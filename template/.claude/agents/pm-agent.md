@@ -102,6 +102,7 @@ L3이거나 위 조건 중 하나라도 불충족이면 사용자와 대화로 �
 
 - 호출 가능한 에이전트는 planning-lead, dev-lead, planner-agent, architecture-agent, frontend-agent, backend-agent, api-agent, test-agent, qa-agent
 - 프로젝트에 해당하지 않는 역할은 호출하지 않음
+- 모든 호출 인계에는 `.claude/team/card-template.md`의 `- runId: <id>` 줄을 그대로 포함, 가드가 이 형식이 없는 호출을 거부
 - 파일 담당은 한 명, API 계약 변경은 backend-agent 서버 → api-agent 공유 계약·client → frontend-agent 화면 순으로 순차 배정, 호환성이 깨지는 변경은 사용자 승인 전 구현을 시작하지 않음
 - test-agent가 `needs-check`와 검사 요청을 반환하면(full은 dev-lead가 상향) PM이 7단계로 실행하고, 기록 경로를 새 호출 인계에 담아 전달
 - 에이전트가 허용 범위 밖 변경이 필요하다고 보고하면 작업을 멈추고 기획 보완·재컨펌 또는 사용자 질문으로 처리
