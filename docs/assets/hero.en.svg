@@ -1,24 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="900" viewBox="0 0 2400 900">
-<rect width="2400" height="900" fill="#F5F7FB"/>
-<text x="110" y="250" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="100" font-weight="700" fill="#1A2744">claude-team-base</text>
-<text x="114" y="405" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="36" font-weight="400" fill="#1A2744">A Claude Code agent team that respects your project&#x27;s rules</text>
-<rect x="110" y="500" width="1330" height="90" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
-<text x="140" y="530" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="27" font-weight="400" fill="#1A2744">Requirements first · Scoped changes · Independent QA</text>
-<polyline points="1830,445 1640,205" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<polyline points="1830,445 1845,150" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<polyline points="1830,445 2060,210" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<polyline points="1830,445 2160,390" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<polyline points="1830,445 2070,670" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<polyline points="1830,445 1850,735" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<polyline points="1830,445 1640,655" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<polyline points="1830,445 2290,470" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<circle cx="1640" cy="205" r="35" fill="#3B6FD8"/>
-<circle cx="1845" cy="150" r="35" fill="#3B6FD8"/>
-<circle cx="2060" cy="210" r="35" fill="#3B6FD8"/>
-<circle cx="2160" cy="390" r="35" fill="#3B6FD8"/>
-<circle cx="2070" cy="670" r="35" fill="#15996B"/>
-<circle cx="1850" cy="735" r="35" fill="#15996B"/>
-<circle cx="1640" cy="655" r="35" fill="#15996B"/>
-<circle cx="2290" cy="470" r="35" fill="#3B6FD8"/>
-<circle cx="1830" cy="445" r="68" fill="#1A2744"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="500" viewBox="0 0 2400 500">
+<rect width="2400" height="500" fill="#F5F7FB"/>
+<rect x="50" y="40" width="2300" height="420" rx="24" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="112" y="100" width="72" height="6" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<rect x="196" y="100" width="24" height="6" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<polyline points="2180,394 2288,394" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<text x="639.0" y="190" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="124" font-weight="700" fill="#1A2744">claude-team-base</text>
 </svg>
