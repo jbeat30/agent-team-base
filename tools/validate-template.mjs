@@ -9,14 +9,22 @@ const agentsDir = join(root, '.claude', 'agents');
 const teamDir = join(root, '.claude-team');
 
 // 역할별 허용 도구 상한, pm-agent는 Agent 호출 대상 검사를 별도로 수행
+const context7 = ['mcp__context7__resolve-library-id', 'mcp__context7__query-docs'];
 const toolCeiling = {
-  'planner-agent': ['Read', 'Glob', 'Grep'],
-  'architecture-agent': ['Read', 'Glob', 'Grep'],
-  'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write'],
-  'backend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write'],
-  'api-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write'],
-  'test-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write'],
-  'qa-agent': ['Read', 'Glob', 'Grep', 'Write'],
+  'planner-agent': ['Read', 'Glob', 'Grep', ...context7],
+  'architecture-agent': ['Read', 'Glob', 'Grep', ...context7],
+  'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
+  'backend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
+  'api-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
+  'test-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
+  'qa-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
+  'planning-lead': ['Read', 'Glob', 'Grep', 'Write'],
+  'dev-lead': ['Read', 'Glob', 'Grep', 'Write'],
+};
+// 리더만 Agent 도구를 가지며 호출 대상은 소속 역할로 한정
+const leaderTargets = {
+  'planning-lead': ['planner-agent', 'architecture-agent', 'qa-agent'],
+  'dev-lead': ['frontend-agent', 'backend-agent', 'api-agent', 'test-agent'],
 };
 const reportFields = ['status', 'summary', 'changedFiles', 'evidence', 'checks', 'unverified', 'blockers'];
 const bannedPhrases = ['입니다', '하고 있습니다', '하는 로직입니다'];
@@ -97,9 +105,18 @@ for (const file of agentFiles) {
     fail(file, '정의되지 않은 역할, 도구 상한 등록 필요');
     continue;
   }
+  const allowedTargets = leaderTargets[name];
   for (const tool of tools) {
-    if (!ceiling.includes(tool)) fail(file, `허용되지 않은 도구 ${tool}`);
+    if (tool.startsWith('Agent(')) {
+      if (!allowedTargets) fail(file, 'Agent 도구는 리더만 사용');
+      else {
+        const targets = tool.slice(6, -1).split(',').map((s) => s.trim());
+        for (const t of targets) if (!allowedTargets.includes(t)) fail(file, `Agent 대상 ${t}은 소속 역할이 아님`);
+        for (const t of allowedTargets) if (!targets.includes(t)) fail(file, `Agent 대상 ${t} 누락`);
+      }
+    } else if (!ceiling.includes(tool)) fail(file, `허용되지 않은 도구 ${tool}`);
   }
+  if (allowedTargets && !tools.some((t) => t.startsWith('Agent('))) fail(file, '리더는 Agent(...) 필요');
   for (const heading of ['## 공통 규칙', '## 보고 형식']) {
     if (!body.includes(heading)) fail(file, `${heading} 구간 없음`);
   }
