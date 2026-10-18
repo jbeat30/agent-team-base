@@ -5,8 +5,8 @@
 요약이 아닌 파일 경로를 단일 기준으로 사용, 카드와 파일이 다르면 수신자가 작업을 중단하고 차이를 보고
 
 - runId:
-- 요청 원문 경로: `.claude-team/runs/<runId>/request.md`
-- 기획안 경로·해시: `.claude-team/runs/<runId>/plan.md`, 해시
+- 요청 원문 경로: `.claude-team-docs/runs/<runId>/request.md`
+- 기획안 경로·해시: `.claude-team-docs/runs/<runId>/plan.md`, 해시
 - 모드: 해당 시 plan | final
 - 목표:
 - 허용 파일(구체적 경로):

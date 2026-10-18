@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const script = join(dirname(fileURLToPath(import.meta.url)), '..', 'template', '.claude-team', 'bin', 'team-check.mjs');
+const script = join(dirname(fileURLToPath(import.meta.url)), '..', 'template', '.claude', 'team', 'bin', 'team-check.mjs');
 const RUN_ID = '20260101-0000-test';
 
 function plan(rows) {
@@ -22,13 +22,13 @@ function project(rows) {
   writeFileSync(join(dir, 'a.txt'), 'base\n');
   git('add', '-A');
   git('commit', '-qm', 'base');
-  mkdirSync(join(dir, '.claude-team', 'runs', RUN_ID), { recursive: true });
-  writeFileSync(join(dir, '.claude-team', 'runs', RUN_ID, 'plan.md'), plan(rows));
+  mkdirSync(join(dir, '.claude-team-docs', 'runs', RUN_ID), { recursive: true });
+  writeFileSync(join(dir, '.claude-team-docs', 'runs', RUN_ID, 'plan.md'), plan(rows));
   return dir;
 }
 
 const run = (dir, ...args) => spawnSync(process.execPath, [script, ...args], { cwd: dir, encoding: 'utf8' });
-const checksDir = (dir) => join(dir, '.claude-team', 'runs', RUN_ID, 'checks');
+const checksDir = (dir) => join(dir, '.claude-team-docs', 'runs', RUN_ID, 'checks');
 
 test('승인된 명령을 실행하고 exit code와 원본 출력을 기록', () => {
   const cmd = `node -e "console.log('hello');process.exit(3)"`;
@@ -76,7 +76,7 @@ test('출력 변조와 기획안 변경을 verify가 탐지', () => {
 
   const dir2 = project([[cmd, '.', '없음']]);
   run(dir2, 'run', RUN_ID, cmd);
-  writeFileSync(join(dir2, '.claude-team', 'runs', RUN_ID, 'plan.md'), `${plan([[cmd, '.', '없음']])}\n변경\n`);
+  writeFileSync(join(dir2, '.claude-team-docs', 'runs', RUN_ID, 'plan.md'), `${plan([[cmd, '.', '없음']])}\n변경\n`);
   const changed = run(dir2, 'verify', RUN_ID);
   assert.equal(changed.status, 1);
   assert.match(changed.stdout, /기획안이 변경/);
@@ -93,7 +93,7 @@ test('diff는 추적·미추적 변경을 원문 그대로 저장하고 실행 �
   writeFileSync(join(dir, 'new.txt'), 'brand new\n');
   const result = run(dir, 'diff', RUN_ID);
   assert.equal(result.status, 0, result.stderr);
-  const patch = readFileSync(join(dir, '.claude-team', 'runs', RUN_ID, 'changes.patch'), 'utf8');
+  const patch = readFileSync(join(dir, '.claude-team-docs', 'runs', RUN_ID, 'changes.patch'), 'utf8');
   assert.match(patch, /\+changed/);
   assert.match(patch, /\+brand new/);
   assert.doesNotMatch(patch, /plan\.md/);

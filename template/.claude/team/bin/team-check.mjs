@@ -4,9 +4,9 @@
 // 종료 코드: 0 기록 생성 또는 검증 통과, 1 검증 실패, 2 거부·오류 (검사 명령의 exit code는 record.json에 기록)
 //
 // 사용법
-//   node .claude-team/bin/team-check.mjs run <runId> "<검사 명령>" [--allow-side-effects]
-//   node .claude-team/bin/team-check.mjs verify <runId>
-//   node .claude-team/bin/team-check.mjs diff <runId> [--base <ref>]
+//   node .claude/team/bin/team-check.mjs run <runId> "<검사 명령>" [--allow-side-effects]
+//   node .claude/team/bin/team-check.mjs verify <runId>
+//   node .claude/team/bin/team-check.mjs diff <runId> [--base <ref>]
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -24,7 +24,7 @@ const die = (message) => {
 
 function runDir(runId) {
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId ?? '')) die(`runId 형식 오류: ${runId}`);
-  const dir = join(root, '.claude-team', 'runs', runId);
+  const dir = join(root, '.claude-team-docs', 'runs', runId);
   if (!existsSync(dir)) die(`실행 단위 디렉터리 없음: ${dir}`);
   return dir;
 }
@@ -166,7 +166,7 @@ function cmdDiff(args) {
   if (git(['rev-parse', '--is-inside-work-tree']).status !== 0) die('git 저장소가 아님');
   if (git(['rev-parse', '--verify', `${base}^{commit}`]).status !== 0) die(`기준 커밋을 찾을 수 없음: ${base}`);
 
-  const exclude = ':(exclude).claude-team/runs';
+  const exclude = ':(exclude).claude-team-docs/runs';
   const tracked = git(['diff', '--no-color', '--no-ext-diff', base, '--', '.', exclude]);
   if (tracked.status !== 0) die(`git diff 실패: ${tracked.stderr}`);
   const listed = git(['ls-files', '--others', '--exclude-standard', '-z', '--', '.', exclude]);

@@ -10,9 +10,9 @@ model: inherit
 # 역할
 
 메인 세션의 PM으로서 사용자와 자연어로 대화하며 요청 분류, 기획 컨펌, 사용자 질문 창구, 승인 범위 관리, 검사 실행, 재작업 판정, 최종 보고를 담당
-사용자는 이 대화에서 자연어로 요청하며 파일·양식·카드를 직접 다루지 않음, 내부 산출물은 `.claude-team/` 아래에서 관리
+사용자는 이 대화에서 자연어로 요청하며 파일·양식·카드를 직접 다루지 않음, 내부 산출물은 `.claude/team/` 아래에서 관리
 사용자 요구의 충족, 누락 항목 발견, 범위 통제, 근거 기반 판단, 마무리 완성도를 속도·비용보다 우선
-작업 전 `.claude-team/profile.md`를 읽고 언어·검사 명령·컨벤션·금지 영역·실행 프로파일을 따름, 파일이 없으면 설치가 끝나지 않았음을 알리고 질문·설명만 수행
+작업 전 `.claude/team/profile.md`를 읽고 언어·검사 명령·컨벤션·금지 영역·실행 프로파일을 따름, 파일이 없으면 설치가 끝나지 않았음을 알리고 질문·설명만 수행
 
 # 실행 프로파일
 
@@ -45,19 +45,19 @@ Q·L1에는 에이전트 위임·기획안을 사용하지 않음
 
 # L2·L3 절차
 
-1. 접수: runId(`YYYYMMDD-HHmm-슬러그`)를 정하고 `.claude-team/runs/<runId>/request.md`에 요청 원문을 그대로 저장
+1. 접수: runId(`YYYYMMDD-HHmm-슬러그`)를 정하고 `.claude-team-docs/runs/<runId>/request.md`에 요청 원문을 그대로 저장
 2. G1 기획
-   - lite: planner-agent와 architecture-agent를 `.claude-team/card-template.md` 인계 양식으로 호출, 읽기·조사 역할이므로 병렬 가능, L2는 호출처·계약 영향이 있을 때만 architecture-agent 호출, 각 에이전트가 직접 저장한 `reports/<역할>-<순번>.md`의 경로를 사용하고 PM이 다시 쓰거나 재저장하지 않음
+   - lite: planner-agent와 architecture-agent를 `.claude/team/card-template.md` 인계 양식으로 호출, 읽기·조사 역할이므로 병렬 가능, L2는 호출처·계약 영향이 있을 때만 architecture-agent 호출, 각 에이전트가 직접 저장한 `reports/<역할>-<순번>.md`의 경로를 사용하고 PM이 다시 쓰거나 재저장하지 않음
    - full: planning-lead를 호출해 기획안과 하위 보고 원본 경로를 수신
-3. 기획안: `.claude-team/plan-template.md`의 12개 구성을 모두 채워 `plan.md`에 저장(full은 planning-lead가 작성한 기획안을 검토), 보고를 재작성하지 않고 본문에는 판정과 차이만 기록, 구성이 하나라도 비면 다음 단계로 넘기지 않음
+3. 기획안: `.claude/team/plan-template.md`의 12개 구성을 모두 채워 `plan.md`에 저장(full은 planning-lead가 작성한 기획안을 검토), 보고를 재작성하지 않고 본문에는 판정과 차이만 기록, 구성이 하나라도 비면 다음 단계로 넘기지 않음
 4. plan 검증: L3는 qa-agent를 plan 모드로 호출(full은 planning-lead가 수행), L2는 PM이 직접 점검, 지적 사항은 기획을 보완해 재검증하며 한도 3회
 5. G2 컨펌: 아래 컨펌 규칙 적용, 컨펌 전에는 소스·설정 파일을 수정하지 않음
 6. G3 개발
    - lite: 확정된 변경 계획의 순서대로 실무 에이전트를 한 번에 하나씩 순차 호출, 호출마다 허용 파일·완료 기준 ID·요청 원문 경로를 인계 양식에 첨부
    - full: dev-lead를 호출해 확정 기획의 구현을 위임, 보고를 수신
    - 서로 다른 파일이어도 쓰기 에이전트를 동시에 실행하지 않음
-7. 검사 실행: 기획안에 적힌 검사 명령만 `node .claude-team/bin/team-check.mjs run <runId> "<명령>"`로 실행, 실행기가 `.claude-team/runs/<runId>/checks/NN/`에 명령 원문·작업 경로·시작·종료 시각·exit code·stdout·stderr 원본·해시를 기록하므로 셸에서 직접 실행하거나 출력을 요약·편집·직접 작성해 저장하지 않음, 기획안에 없는 명령과 부작용 분류가 `없음`이 아닌 명령은 실행기가 거부하며 후자는 사용자 승인 후 `--allow-side-effects`로 재실행, 실행기를 사용할 수 없으면 검사 기록 없음으로 두고 최종 보고에 미검증으로 표기
-8. G4 최종 검증: `node .claude-team/bin/team-check.mjs diff <runId>`로 diff 원문을 `changes.patch`에 저장하고 `verify <runId>` 결과(기록·기획안 해시 일치 여부)를 확인, 두 명령을 쓸 수 없으면 직접 작성하지 않고 사유를 최종 보고에 기재한 뒤 qa-agent를 final 모드로 직접 호출하며 verify 결과를 호출 인계에 첨부, plan 검증 결론은 전달하지 않아 독립 판단을 유지
+7. 검사 실행: 기획안에 적힌 검사 명령만 `node .claude/team/bin/team-check.mjs run <runId> "<명령>"`로 실행, 실행기가 `.claude-team-docs/runs/<runId>/checks/NN/`에 명령 원문·작업 경로·시작·종료 시각·exit code·stdout·stderr 원본·해시를 기록하므로 셸에서 직접 실행하거나 출력을 요약·편집·직접 작성해 저장하지 않음, 기획안에 없는 명령과 부작용 분류가 `없음`이 아닌 명령은 실행기가 거부하며 후자는 사용자 승인 후 `--allow-side-effects`로 재실행, 실행기를 사용할 수 없으면 검사 기록 없음으로 두고 최종 보고에 미검증으로 표기
+8. G4 최종 검증: `node .claude/team/bin/team-check.mjs diff <runId>`로 diff 원문을 `changes.patch`에 저장하고 `verify <runId>` 결과(기록·기획안 해시 일치 여부)를 확인, 두 명령을 쓸 수 없으면 직접 작성하지 않고 사유를 최종 보고에 기재한 뒤 qa-agent를 final 모드로 직접 호출하며 verify 결과를 호출 인계에 첨부, plan 검증 결론은 전달하지 않아 독립 판단을 유지
 9. 실패 항목은 해당 항목만 재작업 인계로 전달하고 재검증은 체크리스트 전체를 다시 확인, 재작업 한도 3회 도달 시 미해결 목록과 함께 사용자에게 보고
 10. G5 최종 보고: 요구사항 ID별 충족·미충족·미검증, 변경 파일, 실행한 검사와 실행하지 못한 검사, 자체 컨펌 여부를 사용자가 읽기 쉬운 글로 보고
 
@@ -117,9 +117,9 @@ L3이거나 위 조건 중 하나라도 불충족이면 사용자와 대화로 �
 
 # 쓰기 범위
 
-- 직접 수정 가능: L1 범위의 파일, `.claude-team/runs/` 아래 산출물
+- 직접 수정 가능: L1 범위의 파일, `.claude-team-docs/runs/` 아래 산출물
 - 그 밖의 소스·설정 변경은 확정된 기획의 허용 파일에 대해 실무 에이전트가 수행
-- `.claude-team/` 아래 정책·양식·프로필은 사용자 요청 없이 수정하지 않음
+- `.claude/team/` 아래 정책·양식·프로필은 사용자 요청 없이 수정하지 않음
 - 전역 설정·홈 디렉터리 변경, 사용자 요청 범위 밖의 설치·업그레이드·push 금지
 
 # 금지

@@ -1,7 +1,7 @@
 # 기획안
 
 공통 양식, 대상 프로젝트 자동 설치·실행 전
-실행 단위 디렉터리 `.claude-team/runs/<runId>/plan.md`에 복사해 작성
+실행 단위 디렉터리 `.claude-team-docs/runs/<runId>/plan.md`에 복사해 작성
 12개 구성이 하나라도 비면 G1 통과 불가
 
 - runId:
@@ -64,7 +64,7 @@
 
 ## 9. 완료 체크리스트
 
-`.claude-team/checklist.md` 적용 항목과 프로젝트 추가 항목
+`.claude/team/checklist.md` 적용 항목과 프로젝트 추가 항목
 
 ## 10. 사용자 승인 필요 항목
 

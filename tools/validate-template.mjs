@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'template');
 const agentsDir = join(root, '.claude', 'agents');
-const teamDir = join(root, '.claude-team');
+const teamDir = join(root, '.claude', 'team');
 
 // 역할별 허용 도구 상한, pm-agent는 Agent 호출 대상 검사를 별도로 수행
 const context7 = ['mcp__context7__resolve-library-id', 'mcp__context7__query-docs'];
@@ -137,10 +137,10 @@ for (const path of walk(root).filter((p) => p.endsWith('.md'))) {
   for (const phrase of bannedPhrases) {
     if (text.includes(phrase)) fail(rel, `지양 문구 "${phrase}" 포함`);
   }
-  for (const m of text.matchAll(/\.claude-team\/((?:bin\/)?[A-Za-z0-9._-]+\.(?:md|mjs))/g)) {
+  for (const m of text.matchAll(/\.claude\/team\/((?:bin\/)?[A-Za-z0-9._-]+\.(?:md|mjs))/g)) {
     const ref = m[1];
     if (generatedRefs.has(ref)) continue;
-    if (!existsSync(join(teamDir, ref))) fail(rel, `참조 파일 .claude-team/${ref} 없음`);
+    if (!existsSync(join(teamDir, ref))) fail(rel, `참조 파일 .claude/team/${ref} 없음`);
   }
 }
 
@@ -149,9 +149,9 @@ const planPath = join(teamDir, 'plan-template.md');
 if (existsSync(planPath)) {
   const plan = readFileSync(planPath, 'utf8');
   for (let i = 1; i <= 12; i++) {
-    if (!new RegExp(`^## ${i}\\. `, 'm').test(plan)) fail('.claude-team/plan-template.md', `구성 ${i}번 없음`);
+    if (!new RegExp(`^## ${i}\\. `, 'm').test(plan)) fail('.claude/team/plan-template.md', `구성 ${i}번 없음`);
   }
-} else fail('.claude-team/plan-template.md', '파일 없음');
+} else fail('.claude/team/plan-template.md', '파일 없음');
 
 if (errors.length) {
   console.error(`실패 ${errors.length}건`);
