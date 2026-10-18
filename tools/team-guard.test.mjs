@@ -88,7 +88,7 @@ test('실무 에이전트: 잠금·confirmed·배정 파일이 모두 맞을 때
   assert.equal(write(dir, 'backend-agent', 'src/a.js').allowed, false, '잠금 없음');
   assert.equal(call(dir, 'pm-agent', 'backend-agent').allowed, true);
   assert.equal(write(dir, 'backend-agent', 'src/a.js').allowed, true);
-  assert.equal(write(dir, 'backend-agent', 'src\\a.js').allowed, true, '역슬래시 경로');
+  if (process.platform === 'win32') assert.equal(write(dir, 'backend-agent', 'src\\a.js').allowed, true, '역슬래시 경로');
   assert.equal(write(dir, 'backend-agent', 'test/a.test.js').allowed, false, '다른 역할 배정');
   assert.equal(write(dir, 'backend-agent', 'src/b.js').allowed, false, '미배정 파일');
   assert.equal(write(dir, 'backend-agent', 'src/other.js').allowed, false, 'glob 배정은 무효');
