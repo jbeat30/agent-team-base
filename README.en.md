@@ -121,7 +121,8 @@ All ten role files are always installed. **Lite or Full is a usage mode you choo
 | Existing verification record | Temporary projects with Claude Code 2.1.302 (Windows, non-interactive): Lite and Full flows, guard firing and blocking, install, verify, and removal. Separate from interactive manual checks |
 | Automated checks | [PR #4 CI](https://github.com/jbeat30/claude-team-base/actions/runs/39152624814), commit `09b6136`: static checks and 31 unit tests pass on Ubuntu and Windows (Node 20). The fix is included in the feature baseline; the README branch also passes all 31 tests locally on Windows (Node 24) |
 | Unverified | Approval flow and workspace trust in interactive sessions, actual Claude runs on non-Windows OSes, repeated evaluation (performance, delegation accuracy), real use of Context7, interactive Q/L1/L2/L3 scenarios on the final integration commit, execution on the minimum Node 18 version |
-| Unsupported | PDCA standalone and integrated (bkit integration), strict mode (approval records), relay mode |
+| Remaining for v0.1.0 | Strict mode (approval records), relay mode, real-environment verification, and repeated behavioral evaluation |
+| Planned for v0.2.0 | Standalone and integrated bkit PDCA. v0.1.0 setup accepts off only; native planning and verification gates remain active |
 
 ### Manual checks before release
 

@@ -121,7 +121,8 @@ https://github.com/jbeat30/claude-team-base 의 INSTALL.md를 읽고 이 프로�
 | 기존 확인 기록 | 임시 프로젝트에서 Claude Code 2.1.302(Windows, 비대화형)로 Lite·Full 흐름, 가드 hook 발화·차단, 설치·검증·제거. 대화형 수동 점검과 구분 |
 | 자동 검사 | [PR #4 CI](https://github.com/jbeat30/claude-team-base/actions/runs/39152624814)의 `09b6136` 기준 정적 검사·단위 31건, Ubuntu·Windows(Node 20) 통과. 해당 수정은 feature 통합 기준에 반영, README 브랜치도 로컬 Windows(Node 24)에서 31건 통과 |
 | 미확인 | 대화형 세션의 승인 흐름·workspace trust, Windows 외 OS의 실제 Claude 실행, 반복 평가(성능·위임 정확도), Context7 연동 실사용, 최종 통합본의 Q·L1·L2·L3 대화형 수동 시나리오, 최소 Node 18에서의 실행 |
-| 미지원 | PDCA standalone·integrated(bkit 연동), 엄격 모드(승인 기록), relay 모드 |
+| v0.1.0 남은 작업 | 엄격 모드(승인 기록), relay 모드, 실제 환경 검증과 반복 행동 평가 |
+| v0.2.0 예정 | bkit PDCA standalone·integrated 연동. v0.1.0 설치는 off만 허용하며 팀 자체 기획·검증 게이트는 유지 |
 
 ### 공개 전 수동 점검
 

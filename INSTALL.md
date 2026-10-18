@@ -41,7 +41,7 @@ Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치
 | Context7 MCP | 설치된 버전 기준 문서 확인을 위해 `.mcp.json`에 등록할지, 실행 시 `npx @upstash/context7-mcp`를 사용하며 질의에는 라이브러리 이름·버전·일반 질문만 보냄 | 항상 질문 |
 | 감지 결과 확인 | 언어·프레임워크, 검사 명령과 부작용(자동 수정 여부), 컨벤션 근거 | 불확실한 항목만 질문 |
 | 수정 금지 영역 | 운영 설정·생성 파일·특정 경로 | 항상 질문 |
-| PDCA | off(기본) / standalone / integrated | 기본값 안내 후 변경 의사만 확인 |
+| PDCA | v0.1.0은 off만 지원, bkit 연동은 v0.2.0 예정 | 선택 질문 생략, 팀 자체 기획·검증 게이트는 유지 |
 | gitignore | `.claude-team-docs/`(작업 기록)를 `.gitignore`에 추가할지, 기본 추가 | 기본값 안내 |
 | 충돌 | plan에서 충돌이 나오면 항목별로 건너뛰기(skip) 또는 백업 후 교체(replace-with-backup), 기존 `agent` 설정은 유지(keep) 또는 교체(replace) | 충돌이 있을 때만 |
 
@@ -54,7 +54,7 @@ Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치
   "profile": "lite | full",
   "context7": true,
   "gitignore": true,
-  "pdca": "off | standalone | integrated",
+  "pdca": "off",
   "agentSetting": "keep | replace (기존 agent 설정이 있을 때만)",
   "stack": [{ "item": "언어·프레임워크", "value": "버전 등", "evidence": "근거 경로" }],
   "checks": [{ "purpose": "테스트", "command": "npm test", "cwd": ".", "sideEffect": "없음 | 있음(자동 수정 등)" }],

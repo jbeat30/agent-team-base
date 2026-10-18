@@ -224,11 +224,12 @@ function loadAnswers(options) {
   const a = parsed.value;
   if (!['lite', 'full'].includes(a.profile)) fail('answers.profile은 lite 또는 full');
   if (typeof a.context7 !== 'boolean') fail('answers.context7은 true 또는 false');
+  if (a.pdca !== undefined && a.pdca !== 'off') fail('v0.1.0은 answers.pdca=off만 지원, bkit PDCA 연동은 v0.2.0 예정');
   return {
     profile: a.profile,
     context7: a.context7,
     gitignore: a.gitignore ?? true,
-    pdca: ['off', 'standalone', 'integrated'].includes(a.pdca) ? a.pdca : 'off',
+    pdca: 'off',
     agentSetting: ['keep', 'replace'].includes(a.agentSetting) ? a.agentSetting : null,
     stack: a.stack ?? [],
     checks: a.checks ?? [],

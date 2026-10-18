@@ -36,6 +36,6 @@
 - 실행 프로파일: lite | full (설치 시 사용자 선택, 역할 파일은 항상 전체 설치)
 - Context7 MCP: 등록 | 미등록
 - 보호 모드: 권고
-- PDCA 모드: off | standalone | integrated
+- PDCA 모드: off (bkit 연동은 v0.2.0 예정)
 - 설치한 역할:
 - 원본 저장소·태그·커밋:

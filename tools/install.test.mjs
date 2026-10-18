@@ -235,3 +235,19 @@ test('잘못된 answers는 거부하고 매니페스트 없는 verify·remove는
   assert.equal(install(['remove', '--target', dir, '--yes']).status, 1);
   assert.equal(install(['plan', '--target', join(dir, 'nope'), '--answers', bad]).status, 2);
 });
+
+test('v0.1.0은 미지원 PDCA 입력을 적용 전에 거부', () => {
+  for (const pdca of ['standalone', 'integrated', 'unknown', null, false]) {
+    const dir = project({ 'keep.txt': 'user content' });
+    const file = answersFile({ pdca });
+    const result = install(planArgs(dir, file));
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /off만 지원/);
+    assert.deepEqual(readdirSync(dir), ['keep.txt']);
+  }
+});
+
+test('PDCA 생략 시 off로 계획·설치', () => {
+  const { dir } = installFresh({}, { pdca: undefined });
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /PDCA 모드: off/);
+});
