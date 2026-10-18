@@ -235,3 +235,54 @@ test('잘못된 answers는 거부하고 매니페스트 없는 verify·remove는
   assert.equal(install(['remove', '--target', dir, '--yes']).status, 1);
   assert.equal(install(['plan', '--target', join(dir, 'nope'), '--answers', bad]).status, 2);
 });
+
+test('v0.1.0은 미지원 PDCA 입력을 적용 전에 거부', () => {
+  for (const pdca of ['standalone', 'integrated', 'unknown', null, false]) {
+    const dir = project({ 'keep.txt': 'user content' });
+    const file = answersFile({ pdca });
+    const result = install(planArgs(dir, file));
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /off만 지원/);
+    assert.deepEqual(readdirSync(dir), ['keep.txt']);
+  }
+});
+
+test('PDCA 생략 시 off로 계획·설치', () => {
+  const { dir } = installFresh({}, { pdca: undefined });
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /PDCA 모드: off/);
+});
+
+test('엄격 모드 설치는 승인 기록을 만들지 않고 실제 점검은 미확인으로 유지', () => {
+  const { dir } = installFresh({}, { guardMode: 'strict' });
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /보호 모드: 엄격/);
+  assert.equal(existsSync(join(dir, '.claude/team/bin/team-approval.mjs')), true);
+  assert.equal(existsSync(join(dir, '.claude-team-docs/.guard/grant.json')), false);
+  const result = install(['verify', '--target', dir, '--live']);
+  assert.equal(result.json.ok, true, JSON.stringify(result.json));
+  const checks = Object.fromEntries(result.json.checks.map((c) => [c.name, c.status]));
+  assert.equal(checks['guard canary'], 'pass');
+  assert.equal(checks['strict approval'], 'unverified');
+  assert.equal(checks['guard live'], 'unverified');
+});
+
+test('잘못된 보호 모드 입력은 설치 계획 전에 거부', () => {
+  const dir = project();
+  const file = answersFile({ guardMode: 'unknown' });
+  assert.equal(install(planArgs(dir, file)).status, 2);
+  assert.deepEqual(readdirSync(dir), []);
+});
+
+test('verify --live의 Claude 호출은 설치 대상 폴더에서 실행', () => {
+  const { dir } = installFresh();
+  const tempDir = temp('live-cwd-');
+  const fake = join(tempDir, 'claude.mjs');
+  const marker = join(tempDir, 'cwd.txt');
+  writeFileSync(fake, [
+    "import { writeFileSync } from 'node:fs';",
+    "if (process.argv.includes('--version')) console.log('2.1.302');",
+    "else { writeFileSync(process.env.CAPTURE_CWD, process.cwd()); console.log(JSON.stringify({ result: 'team-guard: refused' })); }",
+  ].join('\n'));
+  const result = install(['verify', '--target', dir, '--live'], { TEAM_CLAUDE_BIN: '"' + process.execPath + '" "' + fake + '"', CAPTURE_CWD: marker });
+  assert.equal(result.json.ok, true, JSON.stringify(result.json));
+  assert.equal(realpathSync.native(readFileSync(marker, 'utf8')), realpathSync.native(dir));
+});

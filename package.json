@@ -4,9 +4,11 @@
   "private": true,
   "description": "Claude Code agent team base that respects existing project policies",
   "license": "MIT",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "validate": "node tools/validate-template.mjs",
-    "test": "node tools/validate-template.mjs && node --test tools/team-check.test.mjs tools/team-guard.test.mjs tools/install.test.mjs"
+    "test": "node tools/validate-template.mjs && node --test tools/team-check.test.mjs tools/team-guard.test.mjs tools/install.test.mjs tools/team-approval.test.mjs"
   }
 }

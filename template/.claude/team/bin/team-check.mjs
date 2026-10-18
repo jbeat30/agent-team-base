@@ -9,18 +9,28 @@
 //   node .claude/team/bin/team-check.mjs diff <runId> [--base <ref>]
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, realpathSync } from 'node:fs';
 import { join, relative, resolve, isAbsolute } from 'node:path';
+
+import { strictMode, verifyRegistration, paths as approvalPaths, hash as approvalHash } from './team-policy.mjs';
 
 const VERSION = '0.1.0';
 const MAX_BUFFER = 256 * 1024 * 1024;
-const root = process.cwd();
+const root = realpathSync.native(process.cwd());
 
 const sha256 = (data) => createHash('sha256').update(data).digest('hex');
 const die = (message) => {
   console.error(`team-check: ${message}`);
   process.exit(2);
 };
+
+function strictRegistration(runId) {
+  try {
+    return strictMode(root) ? verifyRegistration(root, runId) : null;
+  } catch (error) {
+    return die(error.message);
+  }
+}
 
 function runDir(runId) {
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId ?? '')) die(`runId 형식 오류: ${runId}`);
@@ -82,6 +92,7 @@ function cmdRun(args) {
   if (!command) die('검사 명령 필요');
   const dir = runDir(runId);
   const plan = readPlan(dir);
+  const registration = strictRegistration(runId);
   const entry = parseAllowedChecks(plan.text).find((row) => row.command === command);
   if (!entry) die(`기획안 8장에 없는 명령은 실행하지 않음: ${command}`);
   const clean = /^없음/.test(entry.sideEffect);
@@ -112,6 +123,7 @@ function cmdRun(args) {
     spawnError: result.error ? String(result.error.message) : null,
     sideEffectsApproved: !clean && allowSideEffects,
     planSha256: plan.hash,
+    registrationSha256: registration ? approvalHash(registration) : null,
     stdoutSha256: sha256(stdout),
     stderrSha256: sha256(stderr),
     runner: `team-check ${VERSION}`,
@@ -119,6 +131,12 @@ function cmdRun(args) {
     source: '검사 기록 출처: 메인이 실행기로 실행',
   };
   writeFileSync(join(outDir, 'record.json'), `${JSON.stringify(record, null, 2)}\n`);
+  if (registration) {
+    const indexPath = join(approvalPaths(root, runId).guard, `check-index-${runId}.json`);
+    const index = existsSync(indexPath) ? JSON.parse(readFileSync(indexPath, 'utf8')) : {};
+    index[relative(dir, outDir).replaceAll('\\', '/')] = approvalHash(readFileSync(join(outDir, 'record.json')));
+    writeFileSync(indexPath, `${JSON.stringify(index, null, 2)}\n`);
+  }
   console.log(JSON.stringify({ recordDir: relative(root, outDir), exitCode: record.exitCode, signal: record.signal }));
 }
 
@@ -126,6 +144,7 @@ function cmdVerify(args) {
   const [runId] = args;
   const dir = runDir(runId);
   const planHash = readPlan(dir).hash;
+  const registration = strictRegistration(runId);
   const checksDir = join(dir, 'checks');
   const indices = existsSync(checksDir) ? readdirSync(checksDir).filter((n) => /^\d+$/.test(n)).sort() : [];
   if (!indices.length) {
@@ -145,6 +164,12 @@ function cmdVerify(args) {
       const path = join(base, file);
       if (!existsSync(path)) problems.push(`${index}: ${file} 없음`);
       else if (sha256(readFileSync(path)) !== record[key]) problems.push(`${index}: ${file} 해시 불일치`);
+    }
+    if (registration) {
+      const indexPath = join(approvalPaths(root, runId).guard, `check-index-${runId}.json`);
+      const indexData = existsSync(indexPath) ? JSON.parse(readFileSync(indexPath, 'utf8')) : {};
+      if (indexData[`checks/${index}`] !== approvalHash(readFileSync(recordPath))) problems.push(`${index}: 검사 기록 해시 불일치`);
+      if (record.registrationSha256 !== approvalHash(registration)) problems.push(`${index}: 승인 등록 변경`);
     }
     if (record.planSha256 !== planHash) problems.push(`${index}: 기록 이후 기획안이 변경됨`);
   }

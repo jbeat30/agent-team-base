@@ -8,8 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 BG, NAVY, BLUE, GREEN, LINE, AMBER = '#F5F7FB', '#1A2744', '#3B6FD8', '#15996B', '#D5DBE6', '#E8A33D'
 COPY = {
  'ko': {
-  'hero': "기존 프로젝트 규칙을 존중하는 Claude Code 에이전트 팀",
-  'tag': '요구 충족 · 범위 통제 · 독립 검증', 'user': '사용자', 'main': '메인 세션',
+  'user': '사용자', 'main': '메인 세션',
   'lite': 'PM이 직접 호출', 'full': '리더가 하위를 조율, QA는 PM이 직접 호출',
   'legend': ['조율 · 분석 · 검증', '지정 파일 수정'],
   'note': '역할 파일 10종은 항상 설치 · Lite/Full은 설치 시 선택',
@@ -25,8 +24,7 @@ COPY = {
   'end': '새 세션부터 자연어로 요청',
  },
  'en': {
-  'hero': "A Claude Code agent team that respects your project's rules",
-  'tag': 'Requirements first · Scoped changes · Independent QA', 'user': 'User', 'main': 'main session',
+  'user': 'User', 'main': 'main session',
   'lite': 'Called directly by the PM', 'full': 'Leads coordinate; the PM calls QA directly',
   'legend': ['coordinate · analyze · verify','edit assigned files'],
   'note': 'All 10 roles are always installed · Lite/Full is chosen at setup',
@@ -125,15 +123,15 @@ class Canvas:
 def render(out,fonts):
  out.mkdir(parents=True,exist_ok=True)
  for lang,c in COPY.items():
-  v=Canvas(2400,900,lang,fonts)
-  v.text(110,250,'claude-team-base',100,True,width=1350)
-  v.text(114,405,c['hero'],36,width=1380)
-  v.box(110,500,1330,90)
-  v.text(140,530,c['tag'],27,width=1270)
-  circles=[(1640,205,BLUE),(1845,150,BLUE),(2060,210,BLUE),(2160,390,BLUE),(2070,670,GREEN),(1850,735,GREEN),(1640,655,GREEN),(2290,470,BLUE)]
-  for x,y,color in circles:v.path([(1830,445),(x,y)],arrow=False)
-  for x,y,color in circles:v.circle(x,y,35,color)
-  v.circle(1830,445,68,NAVY)
+  v=Canvas(2400,500,'en',fonts)
+  v.box(50,40,2300,420,fill='white',r=24)
+  v.box(112,100,72,6,BLUE,BLUE,3)
+  v.box(196,100,24,6,GREEN,GREEN,3)
+  v.path([(2180,394),(2288,394)],arrow=False,color=LINE)
+  title='claude-team-base'
+  width=v.font(124,True).getlength(title)/2
+  v.text((2400-width)/2,190,title,124,True)
+  v.lang=lang
   v.save(out,'hero')
 
   v=Canvas(2000,1100,lang,fonts)

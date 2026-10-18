@@ -1,12 +1,14 @@
-<h1 align="center">claude-team-base</h1>
+> [!WARNING]
+> **Under development · Not ready for use**
+> Do not install or apply this to a project before an official release. The guide below describes work in progress.
 
 <p align="center">
-  <img src="docs/assets/hero.en.png" alt="claude-team-base: a Claude Code agent team that respects your project's rules" width="100%">
+  <img src="docs/assets/hero.en.png" alt="claude-team-base" width="100%">
 </p>
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/status-experimental-orange" alt="status: experimental">
+  <img src="https://img.shields.io/badge/status-in%20development-orange" alt="status: in development">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -17,10 +19,6 @@
 A Claude Code agent team that respects your project's existing rules and tools. A main-session PM, specialist agents, and an independent QA work through stage gates.
 Requirement coverage, discovery of missed items, scope control, evidence, and finishing quality come before speed.
 
-> **Preparing experimental v0.1.0; no installable release tag yet** · See [Status](#status) for what has and has not been verified
-> No performance or quality improvement is claimed until it is demonstrated by evaluation
-
-> The quick start below is for a tagged release. INSTALL.md stops installation when no release tag exists.
 
 ## Quick start
 
@@ -113,30 +111,6 @@ All ten role files are always installed. **Lite or Full is a usage mode you choo
 - Check records come from a runner executed by the main session and are not fully tamper-proof; QA reports state the source
 - Right after install the guard is checked with a real Claude call; if that is not confirmed, treat it as no protection
 - Report vulnerabilities privately through [SECURITY.md](SECURITY.md)
-
-## Status
-
-| Area | Details |
-| --- | --- |
-| Existing verification record | Temporary projects with Claude Code 2.1.302 (Windows, non-interactive): Lite and Full flows, guard firing and blocking, install, verify, and removal. Separate from interactive manual checks |
-| Automated checks | [PR #4 CI](https://github.com/jbeat30/claude-team-base/actions/runs/39152624814), commit `09b6136`: static checks and 31 unit tests pass on Ubuntu and Windows (Node 20). The fix is included in the feature baseline; the README branch also passes all 31 tests locally on Windows (Node 24) |
-| Unverified | Approval flow and workspace trust in interactive sessions, actual Claude runs on non-Windows OSes, repeated evaluation (performance, delegation accuracy), real use of Context7, interactive Q/L1/L2/L3 scenarios on the final integration commit, execution on the minimum Node 18 version |
-| Unsupported | PDCA standalone and integrated (bkit integration), strict mode (approval records), relay mode |
-
-### Manual checks before release
-
-Install the final integration commit into a fresh temporary project and check at least one Q, L1, L2, and L3 request
-
-| Scenario | Expected evidence |
-| --- | --- |
-| Q · Explain a function | No file changes, delegation, or PDCA |
-| L1 · Single-file typo | Main-session edit, only the intended file changed, lightweight completion check |
-| L2 · Behavior change | Plan → confirm → build → independent QA, original check records and diff match the report |
-| L3 · API contract change | Impact analysis and user confirmation before source edits, followed by gates and verification |
-
-Check L2/L3 routes in both Lite and Full, plus denied approval, guard rejection, check failure, preservation of existing settings, and removal
-Record the commit, environment, profile, request, approvals, calls, diff, and check records. Four successes do not establish safety in every environment
-Keep unchecked items unverified. Block release if source changes before required approval or out-of-scope writes are allowed
 
 ## Removal and updates
 

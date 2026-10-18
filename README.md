@@ -1,12 +1,14 @@
-<h1 align="center">claude-team-base</h1>
+> [!WARNING]
+> **개발 진행 중 · 아직 사용할 수 없음**
+> 정식 릴리즈 전까지 설치·실제 프로젝트 적용 보류. 아래 내용은 개발 중인 사용 안내.
 
 <p align="center">
-  <img src="docs/assets/hero.ko.png" alt="claude-team-base: 기존 프로젝트 규칙을 존중하는 Claude Code 에이전트 팀" width="100%">
+  <img src="docs/assets/hero.ko.png" alt="claude-team-base" width="100%">
 </p>
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/status-experimental-orange" alt="status: experimental">
+  <img src="https://img.shields.io/badge/status-in%20development-orange" alt="status: in development">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 이상">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 이상">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -17,10 +19,6 @@
 기존 프로젝트의 규칙과 도구를 존중하면서, 메인 세션 PM·담당 에이전트·독립 QA가 단계 게이트로 일하는 Claude Code 에이전트 팀
 속도보다 요구 충족·누락 발견·범위 통제·근거·마무리 완성도를 우선
 
-> **v0.1.0 실험적 공개 준비 중** · 현재 설치 가능한 릴리즈 태그 없음
-> 아래 빠른 시작은 릴리즈 후 사용 절차. 태그가 없으면 INSTALL.md에 따라 설치 중단
-> 설계와 동작 확인 범위는 [현재 상태](#현재-상태)에 정리
-> 성능·품질 향상은 평가로 입증하기 전까지 주장하지 않음
 
 ## 빠른 시작
 
@@ -113,30 +111,6 @@ https://github.com/jbeat30/claude-team-base 의 INSTALL.md를 읽고 이 프로�
 - 검사 기록은 메인 세션이 실행기로 실행한 결과이며 위·변조를 완전히 방어하지 않음, QA 보고서에 출처를 표기
 - 설치 직후 보호 장치를 실제 Claude 호출로 점검하고, 확인되지 않으면 `보호 없음`으로 취급
 - 취약점은 [SECURITY.md](SECURITY.md)로 비공개 제보
-
-## 현재 상태
-
-| 구분 | 내용 |
-| --- | --- |
-| 기존 확인 기록 | 임시 프로젝트에서 Claude Code 2.1.302(Windows, 비대화형)로 Lite·Full 흐름, 가드 hook 발화·차단, 설치·검증·제거. 대화형 수동 점검과 구분 |
-| 자동 검사 | [PR #4 CI](https://github.com/jbeat30/claude-team-base/actions/runs/39152624814)의 `09b6136` 기준 정적 검사·단위 31건, Ubuntu·Windows(Node 20) 통과. 해당 수정은 feature 통합 기준에 반영, README 브랜치도 로컬 Windows(Node 24)에서 31건 통과 |
-| 미확인 | 대화형 세션의 승인 흐름·workspace trust, Windows 외 OS의 실제 Claude 실행, 반복 평가(성능·위임 정확도), Context7 연동 실사용, 최종 통합본의 Q·L1·L2·L3 대화형 수동 시나리오, 최소 Node 18에서의 실행 |
-| 미지원 | PDCA standalone·integrated(bkit 연동), 엄격 모드(승인 기록), relay 모드 |
-
-### 공개 전 수동 점검
-
-최종 통합 커밋을 새 임시 프로젝트에 설치한 뒤 Q·L1·L2·L3를 각 1건 이상 확인
-
-| 시나리오 | 확인할 결과 |
-| --- | --- |
-| Q · 함수 설명 | 파일 변경·위임·PDCA 없이 답변 |
-| L1 · 단일 파일 오탈자 | 메인 직접 수정, 해당 파일만 변경, 경량 완료 확인 |
-| L2 · 일반 동작 변경 | 기획 → 컨펌 → 개발 → 독립 QA, 검사 원본·diff와 보고 일치 |
-| L3 · API 계약 변경 | 영향 분석과 사용자 확인 전 소스 변경 없음, 확인 후 게이트·검증 완료 |
-
-Lite·Full 양쪽의 L2·L3 호출 경로를 확인하고, 승인 거절·가드 차단·검사 실패·기존 설정 보존·제거도 별도 확인
-커밋·환경·프로파일·요청·승인 내역·도구 호출·diff·검사 기록을 남기며, 4건 성공만으로 모든 환경의 안전성을 보장하지 않음
-미점검 항목은 미확인으로 유지하고, 확인 없이 소스를 바꾸거나 범위 밖 쓰기가 허용되는 실패는 해결 전 공개 보류
 
 ## 제거와 갱신
 
