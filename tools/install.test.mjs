@@ -271,3 +271,18 @@ test('잘못된 보호 모드 입력은 설치 계획 전에 거부', () => {
   assert.equal(install(planArgs(dir, file)).status, 2);
   assert.deepEqual(readdirSync(dir), []);
 });
+
+test('verify --live의 Claude 호출은 설치 대상 폴더에서 실행', () => {
+  const { dir } = installFresh();
+  const tempDir = temp('live-cwd-');
+  const fake = join(tempDir, 'claude.mjs');
+  const marker = join(tempDir, 'cwd.txt');
+  writeFileSync(fake, [
+    "import { writeFileSync } from 'node:fs';",
+    "if (process.argv.includes('--version')) console.log('2.1.302');",
+    "else { writeFileSync(process.env.CAPTURE_CWD, process.cwd()); console.log(JSON.stringify({ result: 'team-guard: refused' })); }",
+  ].join('\n'));
+  const result = install(['verify', '--target', dir, '--live'], { TEAM_CLAUDE_BIN: '"' + process.execPath + '" "' + fake + '"', CAPTURE_CWD: marker });
+  assert.equal(result.json.ok, true, JSON.stringify(result.json));
+  assert.equal(realpathSync.native(readFileSync(marker, 'utf8')), dir);
+});

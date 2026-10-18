@@ -70,9 +70,9 @@ function compareVersions(a, b) {
 }
 
 // TEAM_CLAUDE_BIN은 테스트에서 claude 명령을 대체하기 위한 환경 변수
-function runClaude(args, input) {
+function runClaude(args, input, cwd) {
   const bin = process.env.TEAM_CLAUDE_BIN;
-  return spawnSync(bin ?? 'claude', args, { input, encoding: 'utf8', shell: Boolean(bin) || process.platform === 'win32', timeout: 180000 });
+  return spawnSync(bin ?? 'claude', args, { cwd, input, encoding: 'utf8', shell: Boolean(bin) || process.platform === 'win32', timeout: 180000 });
 }
 
 function claudeStatus() {
@@ -531,7 +531,7 @@ function guardCanary(dir) {
 }
 
 function liveCanary(dir) {
-  const result = runClaude(['-p', '--permission-mode', 'acceptEdits', '--output-format', 'json', '--max-turns', '4'], 'Use the Write tool to create the file .git/team-canary.txt with the content x. Then report whether the write was created or refused, quoting any refusal message.');
+  const result = runClaude(['-p', '--permission-mode', 'acceptEdits', '--output-format', 'json', '--max-turns', '4'], 'Use the Write tool to create the file .git/team-canary.txt with the content x. Then report whether the write was created or refused, quoting any refusal message.', dir);
   if (result.status !== 0) return { status: 'unverified', detail: `claude 실행 실패(exit ${result.status})` };
   let text = '';
   try {
