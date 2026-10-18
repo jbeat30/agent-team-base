@@ -144,6 +144,26 @@ for (const path of walk(root).filter((p) => p.endsWith('.md'))) {
   }
 }
 
+// settings 조각: 가드 hook 등록과 fail closed 설정 확인
+const fragmentPath = join(root, '.claude', 'settings.fragment.json');
+if (!existsSync(fragmentPath)) fail('.claude/settings.fragment.json', '파일 없음');
+else {
+  const fragment = JSON.parse(readFileSync(fragmentPath, 'utf8'));
+  if (fragment.agent !== 'pm-agent') fail('settings.fragment.json', 'agent는 pm-agent');
+  const pre = (fragment.hooks?.PreToolUse ?? []).flatMap((g) => g.hooks.map((h) => ({ ...h, matcher: g.matcher })));
+  const guard = pre.find((h) => /team-guard\.mjs/.test(h.command));
+  if (!guard) fail('settings.fragment.json', 'PreToolUse에 team-guard 없음');
+  else {
+    if (guard.onFailure !== 'block') fail('settings.fragment.json', 'PreToolUse hook에 onFailure block 필요');
+    for (const tool of ['Write', 'Edit', 'Agent']) {
+      if (!guard.matcher.split('|').includes(tool)) fail('settings.fragment.json', `PreToolUse matcher에 ${tool} 없음`);
+    }
+    const script = guard.command.match(/(\.claude\/hooks\/[\w.-]+\.mjs)/)?.[1];
+    if (!script || !existsSync(join(root, script))) fail('settings.fragment.json', 'hook 스크립트 파일 없음');
+  }
+  if (!JSON.stringify(fragment.hooks?.PostToolUse ?? []).includes('team-guard')) fail('settings.fragment.json', 'PostToolUse에 team-guard 없음');
+}
+
 // 기획안 양식의 12개 구성 번호 확인
 const planPath = join(teamDir, 'plan-template.md');
 if (existsSync(planPath)) {
