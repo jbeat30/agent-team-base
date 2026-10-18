@@ -157,7 +157,7 @@ function ownReportRunId(role, rel) {
   const [, runId, , reportFile] = m;
   const name = reportFile ?? m[2];
   if ([...ANALYSTS, ...WRITERS].includes(role) && new RegExp(`^${role}-\\d{2}\\.md$`).test(reportFile ?? '')) return runId;
-  if (role === 'qa-agent' && /^qa-(plan|final)\.md$/.test(reportFile ?? '')) return runId;
+  if (role === 'qa-agent' && /^qa-(plan|final)(-\d{2})?\.md$/.test(reportFile ?? '')) return runId;
   if (role === 'dev-lead' && reportFile === 'dev-lead.md') return runId;
   if (role === 'planning-lead' && name === 'plan.md') return runId;
   return null;
@@ -191,7 +191,7 @@ function decideWrite(root, input) {
   const lock = readLock(root);
   if (!lock || lock.subagentType !== role) return deny(`${role}은 PM·dev-lead의 호출로 활성화된 경우에만 쓸 수 있음`);
   if (!planConfirmed(root, lock.runId)) return deny('기획안이 confirmed 상태가 아니라 소스·설정 쓰기를 시작할 수 없음');
-  if (!assignedFiles(root, lock.runId, role).includes(norm(rl))) return deny(`기획안 변경 계획에서 ${role}에 배정되지 않은 파일: ${rel}`);
+  if (!assignedFiles(root, lock.runId, role).includes(norm(rl))) return deny(`기획안 변경 계획(6장 표)에서 ${role}에 배정되지 않은 파일: ${rel}, 표 셀 안의 | 는 \\| 로 표기하고 담당 열은 역할 이름만 기재`);
 }
 
 function decideAgent(root, input) {
@@ -206,8 +206,10 @@ function decideAgent(root, input) {
     if (target === 'qa-agent' && /모드:\s*final/.test(prompt)) return deny('final 검증은 PM이 직접 호출');
   }
 
-  const runId = prompt.match(/runId:\s*([A-Za-z0-9][A-Za-z0-9._-]*)/)?.[1];
-  if (!runId) return deny('호출 인계에 runId가 필요');
+  // `runId: <id>`가 표준 형식이며 `runId <id>`·`runId=<id>`도 허용
+  // 문장 끝의 마침표·하이픈은 runId에서 제외
+  const runId = prompt.match(/runId[\s:=]+([A-Za-z0-9][A-Za-z0-9._-]*)/)?.[1]?.replace(/[._-]+$/, '');
+  if (!runId) return deny('호출 인계에 `- runId: <id>` 줄이 필요');
   if (!existsSync(runPaths(root, runId).request)) return deny(`실행 단위(request.md)가 없음: ${runId}`);
 
   if (target === 'dev-lead' || WRITERS.includes(target)) {

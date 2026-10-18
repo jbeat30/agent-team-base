@@ -73,6 +73,8 @@ test('분석·QA·리더는 자신의 보고·산출물에만 쓰기', () => {
   assert.equal(write(dir, 'planner-agent', 'src/a.js').allowed, false);
   assert.equal(write(dir, 'qa-agent', reports('qa-final.md')).allowed, true);
   assert.equal(write(dir, 'qa-agent', reports('qa-plan.md')).allowed, true);
+  assert.equal(write(dir, 'qa-agent', reports('qa-final-01.md')).allowed, true, '재검증 순번');
+  assert.equal(write(dir, 'qa-agent', reports('qa-extra.md')).allowed, false);
   assert.equal(write(dir, 'qa-agent', 'src/a.js').allowed, false);
   assert.equal(write(dir, 'planning-lead', '.claude-team-docs/runs/R1/plan.md').allowed, true);
   assert.equal(write(dir, 'planning-lead', 'src/a.js').allowed, false);
@@ -125,6 +127,9 @@ test('쓰기 에이전트 동시 호출 차단, 종료 후 해제, 오래된 잠
 test('호출 인계 검사: runId·실행 단위 필수', () => {
   const dir = project();
   assert.equal(call(dir, 'pm-agent', 'planner-agent', '인계 없음').allowed, false);
+  assert.equal(call(dir, 'pm-agent', 'planner-agent', '모드: final. runId R1. 작업 경로 x').allowed, true, '콜론 없는 표기');
+  assert.equal(call(dir, 'pm-agent', 'planner-agent', 'runId=R1').allowed, true);
+  assert.equal(call(dir, 'pm-agent', 'planner-agent', 'runId 가 없습니다').allowed, false);
   assert.equal(call(dir, 'pm-agent', 'planner-agent', '- runId: NOPE').allowed, false);
   assert.equal(call(dir, 'pm-agent', 'planner-agent').allowed, true);
 });
@@ -159,4 +164,15 @@ test('오류와 잘못된 입력은 차단(fail closed)', () => {
   assert.equal(existsSync(join(dir, '.claude-team-docs', '.guard', 'writer.lock.json')), false);
   const missingRoot = spawnSync(process.execPath, [script], { cwd: dir, env: { ...process.env, CLAUDE_PROJECT_DIR: join(dir, 'nope') }, input: '{}', encoding: 'utf8' });
   assert.equal(missingRoot.status, 2);
+});
+
+test('기획안 표의 이스케이프하지 않은 파이프는 배정을 어긋나게 해 거부하고 안내', () => {
+  const bad = project({ rows: [['src/<a|b>.js', 'backend-agent']] });
+  call(bad, 'pm-agent', 'backend-agent');
+  const denied = write(bad, 'backend-agent', 'src/<a|b>.js');
+  assert.equal(denied.allowed, false);
+  assert.match(denied.stderr, /6장 표/);
+  const good = project({ rows: [['src/<x>.js', 'backend-agent']] });
+  call(good, 'pm-agent', 'backend-agent');
+  assert.equal(write(good, 'backend-agent', 'src/<x>.js').allowed, true);
 });
