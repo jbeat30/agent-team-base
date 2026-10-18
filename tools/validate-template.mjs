@@ -11,8 +11,8 @@ const teamDir = join(root, '.claude-team');
 // 역할별 허용 도구 상한, pm-agent는 Agent 호출 대상 검사를 별도로 수행
 const context7 = ['mcp__context7__resolve-library-id', 'mcp__context7__query-docs'];
 const toolCeiling = {
-  'planner-agent': ['Read', 'Glob', 'Grep', ...context7],
-  'architecture-agent': ['Read', 'Glob', 'Grep', ...context7],
+  'planner-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
+  'architecture-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
   'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
   'backend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
   'api-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
@@ -137,7 +137,7 @@ for (const path of walk(root).filter((p) => p.endsWith('.md'))) {
   for (const phrase of bannedPhrases) {
     if (text.includes(phrase)) fail(rel, `지양 문구 "${phrase}" 포함`);
   }
-  for (const m of text.matchAll(/\.claude-team\/([A-Za-z0-9._-]+\.md)/g)) {
+  for (const m of text.matchAll(/\.claude-team\/((?:bin\/)?[A-Za-z0-9._-]+\.(?:md|mjs))/g)) {
     const ref = m[1];
     if (generatedRefs.has(ref)) continue;
     if (!existsSync(join(teamDir, ref))) fail(rel, `참조 파일 .claude-team/${ref} 없음`);
