@@ -1,0 +1,19 @@
+{
+  "target": "branch",
+  "enforcement": "active",
+  "rules": [
+    {
+      "type": "deletion"
+    }
+  ],
+  "bypass_actors": [],
+  "name": "develop-history-protection",
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "refs/heads/develop"
+      ]
+    }
+  }
+}
