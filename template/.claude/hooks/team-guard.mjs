@@ -35,7 +35,8 @@ function readInput() {
 
 function projectRoot(input) {
   const base = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
-  return realpathSync(base);
+  // Windows 8.3 단축 경로를 symlink 검사와 같은 native 기준으로 비교
+  return realpathSync.native(base);
 }
 
 // 프로젝트 내부의 일반 경로만 허용: 밖으로 나가는 경로·UNC·다른 드라이브·symlink·junction 거부
@@ -181,7 +182,8 @@ function decideWrite(root, input) {
 
   if (!SUBAGENT_ROLES.includes(role)) return; // 이 팀 외의 에이전트
 
-  const reportRun = ownReportRunId(role, rl);
+  // 실행 ID는 실제 디렉터리 이름을 보존, 보호 정책용 소문자 경로와 분리
+  const reportRun = ownReportRunId(role, rel);
   if (reportRun !== null) {
     if (!validRunId(reportRun) || !existsSync(runPaths(root, reportRun).request)) return deny(`실행 단위(request.md)가 없음: ${reportRun}`);
     return;
@@ -191,7 +193,7 @@ function decideWrite(root, input) {
   const lock = readLock(root);
   if (!lock || lock.subagentType !== role) return deny(`${role}은 PM·dev-lead의 호출로 활성화된 경우에만 쓸 수 있음`);
   if (!planConfirmed(root, lock.runId)) return deny('기획안이 confirmed 상태가 아니라 소스·설정 쓰기를 시작할 수 없음');
-  if (!assignedFiles(root, lock.runId, role).includes(norm(rl))) return deny(`기획안 변경 계획(6장 표)에서 ${role}에 배정되지 않은 파일: ${rel}, 표 셀 안의 | 는 \\| 로 표기하고 담당 열은 역할 이름만 기재`);
+  if (!assignedFiles(root, lock.runId, role).includes(norm(rel))) return deny(`기획안 변경 계획(6장 표)에서 ${role}에 배정되지 않은 파일: ${rel}, 표 셀 안의 | 는 \\| 로 표기하고 담당 열은 역할 이름만 기재`);
 }
 
 function decideAgent(root, input) {
