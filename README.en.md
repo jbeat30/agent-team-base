@@ -17,8 +17,10 @@
 A Claude Code agent team that respects your project's existing rules and tools. A main-session PM, specialist agents, and an independent QA work through stage gates.
 Requirement coverage, discovery of missed items, scope control, evidence, and finishing quality come before speed.
 
-> **Experimental release (v0.1.0)** · See [Status](#status) for what has and has not been verified
+> **Preparing experimental v0.1.0; no installable release tag yet** · See [Status](#status) for what has and has not been verified
 > No performance or quality improvement is claimed until it is demonstrated by evaluation
+
+> The quick start below is for a tagged release. INSTALL.md stops installation when no release tag exists.
 
 ## Quick start
 
@@ -32,7 +34,7 @@ Read INSTALL.md at https://github.com/jbeat30/claude-team-base and set this proj
 
 - Claude reads [INSTALL.md](INSTALL.md), pins a release tag, fetches it, and inspects your project
 - It asks only what it needs, in chat: Lite or Full, Context7 MCP registration, protected areas, and corrections to what it detected
-- It shows the change plan in ten lines or fewer and asks for **one confirmation**
+- It shows the change plan in ten lines or fewer and asks for **one final setup confirmation** (missing information, conflicts, or failures may need separate questions)
 - An installer script copies and merges files deterministically, then checks the guard with a real Claude call
 - Requirements: Claude Code 2.1.302 or later, Node 18 or later
 - Existing files are never overwritten, and global settings and feature code are not changed. You can remove it at any time
@@ -116,9 +118,25 @@ All ten role files are always installed. **Lite or Full is a usage mode you choo
 
 | Area | Details |
 | --- | --- |
-| Verified | On temporary projects with Claude Code 2.1.302 (Windows, non-interactive): Lite and Full flows, guard hook firing and blocking, install, verify, and removal, 30 unit tests |
-| Unverified | Approval flow and workspace trust in interactive sessions, non-Windows OSes, repeated evaluation (performance, delegation accuracy), real use of Context7, real runs of the L1 and L3 flows |
+| Existing verification record | Temporary projects with Claude Code 2.1.302 (Windows, non-interactive): Lite and Full flows, guard firing and blocking, install, verify, and removal. Separate from interactive manual checks |
+| Current automated checks | [PR #4 CI](https://github.com/jbeat30/claude-team-base/actions/runs/39151213484), commit `f4b6872`: static checks and 31 unit tests pass on Ubuntu and Windows (Node 20), and locally on Windows (Node 24). Include the fix in the final integration candidate |
+| Unverified | Approval flow and workspace trust in interactive sessions, actual Claude runs on non-Windows OSes, repeated evaluation (performance, delegation accuracy), real use of Context7, interactive Q/L1/L2/L3 scenarios on the final integration commit, execution on the minimum Node 18 version |
 | Unsupported | PDCA standalone and integrated (bkit integration), strict mode (approval records), relay mode |
+
+### Manual checks before release
+
+Install the final integration commit into a fresh temporary project and check at least one Q, L1, L2, and L3 request
+
+| Scenario | Expected evidence |
+| --- | --- |
+| Q · Explain a function | No file changes, delegation, or PDCA |
+| L1 · Single-file typo | Main-session edit, only the intended file changed, lightweight completion check |
+| L2 · Behavior change | Plan → confirm → build → independent QA, original check records and diff match the report |
+| L3 · API contract change | Impact analysis and user confirmation before source edits, followed by gates and verification |
+
+Check L2/L3 routes in both Lite and Full, plus denied approval, guard rejection, check failure, preservation of existing settings, and removal
+Record the commit, environment, profile, request, approvals, calls, diff, and check records. Four successes do not establish safety in every environment
+Keep unchecked items unverified. Block release if source changes before required approval or out-of-scope writes are allowed
 
 ## Removal and updates
 
@@ -142,6 +160,7 @@ Issues and fork PRs are welcome. Only the owner has write access; every change i
 - Bugs and feature ideas: [Issues](https://github.com/jbeat30/claude-team-base/issues/new/choose)
 - Changes: fork and open a PR against the `feature/vX.Y.Z` branch the owner designates
 - `main`, `release`, and `feature` branches require PRs and forbid force pushes; outside contributors cannot push or merge directly
+- Fork PR workflows from all external contributors require maintainer approval, regardless of contribution history
 - Development needs Node 18 or later; run `npm test` for static checks and unit tests
 - Details (in Korean): [Contributing](.github/CONTRIBUTING.md) · [Branch strategy](.github/BRANCH_STRATEGY.md) · [Development rules](AGENTS.md)
 
