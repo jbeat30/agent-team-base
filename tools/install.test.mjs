@@ -284,5 +284,5 @@ test('verify --live의 Claude 호출은 설치 대상 폴더에서 실행', () =
   ].join('\n'));
   const result = install(['verify', '--target', dir, '--live'], { TEAM_CLAUDE_BIN: '"' + process.execPath + '" "' + fake + '"', CAPTURE_CWD: marker });
   assert.equal(result.json.ok, true, JSON.stringify(result.json));
-  assert.equal(realpathSync.native(readFileSync(marker, 'utf8')), dir);
+  assert.equal(realpathSync.native(readFileSync(marker, 'utf8')), realpathSync.native(dir));
 });
