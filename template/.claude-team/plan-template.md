@@ -78,8 +78,8 @@
 
 원본 보고 파일의 경로·해시 참조, 전문 복사 금지
 
-- reports/planner-agent.md:
-- reports/architecture-agent.md:
+- reports/planner-agent-01.md:
+- reports/architecture-agent-01.md:
 - reports/qa-plan.md:
 
 ## 컨펌 기록

@@ -47,7 +47,7 @@ Q·L1에는 에이전트 위임·기획안을 사용하지 않음
 
 1. 접수: runId(`YYYYMMDD-HHmm-슬러그`)를 정하고 `.claude-team/runs/<runId>/request.md`에 요청 원문을 그대로 저장
 2. G1 기획
-   - lite: planner-agent와 architecture-agent를 `.claude-team/card-template.md` 인계 양식으로 호출, 읽기·조사 역할이므로 병렬 가능, L2는 호출처·계약 영향이 있을 때만 architecture-agent 호출, 반환 보고는 수정 없이 원문 그대로 `reports/<역할>.md`에 저장
+   - lite: planner-agent와 architecture-agent를 `.claude-team/card-template.md` 인계 양식으로 호출, 읽기·조사 역할이므로 병렬 가능, L2는 호출처·계약 영향이 있을 때만 architecture-agent 호출, 각 에이전트가 직접 저장한 `reports/<역할>-<순번>.md`의 경로를 사용하고 PM이 다시 쓰거나 재저장하지 않음
    - full: planning-lead를 호출해 기획안과 하위 보고 원본 경로를 수신
 3. 기획안: `.claude-team/plan-template.md`의 12개 구성을 모두 채워 `plan.md`에 저장(full은 planning-lead가 작성한 기획안을 검토), 보고를 재작성하지 않고 본문에는 판정과 차이만 기록, 구성이 하나라도 비면 다음 단계로 넘기지 않음
 4. plan 검증: L3는 qa-agent를 plan 모드로 호출(full은 planning-lead가 수행), L2는 PM이 직접 점검, 지적 사항은 기획을 보완해 재검증하며 한도 3회
@@ -56,8 +56,8 @@ Q·L1에는 에이전트 위임·기획안을 사용하지 않음
    - lite: 확정된 변경 계획의 순서대로 실무 에이전트를 한 번에 하나씩 순차 호출, 호출마다 허용 파일·완료 기준 ID·요청 원문 경로를 인계 양식에 첨부
    - full: dev-lead를 호출해 확정 기획의 구현을 위임, 보고를 수신
    - 서로 다른 파일이어도 쓰기 에이전트를 동시에 실행하지 않음
-7. 검사 실행: 기획안에 적힌 검사 명령만 직접 실행하고 명령 원문·작업 경로·시작·종료 시각·exit code·출력 원본을 `.claude-team/runs/<runId>/checks/`에 가공 없이 저장, 계획에 없거나 부작용이 있는 명령은 실행 전 사용자 확인, 출력을 요약·축약해 저장하지 않고 exit code·시각을 기록하지 못하면 그 사실을 기록 파일에 명시하고 최종 보고에 미검증으로 표기
-8. G4 최종 검증: 변경 diff 원문을 `.claude-team/runs/<runId>/changes.patch`에 저장(diff를 얻지 못하면 요약본을 changes.patch로 저장하지 않고 사유를 최종 보고에 기재)한 뒤 qa-agent를 final 모드로 직접 호출, plan 검증 결론은 전달하지 않아 독립 판단을 유지
+7. 검사 실행: 기획안에 적힌 검사 명령만 `node .claude-team/bin/team-check.mjs run <runId> "<명령>"`로 실행, 실행기가 `.claude-team/runs/<runId>/checks/NN/`에 명령 원문·작업 경로·시작·종료 시각·exit code·stdout·stderr 원본·해시를 기록하므로 셸에서 직접 실행하거나 출력을 요약·편집·직접 작성해 저장하지 않음, 기획안에 없는 명령과 부작용 분류가 `없음`이 아닌 명령은 실행기가 거부하며 후자는 사용자 승인 후 `--allow-side-effects`로 재실행, 실행기를 사용할 수 없으면 검사 기록 없음으로 두고 최종 보고에 미검증으로 표기
+8. G4 최종 검증: `node .claude-team/bin/team-check.mjs diff <runId>`로 diff 원문을 `changes.patch`에 저장하고 `verify <runId>` 결과(기록·기획안 해시 일치 여부)를 확인, 두 명령을 쓸 수 없으면 직접 작성하지 않고 사유를 최종 보고에 기재한 뒤 qa-agent를 final 모드로 직접 호출하며 verify 결과를 호출 인계에 첨부, plan 검증 결론은 전달하지 않아 독립 판단을 유지
 9. 실패 항목은 해당 항목만 재작업 인계로 전달하고 재검증은 체크리스트 전체를 다시 확인, 재작업 한도 3회 도달 시 미해결 목록과 함께 사용자에게 보고
 10. G5 최종 보고: 요구사항 ID별 충족·미충족·미검증, 변경 파일, 실행한 검사와 실행하지 못한 검사, 자체 컨펌 여부를 사용자가 읽기 쉬운 글로 보고
 
