@@ -251,3 +251,23 @@ test('PDCA 생략 시 off로 계획·설치', () => {
   const { dir } = installFresh({}, { pdca: undefined });
   assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /PDCA 모드: off/);
 });
+
+test('엄격 모드 설치는 승인 기록을 만들지 않고 실제 점검은 미확인으로 유지', () => {
+  const { dir } = installFresh({}, { guardMode: 'strict' });
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /보호 모드: 엄격/);
+  assert.equal(existsSync(join(dir, '.claude/team/bin/team-approval.mjs')), true);
+  assert.equal(existsSync(join(dir, '.claude-team-docs/.guard/grant.json')), false);
+  const result = install(['verify', '--target', dir, '--live']);
+  assert.equal(result.json.ok, true, JSON.stringify(result.json));
+  const checks = Object.fromEntries(result.json.checks.map((c) => [c.name, c.status]));
+  assert.equal(checks['guard canary'], 'pass');
+  assert.equal(checks['strict approval'], 'unverified');
+  assert.equal(checks['guard live'], 'unverified');
+});
+
+test('잘못된 보호 모드 입력은 설치 계획 전에 거부', () => {
+  const dir = project();
+  const file = answersFile({ guardMode: 'unknown' });
+  assert.equal(install(planArgs(dir, file)).status, 2);
+  assert.deepEqual(readdirSync(dir), []);
+});

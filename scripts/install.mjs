@@ -224,12 +224,14 @@ function loadAnswers(options) {
   const a = parsed.value;
   if (!['lite', 'full'].includes(a.profile)) fail('answers.profile은 lite 또는 full');
   if (typeof a.context7 !== 'boolean') fail('answers.context7은 true 또는 false');
+  if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode는 advisory 또는 strict');
   if (a.pdca !== undefined && a.pdca !== 'off') fail('v0.1.0은 answers.pdca=off만 지원, bkit PDCA 연동은 v0.2.0 예정');
   return {
     profile: a.profile,
     context7: a.context7,
     gitignore: a.gitignore ?? true,
     pdca: 'off',
+    guardMode: a.guardMode ?? 'advisory',
     agentSetting: ['keep', 'replace'].includes(a.agentSetting) ? a.agentSetting : null,
     stack: a.stack ?? [],
     checks: a.checks ?? [],
@@ -265,7 +267,7 @@ ${table(['경로', '사유'], answers.forbidden.map((f) => [f.path, f.reason ?? 
 
 - 실행 프로파일: ${answers.profile}
 - Context7 MCP: ${answers.context7 ? '등록' : '미등록'}
-- 보호 모드: 권고
+- 보호 모드: ${answers.guardMode === 'strict' ? '엄격' : '권고'}
 - PDCA 모드: ${answers.pdca}
 - 설치한 역할: ${ROLE_FILES.join(', ')} (역할 파일은 항상 전체 설치)
 - 원본 저장소·태그·커밋: ${source.repo} · ${source.tag ?? '태그 없음'} · ${source.commit ?? '미확인'}
@@ -520,12 +522,12 @@ function apply(dir, options) {
 function guardCanary(dir) {
   const script = join(dir, '.claude', 'hooks', 'team-guard.mjs');
   if (!existsSync(script)) return { status: 'fail', detail: 'team-guard.mjs 없음' };
-  const run = (input) => spawnSync(process.execPath, [script], { cwd: dir, env: { ...process.env, CLAUDE_PROJECT_DIR: dir }, input: JSON.stringify({ cwd: dir, hook_event_name: 'PreToolUse', ...input }), encoding: 'utf8' });
+  const run = (input) => spawnSync(process.execPath, [script], { cwd: dir, env: { ...process.env, CLAUDE_PROJECT_DIR: dir }, input: JSON.stringify({ cwd: dir, permission_mode: 'default', hook_event_name: 'PreToolUse', ...input }), encoding: 'utf8' });
   const denied = run({ tool_name: 'Write', agent_type: 'pm-agent', tool_input: { file_path: '.git/team-canary' } });
-  const allowed = run({ tool_name: 'Write', agent_type: 'pm-agent', tool_input: { file_path: 'team-canary-allowed.txt' } });
+  const allowed = run({ tool_name: 'Write', agent_type: 'pm-agent', tool_input: { file_path: '.claude-team-docs/runs/team-canary/request.md' } });
   const broken = spawnSync(process.execPath, [script], { cwd: dir, input: '{not json', encoding: 'utf8' });
   const ok = denied.status === 2 && allowed.status === 0 && broken.status === 2;
-  return { status: ok ? 'pass' : 'fail', detail: ok ? '보호 경로 거부·일반 경로 허용·오류 시 차단 확인(스크립트 단독 실행, Claude의 hook 발화는 --live로 확인)' : `거부 ${denied.status}, 허용 ${allowed.status}, 오류 ${broken.status}` };
+  return { status: ok ? 'pass' : 'fail', detail: ok ? '보호 경로 거부·PM 작업 기록 경로 허용·오류 시 차단 확인(스크립트 단독 실행, Claude의 hook 발화는 --live로 확인)' : `거부 ${denied.status}, 허용 ${allowed.status}, 오류 ${broken.status}` };
 }
 
 function liveCanary(dir) {
@@ -568,7 +570,11 @@ function verify(dir, options) {
   add('claude version', claude.status === 'ok' ? 'pass' : claude.status === 'below' ? 'fail' : 'unverified', `${claude.version ?? '확인 불가'} (최소 ${MIN_CLAUDE})`);
   const canary = guardCanary(dir);
   add('guard canary', canary.status, canary.detail);
-  if (options.live) {
+  const strict = existsSync(join(dir, '.claude/team/profile.md')) && /^- 보호 모드:\s*엄격\s*$/m.test(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'));
+  if (strict) add('strict approval', 'unverified', '직접 승인 범위·등록·default 대화형 실행은 별도 점검 필요, 자동 확인 완료로 취급 금지');
+  if (options.live && strict) {
+    add('guard live', 'unverified', '엄격 모드는 default 대화형 세션에서 직접 승인·가드 발화 점검 필요, 비대화형 호출 생략');
+  } else if (options.live) {
     const live = liveCanary(dir);
     add('guard live', live.status, live.detail);
   } else add('guard live', 'unverified', 'Claude Code에서의 hook 발화는 --live로 확인하기 전까지 미확인, 미확인이면 보호 없음으로 취급');

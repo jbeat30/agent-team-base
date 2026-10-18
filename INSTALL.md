@@ -5,7 +5,7 @@ Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치
 
 ## 항상 지킬 규칙
 
-- 사용자와는 채팅으로 대화하며 필요한 질문은 직접 묻고 답을 받음, 사용자에게 파일 편집이나 명령 실행을 시키지 않음
+- 사용자와는 채팅으로 대화하며 필요한 질문은 직접 묻고 답을 받음, 사용자에게 파일 편집이나 명령 실행을 시키지 않음. 단, 사용자가 선택한 엄격 모드의 grant·approve는 직접 승인 기록을 위해 사용자 본인이 실행하는 예외
 - 변경 범위는 대상 프로젝트 내부, 홈·전역 settings·외부 플러그인 변경 금지
 - 사용자 기능 코드 수정 금지, 기존 파일 덮어쓰기 금지(충돌은 사용자가 정한 방식으로만 처리)
 - Claude Code·Node 업그레이드 자동 실행 금지
@@ -41,6 +41,7 @@ Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치
 | Context7 MCP | 설치된 버전 기준 문서 확인을 위해 `.mcp.json`에 등록할지, 실행 시 `npx @upstash/context7-mcp`를 사용하며 질의에는 라이브러리 이름·버전·일반 질문만 보냄 | 항상 질문 |
 | 감지 결과 확인 | 언어·프레임워크, 검사 명령과 부작용(자동 수정 여부), 컨벤션 근거 | 불확실한 항목만 질문 |
 | 수정 금지 영역 | 운영 설정·생성 파일·특정 경로 | 항상 질문 |
+| 보호 모드 | 권고(기본) 또는 엄격(선택형 직접 승인 추적), 엄격은 사용자가 승인 명령을 직접 실행하며 메인 셸의 위조를 막는 보안 경계는 아님 | 기본값 안내, 엄격 선택 시 직접 실행 절차 수용 확인 |
 | PDCA | v0.1.0은 off만 지원, bkit 연동은 v0.2.0 예정 | 선택 질문 생략, 팀 자체 기획·검증 게이트는 유지 |
 | gitignore | `.claude-team-docs/`(작업 기록)를 `.gitignore`에 추가할지, 기본 추가 | 기본값 안내 |
 | 충돌 | plan에서 충돌이 나오면 항목별로 건너뛰기(skip) 또는 백업 후 교체(replace-with-backup), 기존 `agent` 설정은 유지(keep) 또는 교체(replace) | 충돌이 있을 때만 |
@@ -55,6 +56,7 @@ Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치
   "context7": true,
   "gitignore": true,
   "pdca": "off",
+  "guardMode": "advisory",
   "agentSetting": "keep | replace (기존 agent 설정이 있을 때만)",
   "stack": [{ "item": "언어·프레임워크", "value": "버전 등", "evidence": "근거 경로" }],
   "checks": [{ "purpose": "테스트", "command": "npm test", "cwd": ".", "sideEffect": "없음 | 있음(자동 수정 등)" }],
@@ -75,14 +77,14 @@ Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치
 ## 7. 적용과 점검
 
 1. 확인받은 plan의 `hash`로 `<설치기> apply --target <프로젝트> --answers <파일> --plan-hash <hash> [같은 --on-conflict]` 실행, 해시가 다르면 거부되므로 plan부터 다시
-2. `<설치기> verify --target <프로젝트> --live` 실행
+2. 권고 모드는 `<설치기> verify --target <프로젝트> --live` 실행. 엄격 모드는 `verify`로 정적·canary 검사를 수행하고, 설치된 `.claude/team/strict-mode.md`를 따라 승인 범위 초안을 보여준 뒤 사용자 본인이 직접 승인 명령을 실행하도록 안내. 에이전트가 grant·approve를 대행하거나 `승인 완료`를 가정하지 않음. 실제 default 대화형 점검 전 보호 상태는 미확인
 3. `fail`이 있으면 원인을 보고하고 제거(`remove`) 여부를 사용자에게 질문
 4. 임시 디렉터리 삭제
 
 ## 8. 최종 보고
 
 - 설치한 버전(태그·커밋), 프로파일, 변경한 파일 요약, 건너뛰거나 백업한 항목
-- 보호 상태: 권고 모드, `guard live` 결과가 `pass`가 아니면 `보호 없음`으로 표기
+- 보호 상태: 선택한 권고/엄격 모드, `guard live` 결과가 `pass`가 아니면 `보호 없음`으로 표기
 - 미확인 항목(verify의 `unverified`), Context7은 Claude Code 재시작 후 MCP 승인이 필요하다는 점
 - 새 세션부터 메인 세션이 PM으로 동작하며 자연어로 요청하면 된다는 점과 사용 예시 한두 개
 - 제거·갱신은 사용자가 같은 방식으로 요청하면 아래 9·10장 절차를 따름, 사용자가 수정한 파일은 보존됨
