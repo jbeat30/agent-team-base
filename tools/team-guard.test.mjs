@@ -16,7 +16,7 @@ function plan(status, rows) {
 }
 
 function project({ status = 'confirmed', rows = [['src/a.js', 'backend-agent'], ['test/a.test.js', 'test-agent'], ['src/*.js', 'backend-agent']] } = {}) {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'team-guard-')));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), 'team-guard-')));
   const runDir = join(dir, '.claude-team-docs', 'runs', RUN);
   mkdirSync(runDir, { recursive: true });
   writeFileSync(join(runDir, 'request.md'), '요청\n');
@@ -57,7 +57,7 @@ test('PM: 일반 파일과 요청·기획안은 허용, 보고·검사 기록·�
 
 test('경로 이탈·절대 경로·UNC·symlink는 거부', () => {
   const dir = project();
-  const outside = realpathSync(mkdtempSync(join(tmpdir(), 'outside-')));
+  const outside = realpathSync.native(mkdtempSync(join(tmpdir(), 'outside-')));
   assert.equal(write(dir, 'pm-agent', '../x.txt').allowed, false);
   assert.equal(write(dir, 'pm-agent', join(outside, 'x.txt')).allowed, false);
   assert.equal(write(dir, 'pm-agent', '\\\\server\\share\\x.txt').allowed, false);
@@ -175,4 +175,12 @@ test('기획안 표의 이스케이프하지 않은 파이프는 배정을 어�
   const good = project({ rows: [['src/<x>.js', 'backend-agent']] });
   call(good, 'pm-agent', 'backend-agent');
   assert.equal(write(good, 'backend-agent', 'src/<x>.js').allowed, true);
+});
+
+test('배정 파일의 대소문자는 파일시스템 기준으로 비교', () => {
+  const dir = project({ rows: [['src/MixedCase.js', 'backend-agent']] });
+  assert.equal(call(dir, 'pm-agent', 'backend-agent').allowed, true);
+  assert.equal(write(dir, 'backend-agent', 'src/MixedCase.js').allowed, true);
+  assert.equal(write(dir, 'backend-agent', 'src/mixedcase.js').allowed, process.platform !== 'linux');
+  assert.equal(write(dir, 'backend-agent', reports('backend-agent-01.md')).allowed, true, '대문자 실행 ID R1 보존');
 });
