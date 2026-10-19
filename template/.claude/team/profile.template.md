@@ -37,6 +37,6 @@
 - 실행 모드: nested | relay | 해당 없음(lite) (full 전용, nested는 깊이 2 호출 검증 후에만 선택, 기본 relay)
 - Context7 MCP: 등록 | 미등록
 - 보호 모드: 권고 | 엄격 (기본 권고, 엄격 모드는 직접 승인 기록 필요)
-- PDCA 모드: off (bkit 연동은 v0.2.0 예정)
+- PDCA 모드: off (bkit 연동은 후속 버전 예정)
 - 설치한 역할:
 - 원본 저장소·태그·커밋:

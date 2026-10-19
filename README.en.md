@@ -1,6 +1,6 @@
-> [!WARNING]
-> **Under development · Not ready for use**
-> Do not install or apply this to a project before an official release. The guide below describes work in progress.
+> [!NOTE]
+> **Preview (v0.1.0)**
+> A preview release verified on a small fixture. It can cost far more time and money than handling tasks directly, and its usefulness is still to be evaluated. Read the limits in the [run record](docs/verification/2026-10-19-small-fixture.md) (Korean) before using it.
 
 <p align="center">
   <img src="docs/assets/hero.en.png" alt="claude-team-base" width="100%">
@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/status-in%20development-orange" alt="status: in development">
+  <img src="https://img.shields.io/badge/status-preview-yellow" alt="status: preview">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
