@@ -1,0 +1,28 @@
+name: 기능 제안
+description: 역할·워크플로·설치 흐름 개선 제안
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 해결하려는 문제
+      description: 지금 어떤 점이 불편하거나 부족한지
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 제안
+      description: 원하는 동작이나 예시
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 고려한 대안
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: 범위 확인
+      options:
+        - label: 기존 프로젝트 규칙을 존중하고 전역 설정을 바꾸지 않는 범위의 제안입니다
