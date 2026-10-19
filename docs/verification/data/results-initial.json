@@ -1,0 +1,258 @@
+[
+  {
+    "group": "initial",
+    "mode": "direct",
+    "task": "inject",
+    "costUsd": 0.064,
+    "wallSec": 9,
+    "tokens": {
+      "input": 4,
+      "cacheCreation": 12982,
+      "cacheRead": 30312,
+      "output": 373
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 0
+  },
+  {
+    "group": "initial",
+    "mode": "direct",
+    "task": "l1",
+    "costUsd": 0.087,
+    "wallSec": 9,
+    "tokens": {
+      "input": 5,
+      "cacheCreation": 17445,
+      "cacheRead": 52683,
+      "output": 356
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 1
+  },
+  {
+    "group": "initial",
+    "mode": "direct",
+    "task": "l2",
+    "costUsd": 0.165,
+    "wallSec": 28,
+    "tokens": {
+      "input": 11,
+      "cacheCreation": 20421,
+      "cacheRead": 220812,
+      "output": 1463
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 1
+  },
+  {
+    "group": "initial",
+    "mode": "direct",
+    "task": "l3",
+    "costUsd": 0.155,
+    "wallSec": 26,
+    "tokens": {
+      "input": 10,
+      "cacheCreation": 19472,
+      "cacheRead": 189818,
+      "output": 1615
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 3
+  },
+  {
+    "group": "initial",
+    "mode": "direct",
+    "task": "q",
+    "costUsd": 0.171,
+    "wallSec": 11,
+    "tokens": {
+      "input": 4,
+      "cacheCreation": 43692,
+      "cacheRead": 0,
+      "output": 445
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 0
+  },
+  {
+    "group": "initial",
+    "mode": "direct",
+    "task": "scope",
+    "costUsd": 0.096,
+    "wallSec": 11,
+    "tokens": {
+      "input": 6,
+      "cacheCreation": 17501,
+      "cacheRead": 77096,
+      "output": 445
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 1
+  },
+  {
+    "group": "initial",
+    "mode": "full",
+    "task": "l2",
+    "costUsd": 0.96,
+    "wallSec": 381,
+    "tokens": {
+      "input": 21,
+      "cacheCreation": 31365,
+      "cacheRead": 409232,
+      "output": 9053
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [
+      "planner-agent",
+      "architecture-agent",
+      "planning-lead"
+    ],
+    "changedFiles": 0
+  },
+  {
+    "group": "initial",
+    "mode": "full",
+    "task": "l3",
+    "costUsd": 0.559,
+    "wallSec": 413,
+    "tokens": {
+      "input": 3,
+      "cacheCreation": 2457,
+      "cacheRead": 26643,
+      "output": 712
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [
+      "planner-agent",
+      "architecture-agent",
+      "planning-lead"
+    ],
+    "changedFiles": 0
+  },
+  {
+    "group": "initial",
+    "mode": "lite",
+    "task": "inject",
+    "costUsd": 0.082,
+    "wallSec": 43,
+    "tokens": {
+      "input": 9,
+      "cacheCreation": 5009,
+      "cacheRead": 128069,
+      "output": 1626
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 0
+  },
+  {
+    "group": "initial",
+    "mode": "lite",
+    "task": "l1",
+    "costUsd": 0.066,
+    "wallSec": 20,
+    "tokens": {
+      "input": 8,
+      "cacheCreation": 4868,
+      "cacheRead": 107574,
+      "output": 995
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 1
+  },
+  {
+    "group": "initial",
+    "mode": "lite",
+    "task": "l2",
+    "costUsd": 2.014,
+    "wallSec": 891,
+    "tokens": {
+      "input": 51,
+      "cacheCreation": 59187,
+      "cacheRead": 1712870,
+      "output": 33387
+    },
+    "budgetStopped": true,
+    "testsPass": true,
+    "delegations": [
+      "planner-agent",
+      "architecture-agent",
+      "backend-agent",
+      "test-agent"
+    ],
+    "changedFiles": 2
+  },
+  {
+    "group": "initial",
+    "mode": "lite",
+    "task": "l3",
+    "costUsd": 1.807,
+    "wallSec": 816,
+    "tokens": {
+      "input": 47,
+      "cacheCreation": 51007,
+      "cacheRead": 1607101,
+      "output": 31449
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [
+      "planner-agent",
+      "backend-agent",
+      "test-agent",
+      "qa-agent"
+    ],
+    "changedFiles": 3
+  },
+  {
+    "group": "initial",
+    "mode": "lite",
+    "task": "q",
+    "costUsd": 0.084,
+    "wallSec": 22,
+    "tokens": {
+      "input": 4,
+      "cacheCreation": 17647,
+      "cacheRead": 16540,
+      "output": 817
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 0
+  },
+  {
+    "group": "initial",
+    "mode": "lite",
+    "task": "scope",
+    "costUsd": 0.034,
+    "wallSec": 20,
+    "tokens": {
+      "input": 4,
+      "cacheCreation": 2005,
+      "cacheRead": 31824,
+      "output": 1074
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 0
+  }
+]

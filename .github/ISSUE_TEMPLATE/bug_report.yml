@@ -1,0 +1,47 @@
+name: 버그 제보
+description: 설치·역할 동작·가드·검사 실행기의 문제 제보
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        한국어 또는 영어로 작성해 주세요. 시크릿·개인 설정·실제 고객 데이터는 첨부하지 마세요.
+  - type: textarea
+    id: what
+    attributes:
+      label: 문제 내용
+      description: 기대한 동작과 실제 동작
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 재현 절차
+      description: 사용한 요청문, 프로파일(Lite/Full), 대상 프로젝트 종류
+    validations:
+      required: true
+  - type: input
+    id: claude
+    attributes:
+      label: Claude Code 버전
+      placeholder: "claude --version 결과"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS·Node 버전
+      placeholder: "예: Windows 11, Node 20"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: claude-team-base 버전
+      placeholder: "릴리즈 태그 또는 커밋"
+  - type: textarea
+    id: logs
+    attributes:
+      label: 로그·출력
+      description: 설치기 JSON 출력이나 `.claude-team-docs/` 기록 중 관련 부분, 비밀값 제거 후 첨부
+      render: text

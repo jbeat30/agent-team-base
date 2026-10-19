@@ -7,3 +7,6 @@ work/
 .DS_Store
 Thumbs.db
 *.log
+.idea/
+.vscode/
+.claude-team-docs/

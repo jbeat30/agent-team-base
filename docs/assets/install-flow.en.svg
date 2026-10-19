@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="700" viewBox="0 0 2000 700">
+<rect width="2000" height="700" fill="#F5F7FB"/>
+<rect x="40" y="55" width="1400" height="140" rx="14" fill="white" stroke="#1A2744" stroke-width="1.5"/>
+<path d="M 150 194 L 175 220 L 200 194" fill="white" stroke="#1A2744" stroke-width="1.5"/>
+<text x="75" y="108" dominant-baseline="text-before-edge" font-family="Consolas, Noto Sans KR, sans-serif" font-size="27" font-weight="400" fill="#1A2744">Read INSTALL.md at …/claude-team-base and set this project up</text>
+<polyline points="175,220 175,285" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="175,285 169.0,274.60769515458674 181.0,274.60769515458674" fill="#D5DBE6"/>
+<rect x="40" y="285" width="290" height="210" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="40" y="300" width="6" height="180" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="58" y="302" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#1A2744">Inspect project</text>
+<polyline points="330,395 355,395" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="355,395 344.60769515458674,401.0 344.60769515458674,389.0" fill="#D5DBE6"/>
+<rect x="355" y="285" width="290" height="210" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="355" y="300" width="6" height="180" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="373" y="302" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#1A2744">Questions in chat</text>
+<text x="373" y="336" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="18" font-weight="400" fill="#1A2744">Lite/Full · Context7 ·</text>
+<text x="373" y="360" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="18" font-weight="400" fill="#1A2744">protected areas</text>
+<polyline points="645,395 670,395" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="670,395 659.6076951545867,401.0 659.6076951545867,389.0" fill="#D5DBE6"/>
+<rect x="670" y="285" width="290" height="210" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="670" y="300" width="6" height="180" rx="3" fill="#E8A33D" stroke="#E8A33D" stroke-width="1.5"/>
+<text x="688" y="302" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#1A2744">Plan summary · 1</text>
+<text x="688" y="331" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#1A2744">confirmation</text>
+<polyline points="960,395 985,395" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="985,395 974.6076951545867,401.0 974.6076951545867,389.0" fill="#D5DBE6"/>
+<rect x="985" y="285" width="290" height="210" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="985" y="300" width="6" height="180" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="1003" y="302" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#1A2744">Apply via script</text>
+<text x="1003" y="336" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="18" font-weight="400" fill="#1A2744">existing files preserved</text>
+<polyline points="1275,395 1300,395" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1300,395 1289.6076951545867,401.0 1289.6076951545867,389.0" fill="#D5DBE6"/>
+<rect x="1300" y="285" width="290" height="210" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1300" y="300" width="6" height="180" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="1318" y="302" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#1A2744">Verify guard</text>
+<text x="1318" y="336" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="18" font-weight="400" fill="#1A2744">real Claude call</text>
+<polyline points="1590,395 1660,395" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1660,395 1649.6076951545867,401.0 1649.6076951545867,389.0" fill="#D5DBE6"/>
+<rect x="1660" y="285" width="300" height="210" rx="14" fill="#1A2744" stroke="#D5DBE6" stroke-width="1.5"/>
+<text x="1678" y="302" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">Ask in plain language</text>
+<text x="1678" y="332" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">from the next</text>
+<text x="1678" y="362" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">session</text>
+</svg>

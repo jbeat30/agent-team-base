@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1100" viewBox="0 0 2000 1100">
+<rect width="2000" height="1100" fill="#F5F7FB"/>
+<rect x="740" y="20" width="520" height="80" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="740" y="35" width="6" height="50" rx="3" fill="#1A2744" stroke="#1A2744" stroke-width="1.5"/>
+<text x="758" y="37" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="#1A2744">사용자</text>
+<rect x="20" y="145" width="970" height="870" rx="14" fill="#F5F7FB" stroke="#D5DBE6" stroke-width="1.5"/>
+<text x="52" y="170" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">Lite</text>
+<text x="52" y="215" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="#1A2744">PM이 직접 호출</text>
+<polyline points="1000,100 1000,120 505,120 505,260" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="505,260 499.0,249.60769515458674 511.0,249.60769515458674" fill="#D5DBE6"/>
+<rect x="140" y="260" width="760" height="104" rx="14" fill="#1A2744" stroke="#D5DBE6" stroke-width="1.5"/>
+<text x="158" y="277" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">pm-agent · 메인 세션</text>
+<text x="158" y="312" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="white">분류 · 대화 · 컨펌 · 검사 · 보고</text>
+<rect x="1010" y="145" width="970" height="870" rx="14" fill="#F5F7FB" stroke="#D5DBE6" stroke-width="1.5"/>
+<text x="1042" y="170" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">Full</text>
+<text x="1042" y="215" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="#1A2744">리더가 하위를 조율, QA는 PM이 직접 호출</text>
+<polyline points="1000,100 1000,120 1495,120 1495,260" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1495,260 1489.0,249.60769515458674 1501.0,249.60769515458674" fill="#D5DBE6"/>
+<rect x="1130" y="260" width="760" height="104" rx="14" fill="#1A2744" stroke="#D5DBE6" stroke-width="1.5"/>
+<text x="1148" y="277" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">pm-agent · 메인 세션</text>
+<text x="1148" y="312" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="white">분류 · 대화 · 컨펌 · 검사 · 보고</text>
+<polyline points="505,364 505,390 62,390 62,938" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polyline points="62,438 105,438" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="105,438 94.60769515458674,444.0 94.60769515458674,432.0" fill="#D5DBE6"/>
+<rect x="105" y="405" width="820" height="66" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="105" y="417" width="6" height="42" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="125" y="425" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">planner-agent</text>
+<text x="425" y="427" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="17" font-weight="400" fill="#1A2744">요구 분해 · 인수 기준</text>
+<polyline points="62,518 105,518" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="105,518 94.60769515458674,524.0 94.60769515458674,512.0" fill="#D5DBE6"/>
+<rect x="105" y="485" width="820" height="66" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="105" y="497" width="6" height="42" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="125" y="505" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">architecture-agent</text>
+<text x="425" y="507" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="17" font-weight="400" fill="#1A2744">호출처 · 계약 · 영향</text>
+<polyline points="62,598 105,598" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="105,598 94.60769515458674,604.0 94.60769515458674,592.0" fill="#D5DBE6"/>
+<rect x="105" y="565" width="820" height="66" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="105" y="577" width="6" height="42" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<text x="125" y="585" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">frontend-agent</text>
+<text x="425" y="587" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="17" font-weight="400" fill="#1A2744">화면 · 접근성</text>
+<polyline points="62,678 105,678" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="105,678 94.60769515458674,684.0 94.60769515458674,672.0" fill="#D5DBE6"/>
+<rect x="105" y="645" width="820" height="66" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="105" y="657" width="6" height="42" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<text x="125" y="665" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">backend-agent</text>
+<text x="425" y="667" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="17" font-weight="400" fill="#1A2744">서버 · 업무 로직</text>
+<polyline points="62,758 105,758" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="105,758 94.60769515458674,764.0 94.60769515458674,752.0" fill="#D5DBE6"/>
+<rect x="105" y="725" width="820" height="66" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="105" y="737" width="6" height="42" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<text x="125" y="745" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">api-agent</text>
+<text x="425" y="747" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="17" font-weight="400" fill="#1A2744">공유 계약 · 클라이언트</text>
+<polyline points="62,838 105,838" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="105,838 94.60769515458674,844.0 94.60769515458674,832.0" fill="#D5DBE6"/>
+<rect x="105" y="805" width="820" height="66" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="105" y="817" width="6" height="42" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<text x="125" y="825" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">test-agent</text>
+<text x="425" y="827" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="17" font-weight="400" fill="#1A2744">테스트 작성</text>
+<polyline points="62,918 105,918" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="105,918 94.60769515458674,924.0 94.60769515458674,912.0" fill="#D5DBE6"/>
+<rect x="105" y="885" width="820" height="66" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="105" y="897" width="6" height="42" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="125" y="905" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">qa-agent</text>
+<text x="425" y="907" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="17" font-weight="400" fill="#1A2744">독립 검증</text>
+<polyline points="1495,364 1495,400 1185,400 1185,435" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1185,435 1179.0,424.60769515458674 1191.0,424.60769515458674" fill="#D5DBE6"/>
+<rect x="1040" y="435" width="290" height="105" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1040" y="450" width="6" height="75" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="1058" y="452" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">planning-lead</text>
+<text x="1058" y="484" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="16" font-weight="400" fill="#1A2744">기획 조율</text>
+<polyline points="1495,364 1495,400 1505,400 1505,435" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1505,435 1499.0,424.60769515458674 1511.0,424.60769515458674" fill="#D5DBE6"/>
+<rect x="1360" y="435" width="290" height="105" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1360" y="450" width="6" height="75" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="1378" y="452" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">dev-lead</text>
+<text x="1378" y="484" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="16" font-weight="400" fill="#1A2744">개발 조율</text>
+<polyline points="1495,364 1495,400 1825,400 1825,435" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1825,435 1819.0,424.60769515458674 1831.0,424.60769515458674" fill="#D5DBE6"/>
+<rect x="1680" y="435" width="290" height="105" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1680" y="450" width="6" height="75" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="1698" y="452" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="22" font-weight="700" fill="#1A2744">qa-agent</text>
+<text x="1698" y="484" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="16" font-weight="400" fill="#1A2744">독립 검증</text>
+<polyline points="1052,540 1052,730" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polyline points="1052,620 1075,620" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1075,620 1064.6076951545867,626.0 1064.6076951545867,614.0" fill="#D5DBE6"/>
+<rect x="1075" y="575" width="255" height="98" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1075" y="590" width="6" height="68" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="1093" y="592" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="700" fill="#1A2744">planner-agent</text>
+<text x="1093" y="621" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="15" font-weight="400" fill="#1A2744">요구 분해 · 인수 기준</text>
+<polyline points="1052,730 1075,730" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1075,730 1064.6076951545867,736.0 1064.6076951545867,724.0" fill="#D5DBE6"/>
+<rect x="1075" y="685" width="255" height="98" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1075" y="700" width="6" height="68" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
+<text x="1093" y="702" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="700" fill="#1A2744">architecture-agent</text>
+<text x="1093" y="731" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="15" font-weight="400" fill="#1A2744">호출처 · 계약 · 영향</text>
+<polyline points="1372,540 1372,950" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polyline points="1372,620 1395,620" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1395,620 1384.6076951545867,626.0 1384.6076951545867,614.0" fill="#D5DBE6"/>
+<rect x="1395" y="575" width="255" height="98" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1395" y="590" width="6" height="68" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<text x="1413" y="592" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="700" fill="#1A2744">frontend-agent</text>
+<text x="1413" y="621" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="15" font-weight="400" fill="#1A2744">화면 · 접근성</text>
+<polyline points="1372,730 1395,730" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1395,730 1384.6076951545867,736.0 1384.6076951545867,724.0" fill="#D5DBE6"/>
+<rect x="1395" y="685" width="255" height="98" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1395" y="700" width="6" height="68" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<text x="1413" y="702" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="700" fill="#1A2744">backend-agent</text>
+<text x="1413" y="731" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="15" font-weight="400" fill="#1A2744">서버 · 업무 로직</text>
+<polyline points="1372,840 1395,840" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1395,840 1384.6076951545867,846.0 1384.6076951545867,834.0" fill="#D5DBE6"/>
+<rect x="1395" y="795" width="255" height="98" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1395" y="810" width="6" height="68" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<text x="1413" y="812" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="700" fill="#1A2744">api-agent</text>
+<text x="1413" y="841" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="15" font-weight="400" fill="#1A2744">공유 계약 · 클라이언트</text>
+<polyline points="1372,950 1395,950" fill="none" stroke="#D5DBE6" stroke-width="2"/>
+<polygon points="1395,950 1384.6076951545867,956.0 1384.6076951545867,944.0" fill="#D5DBE6"/>
+<rect x="1395" y="905" width="255" height="98" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1395" y="920" width="6" height="68" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
+<text x="1413" y="922" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="700" fill="#1A2744">test-agent</text>
+<text x="1413" y="951" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="15" font-weight="400" fill="#1A2744">테스트 작성</text>
+<text x="35" y="1045" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="23" font-weight="400" fill="#1A2744">역할 파일 10종은 항상 설치 · Lite/Full은 설치 시 선택</text>
+<circle cx="1210" cy="1058" r="7" fill="#3B6FD8"/>
+<text x="1230" y="1048" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="#1A2744">조율 · 분석 · 검증</text>
+<circle cx="1640" cy="1058" r="7" fill="#15996B"/>
+<text x="1660" y="1048" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="#1A2744">지정 파일 수정</text>
+</svg>
