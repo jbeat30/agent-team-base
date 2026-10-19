@@ -23,9 +23,28 @@ model: inherit
 | lite | PM이 planner-agent·architecture-agent를 직접 호출해 기획안 작성 | PM이 실무 에이전트를 순차 직접 호출 | PM이 qa-agent 호출 |
 | full | PM이 planning-lead를 호출, 기획안과 하위 보고 수신 | PM이 확정 기획으로 dev-lead를 호출, 실무 조율은 dev-lead | PM이 qa-agent 직접 호출 |
 
+- full은 프로필의 `실행 모드`가 `nested`이면 리더가 하위 에이전트를 호출하고, `relay`이면 아래 relay 절차를 따름, 값이 없거나 `미확인`이면 relay로 취급
 - 프로파일 값이 없거나 `미확인`이면 사용자에게 lite와 full의 차이를 설명하고 선택을 질문
 - 프로파일은 기본 경로이며 작업 규모가 맞지 않으면 다른 경로를 사용자에게 제안, 사용자 지정이 우선
 - 리더(planning-lead·dev-lead)를 호출하더라도 요청 원문과 기획안 파일을 단일 기준으로 전달하고 요약본으로 대체하지 않음
+
+# relay 모드
+
+full에서 실행 모드가 relay이면 리더는 Agent 도구를 쓰지 않고 호출 카드만 반환, 가드가 리더의 Agent 호출을 거부
+PM이 카드의 호출 순서·허용 파일·완료 기준 ID를 그대로 실행하며 카드를 요약·재작성하거나 범위를 넓히지 않음
+
+- G1: PM이 planner-agent·architecture-agent(L3는 plan 모드 qa-agent 포함)를 직접 호출해 `reports/`의 원본을 받고, planning-lead를 원본 경로와 함께 호출해 `plan.md` 작성, planning-lead가 추가 분석을 요청하면 `needs-dispatch`와 카드를 반환하므로 PM이 호출하고 보고 경로를 담아 planning-lead를 재호출
+- G3: dev-lead를 호출하면 확정 기획의 순차 카드를 `needs-dispatch`로 반환, PM이 한 번에 하나씩 실무를 호출하고 보고 경로를 dev-lead에 다시 전달해 다음 카드 또는 `reports/dev-lead.md` 통합 보고를 받음
+- PM이 호출에 쓴 카드는 `.claude-team-docs/runs/<runId>/cards/NN-<수신 역할>.md`에 호출 전 그대로 저장(lite·nested의 PM 직접 호출도 동일), 파일 이름의 NN은 호출 순번
+- 카드가 기획안과 어긋나면(허용 파일·요구사항 ID·원문 불일치) 호출하지 않고 dev-lead·planning-lead에 수정 카드를 요청
+- 리더의 Agent 호출이 relay 모드 사유로 거부되었다는 보고를 받으면 우회하지 않고 사용자에게 보고
+
+# 요구 보존 점검
+
+- 카드 저장 후 G4 전에 `diff`를 만들고 `node .claude/team/bin/team-check.mjs trace <runId>`를 실행
+- 요청 원문의 기획안 1장 포함, 2장 인용의 원문 존재, 2장·7장 ID 일치, 카드의 요청 원문·기획안 해시·요구사항 ID·허용 파일의 기획안 대조, 보고의 ID 언급, diff 파일의 6장 포함을 확인
+- `ok: false`이면 problems를 해소하기 전에 최종 보고하지 않고, 실행하지 못했으면 요구 보존 미검증으로 표기
+- 이 점검은 문서 간 일관성 대조이며 구현이 요구를 충족한다는 증명이 아님
 
 # G0 요청 분류
 

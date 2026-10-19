@@ -17,6 +17,12 @@ model: sonnet
 - 호출 조건: full 프로파일에서 PM이 L2·L3 기획 단계(G1)를 위해 카드로 호출
 - 제외: 구현 위임·구현 파일 수정·사용자 질문·기획 컨펌(PM 담당), 호출 대상 외 에이전트 호출
 
+# relay 모드
+
+프로필의 `실행 모드`가 relay이면 Agent 도구를 호출하지 않음, 가드가 호출을 거부
+필요한 분석 호출이 있으면 `status: needs-dispatch`와 `.claude/team/card-template.md` 양식의 카드 목록(수신 역할·순서·요청 원문 경로)을 summary에 담아 반환, PM이 호출하고 보고 경로를 전달해 재호출
+PM이 전달한 `reports/` 원본 경로만 근거로 기획안을 작성하고 경로에 파일이 없으면 `blocked`
+
 # 필수 입력
 
 - 호출 카드의 요청 원문 경로, runId, 위험도(L2 | L3), 프로필 경로
@@ -25,7 +31,7 @@ model: sonnet
 # 절차
 
 1. 요청 원문 파일을 직접 읽고 카드와 대조, 불일치하면 작업을 중단해 차이를 보고
-2. planner-agent와 architecture-agent를 같은 요청 원문 경로·runId로 호출, 읽기·조사 역할이므로 병렬 호출 가능, L2는 호출처·계약 영향이 있을 때만 architecture-agent 호출
+2. (nested) planner-agent와 architecture-agent를 같은 요청 원문 경로·runId로 호출, 읽기·조사 역할이므로 병렬 호출 가능, L2는 호출처·계약 영향이 있을 때만 architecture-agent 호출
 3. 하위 에이전트가 직접 저장한 `reports/planner-agent-NN.md`, `reports/architecture-agent-NN.md`의 경로를 확인하고 내용을 다시 쓰거나 재저장하지 않음, 파일이 없으면 `blocked`로 보고
 4. `.claude/team/plan-template.md`의 12개 구성을 모두 채워 `plan.md`에 작성, 하위 보고를 재작성하지 않고 본문에는 판정과 차이만 기록, 부록에는 원본 보고의 경로를 참조
 5. 요구사항 목록에는 요청 원문의 인용을 붙이고 사용자가 말하지 않은 항목마다 처리(포함·제외와 사유·사용자 질문)를 결정해 기록
@@ -63,7 +69,7 @@ model: sonnet
 반환 메시지에 아래 필드를 모두 포함
 
 ```text
-status: done | needs-check | needs-input | blocked
+status: done | needs-check | needs-input | needs-dispatch | blocked
 summary:
 changedFiles:
 evidence:

@@ -97,6 +97,9 @@ for (const file of agentFiles) {
         if (target === 'pm-agent') fail(file, 'pm-agent는 자신을 호출 불가');
       }
     }
+    for (const needle of ['# relay 모드', '# 요구 보존 점검', 'team-check.mjs trace']) {
+      if (!body.includes(needle)) fail(file, `${needle} 없음`);
+    }
     continue;
   }
 
@@ -117,6 +120,10 @@ for (const file of agentFiles) {
     } else if (!ceiling.includes(tool)) fail(file, `허용되지 않은 도구 ${tool}`);
   }
   if (allowedTargets && !tools.some((t) => t.startsWith('Agent('))) fail(file, '리더는 Agent(...) 필요');
+  if (allowedTargets) {
+    if (!body.includes('# relay 모드')) fail(file, 'relay 모드 절차 없음');
+    if (!/^status: .*needs-dispatch/m.test(body)) fail(file, '보고 형식에 needs-dispatch 필요');
+  }
   for (const heading of ['## 공통 규칙', '## 보고 형식']) {
     if (!body.includes(heading)) fail(file, `${heading} 구간 없음`);
   }

@@ -105,6 +105,7 @@ test('신규 설치: 파일·settings·MCP·gitignore·프로필·매니페스�
   assert.match(readFileSync(join(dir, '.gitignore'), 'utf8'), /\.claude-team-docs\//);
   const profile = readFileSync(join(dir, '.claude', 'team', 'profile.md'), 'utf8');
   assert.match(profile, /실행 프로파일: full/);
+  assert.match(profile, /실행 모드: relay/);
   assert.match(profile, /`npm test`/);
   assert.match(profile, /dist\//);
   const verified = install(['verify', '--target', dir]);

@@ -224,6 +224,7 @@ function loadAnswers(options) {
   const a = parsed.value;
   if (!['lite', 'full'].includes(a.profile)) fail('answers.profile은 lite 또는 full');
   if (typeof a.context7 !== 'boolean') fail('answers.context7은 true 또는 false');
+  if (a.executionMode !== undefined && !['nested', 'relay'].includes(a.executionMode)) fail('answers.executionMode는 nested 또는 relay');
   if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode는 advisory 또는 strict');
   if (a.pdca !== undefined && a.pdca !== 'off') fail('v0.1.0은 answers.pdca=off만 지원, bkit PDCA 연동은 v0.2.0 예정');
   return {
@@ -231,6 +232,8 @@ function loadAnswers(options) {
     context7: a.context7,
     gitignore: a.gitignore ?? true,
     pdca: 'off',
+    // nested는 실제 깊이 2 호출 검증 전이라 full의 기본을 relay로 둠, lite는 리더를 쓰지 않아 해당 없음
+    executionMode: a.profile === 'lite' ? null : a.executionMode ?? 'relay',
     guardMode: a.guardMode ?? 'advisory',
     agentSetting: ['keep', 'replace'].includes(a.agentSetting) ? a.agentSetting : null,
     stack: a.stack ?? [],
@@ -266,6 +269,7 @@ ${table(['경로', '사유'], answers.forbidden.map((f) => [f.path, f.reason ?? 
 ## 팀 설정
 
 - 실행 프로파일: ${answers.profile}
+- 실행 모드: ${answers.executionMode ?? '해당 없음(lite)'}
 - Context7 MCP: ${answers.context7 ? '등록' : '미등록'}
 - 보호 모드: ${answers.guardMode === 'strict' ? '엄격' : '권고'}
 - PDCA 모드: ${answers.pdca}
