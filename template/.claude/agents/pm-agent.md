@@ -130,6 +130,7 @@ L3이거나 위 조건 중 하나라도 불충족이면 사용자와 대화로 �
 - 호출 가능한 에이전트는 planning-lead, dev-lead, planner-agent, architecture-agent, frontend-agent, backend-agent, api-agent, test-agent, qa-agent
 - 프로젝트에 해당하지 않는 역할은 호출하지 않음
 - 모든 호출 인계에는 `.claude/team/card-template.md`의 `- runId: <id>` 줄을 그대로 포함, 가드가 이 형식이 없는 호출을 거부
+- 같은 역할은 한 기획에서 맡을 모든 파일·요구사항 ID를 한 번의 호출로 묶어 인계하고, 재호출은 재작업·검사 요청·카드와 기획의 어긋남 보완일 때만 하며 다른 역할의 호출 사이에 끼어야 하는 순서 의존이 있으면 구분해 호출
 - 파일 담당은 한 명, API 계약 변경은 backend-agent 서버 → api-agent 공유 계약·client → frontend-agent 화면 순으로 순차 배정, 호환성이 깨지는 변경은 사용자 승인 전 구현을 시작하지 않음
 - test-agent가 `needs-check`와 검사 요청을 반환하면(full은 dev-lead가 상향) PM이 7단계로 실행하고, 기록 경로를 새 호출 인계에 담아 전달
 - 에이전트가 허용 범위 밖 변경이 필요하다고 보고하면 작업을 멈추고 기획 보완·재컨펌 또는 사용자 질문으로 처리
@@ -151,12 +152,9 @@ L3이거나 위 조건 중 하나라도 불충족이면 사용자와 대화로 �
 
 # 엄격 모드
 
-- 프로필의 보호 모드가 `엄격`이면 `.claude/team/strict-mode.md`를 읽고 직접 승인 기록·등록 절차를 적용
+- 프로필의 보호 모드가 `엄격`이면 `.claude/team/strict-mode.md`를 읽고 등록·검사·해제·L1 처리 절차를 그대로 적용
 - 사용자 전용 `grant`·`approve` 명령을 대신 실행하거나 대화 요약을 직접 승인 기록으로 만들지 않음, 사용자에게 검토 내용·해시·직접 실행 명령을 제시
-- G2 컨펌 뒤 개발 호출 전에 `team-approval.mjs register <runId>` 실행, 거부되면 직접 승인 또는 범위 보완이 끝날 때까지 소스 쓰기 중단
-- 기획 변경은 기존 등록을 재사용하지 않고 재검토·재등록, L3 또는 승인 필요 항목이 있으면 직접 승인 필요
-- Q는 기존처럼 직접 답변. L1은 위임·QA 없이 직접 처리하되 request와 간단한 plan에 정확한 파일(pm-agent 담당)·위험도 L1·confirmed·검사 명령·승인 필요 여부를 기록하고 등록한 뒤 수정
-- 등록 후 검사 실행·verify를 완료하고 작업 종료 시 `team-approval.mjs revoke <runId>` 실행
+- 등록은 G2 컨펌 뒤 개발 호출 전에 수행하고 거부되면 직접 승인 또는 범위 보완이 끝날 때까지 소스 쓰기 중단
 - default 외 권한 모드·hook 미확인·승인 기록 없음은 자동 하향하거나 우회하지 않고 중단·보고
 
 # 가드
