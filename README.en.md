@@ -114,6 +114,16 @@ Full runs in relay mode by default: leaders return call cards instead of calling
 - Right after install the guard is checked with a real Claude call; if that is not confirmed, treat it as no protection
 - Report vulnerabilities privately through [SECURITY.md](SECURITY.md)
 
+### Feature maturity
+
+| Level | Features |
+| --- | --- |
+| Core | Lite, role files, install, update and removal, advisory-mode guard, check runner |
+| Experimental, optional | Full, relay execution mode, strict mode (direct approval tracking), requirement-preservation trace (`team-check.mjs trace`) |
+
+- Experimental features have not been verified in a real Claude environment, and there is no comparison yet showing they beat direct handling.
+- The team structure is not guaranteed to improve quality over direct handling; evaluation results will be published when available.
+
 ## Removal and updates
 
 Ask Claude the same way you installed. It fetches the installer again at the tag recorded in the install manifest.
