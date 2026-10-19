@@ -37,7 +37,7 @@ develop 전체를 main·release에 직접 합치지 않는 기준
 
 | 경로 | 방식 |
 | --- | --- |
-| 작업 브랜치 → feature/vX.Y.Z | Squash |
+| 작업 브랜치 → feature/vX.Y.Z | Squash, 커밋 이력을 유지할 때 Rebase 허용 |
 | 같은 버전 feature → release | Merge commit |
 | hotfix → 해당 패치 release | Merge commit |
 | release → main | Merge commit |
