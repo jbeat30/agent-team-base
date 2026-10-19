@@ -7,6 +7,7 @@
 //   node .claude/team/bin/team-check.mjs run <runId> "<검사 명령>" [--allow-side-effects]
 //   node .claude/team/bin/team-check.mjs verify <runId>
 //   node .claude/team/bin/team-check.mjs diff <runId> [--base <ref>]
+//   node .claude/team/bin/team-check.mjs trace <runId>
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, realpathSync } from 'node:fs';
@@ -218,8 +219,151 @@ function cmdDiff(args) {
   );
 }
 
+const squash = (text) => text.replace(/\s+/g, ' ').trim();
+const stripCell = (cell) => (cell ?? '').replace(/^`+|`+$/g, '').trim();
+
+function splitRow(line) {
+  return line
+    .trim()
+    .replace(/^\||\|$/g, '')
+    .split(/(?<!\\)\|/)
+    .map((c) => c.trim().replace(/\\\|/g, '|'));
+}
+
+// 기획안 N장의 표 본문 행(헤더·구분선 제외)을 셀 배열로 추출
+function planTable(planText, chapter) {
+  const start = planText.search(new RegExp(`^## ${chapter}\\.`, 'm'));
+  if (start < 0) return null;
+  const rows = [];
+  let header = true;
+  for (const line of planText.slice(start).split(/\r?\n/).slice(1)) {
+    if (/^## /.test(line)) break;
+    if (!line.trim().startsWith('|')) continue;
+    if (/^\|\s*-/.test(line.trim())) {
+      header = false;
+      continue;
+    }
+    if (!header) rows.push(splitRow(line));
+  }
+  return rows;
+}
+
+// 1장 인용 블록 전체를 이어 붙여 반환
+function planQuote(planText) {
+  const start = planText.search(/^## 1\./m);
+  if (start < 0) return null;
+  const quoted = [];
+  for (const line of planText.slice(start).split(/\r?\n/).slice(1)) {
+    if (/^## /.test(line)) break;
+    if (line.startsWith('>')) quoted.push(line.replace(/^>\s?/, ''));
+  }
+  return quoted.join('\n');
+}
+
+// 호출 카드의 `- 항목:` 값과 `## 요청 원문` 인용 블록 추출
+function parseCard(text) {
+  const field = (name) => text.match(new RegExp(`^- ${name}[^:\\n]*:[ \\t]*(.*)$`, 'm'))?.[1]?.trim() ?? '';
+  const quote = text.split(/^## 요청 원문\s*$/m)[1];
+  return {
+    runId: field('runId'),
+    planHash: field('기획안 경로·해시').match(/\b[0-9a-f]{64}\b/)?.[0] ?? null,
+    ids: field('담당 요구사항').match(/\bR\d+\b/g) ?? [],
+    files: field('허용 파일').split(',').map((f) => stripCell(f).replace(/^\.\//, '')).filter((f) => f && f !== '없음'),
+    quote: quote === undefined ? null : quote.split(/\r?\n/).filter((l) => l.startsWith('>')).map((l) => l.replace(/^>\s?/, '')).join('\n'),
+  };
+}
+
+// 요청 원문 → 기획안 → 호출 카드 → 보고 → diff로 이어지는 요구·인수 기준·파일 범위 보존 대조
+// 기록 파일의 작성자를 인증하지 않는 일관성 검사이며 구현 정확성이나 요구 충족의 증명이 아님
+function cmdTrace(args) {
+  const [runId] = args;
+  const dir = runDir(runId);
+  const plan = readPlan(dir);
+  const requestPath = join(dir, 'request.md');
+  if (!existsSync(requestPath)) die('request.md 없음');
+  const request = readFileSync(requestPath, 'utf8');
+  const problems = [];
+  const notes = [];
+
+  if (!squash(request)) problems.push('request.md가 비어 있음');
+  else if (!squash(planQuote(plan.text) ?? '').includes(squash(request))) problems.push('기획안 1장에 요청 원문 전체가 없음');
+
+  const reqRows = planTable(plan.text, 2);
+  const doneRows = planTable(plan.text, 7);
+  if (!reqRows || !doneRows) die('기획안 2장 또는 7장 표 없음');
+  const ids = reqRows.map((r) => stripCell(r[0])).filter((id) => /^R\d+$/.test(id));
+  if (!ids.length) problems.push('2장에 요구사항 ID 없음');
+  if (new Set(ids).size !== ids.length) problems.push('2장 요구사항 ID 중복');
+  const flat = squash(request);
+  for (const row of reqRows) {
+    const id = stripCell(row[0]);
+    if (!/^R\d+$/.test(id)) continue;
+    const evidence = squash(stripCell(row[2]).replace(/^["“>]+|["”]+$/g, ''));
+    if (!evidence) problems.push(`${id}: 원문 근거 인용 없음`);
+    else if (!flat.includes(evidence)) problems.push(`${id}: 원문 근거가 request.md에 없음`);
+  }
+  const doneIds = new Set();
+  for (const row of doneRows) {
+    const id = stripCell(row[0]);
+    if (!/^R\d+$/.test(id)) continue;
+    doneIds.add(id);
+    if (![1, 2, 3].every((i) => stripCell(row[i]))) problems.push(`${id}: 완료 기준 Given/When/Then 비어 있음`);
+  }
+  for (const id of ids) if (!doneIds.has(id)) problems.push(`${id}: 7장 완료 기준 없음`);
+  for (const id of doneIds) if (!ids.includes(id)) problems.push(`${id}: 2장에 없는 완료 기준`);
+
+  const changeRows = planTable(plan.text, 6) ?? [];
+  const planned = new Map();
+  for (const row of changeRows) {
+    const file = stripCell(row[1]).replace(/\\/g, '/').replace(/^\.\//, '');
+    if (!file || file === '파일') continue;
+    planned.set(file, stripCell(row[4]));
+  }
+
+  const cardsDir = join(dir, 'cards');
+  const cardFiles = existsSync(cardsDir) ? readdirSync(cardsDir).filter((n) => /^\d{2}-[a-z-]+\.md$/.test(n)).sort() : [];
+  const covered = new Set();
+  for (const name of cardFiles) {
+    const role = name.slice(3, -3);
+    const card = parseCard(readFileSync(join(cardsDir, name), 'utf8'));
+    if (card.runId !== runId) problems.push(`cards/${name}: runId 불일치`);
+    if (card.quote === null || squash(card.quote) !== flat) problems.push(`cards/${name}: 카드의 요청 원문이 request.md와 다름`);
+    if (card.planHash && card.planHash !== plan.hash) problems.push(`cards/${name}: 카드의 기획안 해시가 현재 기획안과 다름`);
+    for (const id of card.ids) {
+      if (!ids.includes(id)) problems.push(`cards/${name}: 기획안에 없는 요구사항 ${id}`);
+      else covered.add(id);
+    }
+    for (const file of card.files) {
+      if (!planned.has(file)) problems.push(`cards/${name}: 기획안 6장에 없는 파일 ${file}`);
+      else if (planned.get(file) !== role) problems.push(`cards/${name}: ${file}의 담당은 ${planned.get(file)}, 카드 수신자는 ${role}`);
+    }
+  }
+  const writerCards = cardFiles.filter((n) => /-(frontend|backend|api|test)-agent\.md$/.test(n));
+  if (writerCards.length) for (const id of ids) if (!covered.has(id)) problems.push(`${id}: 어떤 실무 카드에도 배정되지 않음`);
+  if (!cardFiles.length) notes.push('호출 카드 기록 없음(cards/NN-<역할>.md), 카드 단계 대조 생략');
+
+  const reportsDir = join(dir, 'reports');
+  for (const name of ['dev-lead.md', 'qa-final.md']) {
+    const path = join(reportsDir, name);
+    if (!existsSync(path)) continue;
+    const text = readFileSync(path, 'utf8');
+    for (const id of ids) if (!new RegExp(`\\b${id}\\b`).test(text)) problems.push(`reports/${name}: ${id} 언급 없음`);
+  }
+
+  const patchPath = join(dir, 'changes.patch');
+  if (existsSync(patchPath)) {
+    const patch = readFileSync(patchPath, 'utf8');
+    const changed = new Set([...patch.matchAll(/^diff --git a\/(.+?) b\/(.+)$/gm)].map((m) => m[2]));
+    for (const file of changed) if (!planned.has(file)) problems.push(`changes.patch: 기획안 6장에 없는 변경 파일 ${file}`);
+  } else notes.push('changes.patch 없음, 파일 범위 diff 대조 생략');
+
+  console.log(JSON.stringify({ ok: problems.length === 0, requirements: ids.length, cards: cardFiles.length, problems, notes }));
+  process.exit(problems.length ? 1 : 0);
+}
+
 const [command, ...rest] = process.argv.slice(2);
 if (command === 'run') cmdRun(rest);
 else if (command === 'verify') cmdVerify(rest);
 else if (command === 'diff') cmdDiff(rest);
-else die('사용법: run <runId> "<명령>" | verify <runId> | diff <runId> [--base <ref>]');
+else if (command === 'trace') cmdTrace(rest);
+else die('사용법: run <runId> "<명령>" | verify <runId> | diff <runId> [--base <ref>] | trace <runId>');
