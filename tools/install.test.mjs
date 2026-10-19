@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, realpathSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -286,4 +287,88 @@ test('verify --live의 Claude 호출은 설치 대상 폴더에서 실행', () =
   const result = install(['verify', '--target', dir, '--live'], { TEAM_CLAUDE_BIN: '"' + process.execPath + '" "' + fake + '"', CAPTURE_CWD: marker });
   assert.equal(result.json.ok, true, JSON.stringify(result.json));
   assert.equal(realpathSync.native(readFileSync(marker, 'utf8')), realpathSync.native(dir));
+});
+
+// ---------- 갱신·보존 fixture: 실제 릴리즈 간 갱신이 아닌 이전 릴리즈를 흉내 낸 임시 상태 ----------
+
+const manifestOf = (dir) => JSON.parse(readFileSync(join(dir, '.claude', 'team', 'manifest.json'), 'utf8'));
+const sha = (text) => createHash('sha256').update(text).digest('hex');
+
+// 설치된 파일을 이전 릴리즈 내용으로 바꾸고 매니페스트 해시도 맞춰 "이전 릴리즈 설치 상태"를 만듦
+function downgradeFile(dir, rel, content) {
+  writeFileSync(join(dir, rel), content);
+  const path = join(dir, '.claude', 'team', 'manifest.json');
+  const manifest = JSON.parse(readFileSync(path, 'utf8'));
+  manifest.files.find((f) => f.path === rel).sha256 = sha(content);
+  writeFileSync(path, JSON.stringify(manifest, null, 2));
+}
+
+test('갱신: 이전 릴리즈 그대로인 파일은 update로 교체하고 매니페스트 해시를 갱신', () => {
+  const { dir, file } = installFresh();
+  const rel = '.claude/agents/qa-agent.md';
+  const current = readFileSync(join(dir, rel), 'utf8');
+  downgradeFile(dir, rel, `${current}\n이전 릴리즈 문구\n`);
+  const plan = install(planArgs(dir, file));
+  assert.equal(plan.json.files.find((f) => f.path === rel).action, 'update');
+  assert.equal(plan.json.conflicts.length, 0);
+  assert.equal(install(applyArgs(dir, file, plan.json.hash)).json.ok, true);
+  assert.equal(readFileSync(join(dir, rel), 'utf8'), current);
+  assert.equal(manifestOf(dir).files.find((f) => f.path === rel).sha256, sha(current));
+  assert.equal(install(['verify', '--target', dir]).json.ok, true);
+});
+
+test('갱신: 사용자가 수정한 설치 파일은 충돌로 보고하고 기본은 건너뜀, 백업 교체는 명시 결정', () => {
+  const { dir, file } = installFresh();
+  const rel = '.claude/agents/frontend-agent.md';
+  const mine = '# 사용자가 고친 역할\n';
+  writeFileSync(join(dir, rel), mine);
+  const plan = install(planArgs(dir, file));
+  assert.equal(plan.json.ok, false, '결정 전에는 진행 불가');
+  assert.ok(plan.json.conflicts.some((c) => c.item === rel && /사용자가 수정/.test(c.reason)));
+
+  const skip = install(planArgs(dir, file, ['--on-conflict', 'skip']));
+  assert.equal(install(applyArgs(dir, file, skip.json.hash, ['--on-conflict', 'skip'])).json.ok, true);
+  assert.equal(readFileSync(join(dir, rel), 'utf8'), mine);
+
+  const replace = install(planArgs(dir, file, ['--on-conflict', 'replace-with-backup']));
+  assert.equal(install(applyArgs(dir, file, replace.json.hash, ['--on-conflict', 'replace-with-backup'])).json.ok, true);
+  assert.notEqual(readFileSync(join(dir, rel), 'utf8'), mine);
+  assert.equal(readFileSync(join(dir, manifestOf(dir).backups, rel), 'utf8'), mine, '교체 전 원본 백업');
+});
+
+test('기존 .mcp.json·.gitignore의 사용자 항목은 설치·갱신·제거 후에도 보존', () => {
+  const mcp = { mcpServers: { mine: { command: 'my-server' } }, extra: true };
+  const { dir, file } = installFresh({ '.mcp.json': mcp, '.gitignore': 'node_modules/\n.env\n' });
+  const afterInstall = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8'));
+  assert.deepEqual(afterInstall.mcpServers.mine, { command: 'my-server' });
+  assert.ok(afterInstall.mcpServers.context7);
+  assert.equal(afterInstall.extra, true);
+
+  const again = install(planArgs(dir, file));
+  assert.equal(again.json.mcp.action, 'already');
+  assert.equal(again.json.gitignore.action, 'already');
+
+  assert.equal(install(['remove', '--target', dir, '--yes']).json.ok, true);
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')), mcp);
+  assert.equal(readFileSync(join(dir, '.gitignore'), 'utf8').trim(), 'node_modules/\n.env');
+  assert.equal(existsSync(join(dir, '.claude', 'team', 'manifest.json')), false);
+});
+
+test('기존 context7 설정이 다르면 덮어쓰지 않고 충돌로 보고', () => {
+  const custom = { mcpServers: { context7: { command: 'custom-context7' } } };
+  const dir = project({ '.mcp.json': custom });
+  const plan = install(planArgs(dir, answersFile()));
+  assert.ok(plan.json.conflicts.some((c) => /context7/.test(c.item)));
+  assert.equal(plan.json.mcp.action, 'skip');
+  assert.equal(readdirSync(dir).length, 1, 'plan은 파일을 만들지 않음');
+});
+
+test('제거 후 재설치 가능하고 사용자 프로젝트 파일은 그대로', () => {
+  const { dir, file } = installFresh({ 'src/app.js': 'console.log(1)\n', 'package.json': { name: 'x' } });
+  assert.equal(install(['remove', '--target', dir, '--yes']).json.ok, true);
+  assert.equal(readFileSync(join(dir, 'src', 'app.js'), 'utf8'), 'console.log(1)\n');
+  assert.equal(existsSync(join(dir, '.claude', 'agents')), false, '빈 폴더 정리');
+  const plan = install(planArgs(dir, file));
+  assert.equal(install(applyArgs(dir, file, plan.json.hash)).json.ok, true);
+  assert.equal(install(['verify', '--target', dir]).json.ok, true);
 });
