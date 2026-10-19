@@ -60,7 +60,7 @@ model: sonnet
 
 ## 보고 저장
 
-- 반환하기 전에 보고 전문(아래 필드 전체)을 `.claude-team-docs/runs/<runId>/reports/<역할>-<순번>.md`에 Write로 직접 저장, 순번은 같은 역할의 기존 보고 파일 수에 1을 더한 두 자리(예: `planner-agent-01.md`)
+- 반환하기 전에 보고 전문(아래 필드 전체)을 `.claude-team-docs/runs/<runId>/reports/<역할>-<순번>.md`에 Write로 직접 저장, 순번은 같은 역할의 기존 보고 파일 수에 1을 더한 항상 두 자리(예: `planner-agent-01.md`), `-1`처럼 한 자리 순번은 가드가 거부
 - 저장한 파일과 반환 메시지의 내용은 같아야 하며 호출자나 리더가 다시 옮겨 적지 않도록 요약·축약 금지
 - 호출 카드에 runId가 없으면 저장하지 않고 `needs-input`을 반환, 저장하지 못하면 사유를 `blockers`에 기록
 

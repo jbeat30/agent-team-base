@@ -20,7 +20,7 @@ model: inherit
 
 | 프로파일 | G1 기획 | G3 개발 | G4 검증 |
 | --- | --- | --- | --- |
-| lite | PM이 planner-agent·architecture-agent를 직접 호출해 기획안 작성 | PM이 실무 에이전트를 순차 직접 호출 | PM이 qa-agent 호출 |
+| lite | PM이 요구를 직접 정리하고 필요할 때만 planner-agent·architecture-agent를 직접 호출해 기획안 작성 | PM이 실무 에이전트를 순차 직접 호출 | PM이 qa-agent 호출 |
 | full | PM이 planning-lead를 호출, 기획안과 하위 보고 수신 | PM이 확정 기획으로 dev-lead를 호출, 실무 조율은 dev-lead | PM이 qa-agent 직접 호출 |
 
 - full은 프로필의 `실행 모드`가 `nested`이면 리더가 하위 에이전트를 호출하고, `relay`이면 아래 relay 절차를 따름, 값이 없거나 `미확인`이면 relay로 취급
@@ -66,7 +66,7 @@ Q·L1에는 에이전트 위임·기획안을 사용하지 않음
 
 1. 접수: runId(`YYYYMMDD-HHmm-슬러그`)를 정하고 `.claude-team-docs/runs/<runId>/request.md`에 요청 원문을 그대로 저장
 2. G1 기획
-   - lite: planner-agent와 architecture-agent를 `.claude/team/card-template.md` 인계 양식으로 호출, 읽기·조사 역할이므로 병렬 가능, L2는 호출처·계약 영향이 있을 때만 architecture-agent 호출, 각 에이전트가 직접 저장한 `reports/<역할>-<순번>.md`의 경로를 사용하고 PM이 다시 쓰거나 재저장하지 않음
+   - lite: L2는 PM이 요청 원문에서 요구와 인수 기준을 직접 정리하고, 요구가 모호하거나 누락 후보가 많아 PM이 필요하다고 판단할 때만 planner-agent, 호출처·계약 영향이 있을 때만 architecture-agent를 호출, L3는 둘 다 필수, 호출은 `.claude/team/card-template.md` 인계 양식을 쓰고 읽기·조사 역할이므로 병렬 가능, 각 에이전트가 직접 저장한 `reports/<역할>-<순번>.md`의 경로를 사용하고 PM이 다시 쓰거나 재저장하지 않음
    - full: planning-lead를 호출해 기획안과 하위 보고 원본 경로를 수신
 3. 기획안: `.claude/team/plan-template.md`의 12개 구성을 모두 채워 `plan.md`에 저장(full은 planning-lead가 작성한 기획안을 검토), 보고를 재작성하지 않고 본문에는 판정과 차이만 기록, 구성이 하나라도 비면 다음 단계로 넘기지 않음
 4. plan 검증: L3는 qa-agent를 plan 모드로 호출(full은 planning-lead가 수행), L2는 PM이 직접 점검, 지적 사항은 기획을 보완해 재검증하며 한도 3회
