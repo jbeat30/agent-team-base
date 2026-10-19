@@ -1,6 +1,6 @@
-> [!WARNING]
-> **개발 진행 중 · 아직 사용할 수 없음**
-> 정식 릴리즈 전까지 설치·실제 프로젝트 적용 보류. 아래 내용은 개발 중인 사용 안내.
+> [!NOTE]
+> **Preview (v0.1.0)**
+> 소규모 fixture 측정으로 동작을 확인한 미리보기 릴리즈. 직접 처리보다 비용·시간이 크게 들 수 있고 효용은 추가 평가 예정. 사용 전 [측정 기록](docs/verification/2026-10-19-small-fixture.md)의 한계 확인.
 
 <p align="center">
   <img src="docs/assets/hero.ko.png" alt="claude-team-base" width="100%">
@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/status-in%20development-orange" alt="status: in development">
+  <img src="https://img.shields.io/badge/status-preview-yellow" alt="status: preview">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 이상">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 이상">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>

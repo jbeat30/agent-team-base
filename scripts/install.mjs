@@ -226,7 +226,7 @@ function loadAnswers(options) {
   if (typeof a.context7 !== 'boolean') fail('answers.context7은 true 또는 false');
   if (a.executionMode !== undefined && !['nested', 'relay'].includes(a.executionMode)) fail('answers.executionMode는 nested 또는 relay');
   if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode는 advisory 또는 strict');
-  if (a.pdca !== undefined && a.pdca !== 'off') fail('v0.1.0은 answers.pdca=off만 지원, bkit PDCA 연동은 v0.2.0 예정');
+  if (a.pdca !== undefined && a.pdca !== 'off') fail('v0.1.0은 answers.pdca=off만 지원, bkit PDCA 연동은 후속 버전 예정');
   return {
     profile: a.profile,
     context7: a.context7,
