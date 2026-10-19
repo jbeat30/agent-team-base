@@ -122,6 +122,8 @@ Full runs in relay mode: leaders return call cards instead of calling specialist
 | Experimental, optional | Full, relay execution mode, strict mode (direct approval tracking), requirement-preservation trace (`team-check.mjs trace`) |
 
 - Experimental features have not been verified in a real Claude environment, and there is no comparison yet showing they beat direct handling.
+![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.svg)
+
 - [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
 - The team structure is not guaranteed to improve quality over direct handling; evaluation results will be published when available.
 

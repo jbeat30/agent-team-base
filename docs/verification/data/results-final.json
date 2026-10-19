@@ -1,0 +1,80 @@
+[
+  {
+    "group": "final",
+    "mode": "lite",
+    "task": "l1",
+    "costUsd": 0.092,
+    "wallSec": 42,
+    "tokens": {
+      "input": 11,
+      "cacheCreation": 5541,
+      "cacheRead": 168793,
+      "output": 1329
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 1
+  },
+  {
+    "group": "final",
+    "mode": "lite",
+    "task": "l2",
+    "costUsd": 1.312,
+    "wallSec": 581,
+    "tokens": {
+      "input": 43,
+      "cacheCreation": 43203,
+      "cacheRead": 1196415,
+      "output": 22553
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [
+      "backend-agent",
+      "test-agent",
+      "qa-agent"
+    ],
+    "changedFiles": 2
+  },
+  {
+    "group": "final",
+    "mode": "lite",
+    "task": "l3",
+    "costUsd": 1.505,
+    "wallSec": 532,
+    "tokens": {
+      "input": 50,
+      "cacheCreation": 46493,
+      "cacheRead": 1581471,
+      "output": 24026
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [
+      "backend-agent",
+      "backend-agent",
+      "backend-agent",
+      "backend-agent",
+      "test-agent"
+    ],
+    "changedFiles": 3
+  },
+  {
+    "group": "final",
+    "mode": "lite",
+    "task": "q",
+    "costUsd": 0.072,
+    "wallSec": 17,
+    "tokens": {
+      "input": 6,
+      "cacheCreation": 10474,
+      "cacheRead": 60844,
+      "output": 903
+    },
+    "budgetStopped": false,
+    "testsPass": true,
+    "delegations": [],
+    "changedFiles": 0
+  }
+]

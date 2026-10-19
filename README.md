@@ -122,6 +122,8 @@ Full의 실행 모드는 relay: 리더는 하위 역할을 직접 호출하지 �
 | 실험적·선택 | Full, relay 실행 모드, 엄격 모드(직접 승인 추적), 요구 보존 추적 검사(`team-check.mjs trace`) |
 
 - 실험적 기능은 실제 Claude 환경에서 검증하지 못했고 직접 처리보다 낫다는 비교 결과도 아직 없음
+![모드별 비용·시간·토큰 비교](docs/verification/assets/mode-compare.svg)
+
 - [소규모 fixture 실행 기록](docs/verification/2026-10-19-small-fixture.md), 14회 확인(1회씩, 비대화형): Lite는 직접 처리보다 L2·L3에서 비용 약 12배·시간 30배 이상, 작은 과제는 직접 처리가 빠르고 저렴하므로 Lite를 기본으로 하고 Full은 대형 작업에서 선택
 - 팀 구조가 직접 처리보다 품질을 높인다는 보장은 없으며 평가 결과는 확보되는 대로 공개
 
