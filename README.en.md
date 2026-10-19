@@ -65,7 +65,7 @@ All ten role files are always installed. **Lite or Full is a usage mode you choo
 | Lite | The PM calls analysts, specialists, and QA directly | General work |
 | Full | A planning lead and a development lead coordinate their specialists; the PM calls QA directly | Multi-area, large, or high-risk work |
 
-Full runs in relay mode by default: leaders return call cards instead of calling specialists, and the PM calls them as written.
+Full runs in relay mode: leaders return call cards instead of calling specialists, and the PM calls them as written. Nested mode (leaders calling specialists directly) did not work in the version we checked, so it is not recommended.
 
 | Role | Responsibility |
 | --- | --- |
