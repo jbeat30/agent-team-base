@@ -150,7 +150,7 @@ Issues and fork PRs are welcome. Only the owner has write access; every change i
 - Changes: fork and open a PR against the `feature/vX.Y.Z` branch the owner designates
 - `main`, `release`, and `feature` branches require PRs and forbid force pushes; outside contributors cannot push or merge directly
 - Fork PR workflows from all external contributors require maintainer approval, regardless of contribution history
-- Development needs Node 18 or later; run `npm test` for static checks and unit tests
+- Development needs Node 18 or later; run `npm test` for static checks and unit tests (all test methods, in Korean: [TESTING.md](docs/verification/TESTING.md))
 - Details (in Korean): [Contributing](.github/CONTRIBUTING.md) · [Branch strategy](.github/BRANCH_STRATEGY.md) · [Development rules](AGENTS.md)
 
 ## License

@@ -150,7 +150,7 @@ https://github.com/jbeat30/claude-team-base 의 INSTALL.md를 읽고 이 프로�
 - 변경 제안: 포크 후 PR, 대상은 소유자가 지정한 `feature/vX.Y.Z`
 - `main`·`release`·`feature`는 PR 필수·강제 푸시 금지, 외부 기여자의 직접 푸시·머지 불가
 - 외부 기여자의 fork PR 워크플로는 기여 이력과 관계없이 소유자 실행 승인 필요
-- 개발 환경은 Node 18 이상, `npm test`로 정적 검사와 단위 테스트 실행
+- 개발 환경은 Node 18 이상, `npm test`로 정적 검사와 단위 테스트 실행, 실제 Claude 측정까지의 검사 방법은 [검사 방법](docs/verification/TESTING.md)
 - 자세한 규칙: [기여 안내](.github/CONTRIBUTING.md) · [브랜치 전략](.github/BRANCH_STRATEGY.md) · [개발 규칙](AGENTS.md)
 
 ## 라이선스
