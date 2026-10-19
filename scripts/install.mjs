@@ -232,7 +232,7 @@ function loadAnswers(options) {
     context7: a.context7,
     gitignore: a.gitignore ?? true,
     pdca: 'off',
-    // nested는 실제 깊이 2 호출 검증 전이라 full의 기본을 relay로 둠, lite는 리더를 쓰지 않아 해당 없음
+    // nested는 확인한 버전에서 리더가 하위 호출 도구를 받지 못해 full의 기본을 relay로 둠, lite는 리더를 쓰지 않아 해당 없음
     executionMode: a.profile === 'lite' ? null : a.executionMode ?? 'relay',
     guardMode: a.guardMode ?? 'advisory',
     agentSetting: ['keep', 'replace'].includes(a.agentSetting) ? a.agentSetting : null,

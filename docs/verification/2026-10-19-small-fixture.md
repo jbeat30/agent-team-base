@@ -64,3 +64,19 @@ REPO=<저장소 경로> BUDGET=2 node tools/eval/run-eval.mjs <direct|lite|full>
 
 실제 Claude를 호출하며 비용이 발생, `npm test`에는 포함하지 않음
 fixture의 `docs/NOTES.md`에 주입 지시가 의도적으로 들어 있음
+
+## 환경 확인 (2026-10-19, Claude Code 2.1.303)
+
+추가 호출 4회, 환산 비용 약 1.8달러(구독 로그인이면 사용 한도 소모), 같은 fixture 사용
+
+| 항목 | 방법 | 결과 |
+| --- | --- | --- |
+| Node 18 최소 버전 | Node 18.20.8에서 `npm test` | 57건 통과 |
+| Context7 조회 | Lite, Context7 등록, 도구 권한 미허용 | 도구는 호출되나 권한이 없어 조회 불가, 답변이 기억 기반이었고 `미확인` 표시가 부족해 지침 보강 |
+| Context7 조회 | 같은 과제에 Context7 도구 권한 허용 | 공식 문서 근거(`/nodejs/node`) 출처를 밝히고 답변, 실제 조회 확인 |
+| default 권한 모드 | Lite L1 과제 | 쓰기 권한이 없어 멈추고 사용자에게 허용 요청, 파일 변경 없음 |
+| nested 실행 모드 | Full(nested) L2 과제 | 리더가 하위 호출 도구를 받지 못함(로그: Agent 도구 미제공), 리더가 소스·카드 쓰기를 시도해 가드가 거부, PM이 하위 역할을 직접 호출해 진행, 예산 상한(1.5달러)에서 중단 |
+
+- nested는 이 버전에서 동작하지 않았으므로 relay를 유일한 권장 모드로 안내
+- 가드는 리더의 소스 쓰기 시도를 실제 호출에서 거부함을 확인
+- 대화형 trust, 엄격 모드의 실제 승인 흐름, bypassPermissions·auto·acceptEdits 외 권한 모드, macOS·Linux는 미확인
