@@ -199,6 +199,12 @@ function decideWrite(root, input) {
   if (!assignedFiles(root, lock.runId, role).includes(norm(rel))) return deny(`기획안 변경 계획(6장 표)에서 ${role}에 배정되지 않은 파일: ${rel}, 표 셀 안의 | 는 \\| 로 표기하고 담당 열은 역할 이름만 기재`);
 }
 
+// 프로필의 실행 모드가 relay이면 리더는 하위 에이전트를 직접 호출하지 않고 카드만 반환
+function relayMode(root) {
+  const text = readText(join(root, '.claude/team/profile.md'));
+  return text !== null && /^- 실행 모드:\s*relay\b/m.test(text);
+}
+
 function decideAgent(root, input) {
   const caller = input.agent_type || 'main';
   const target = input.tool_input?.subagent_type;
@@ -209,6 +215,7 @@ function decideAgent(root, input) {
   }
 
   if (SUBAGENT_ROLES.includes(caller)) {
+    if (relayMode(root)) return deny(`relay 모드에서 ${caller}는 하위 에이전트를 호출하지 않음, 호출 카드를 반환해 PM이 호출`);
     const allowed = CALL_TARGETS[caller] ?? [];
     if (!allowed.includes(target)) return deny(`${caller}는 ${target}을 호출할 수 없음`);
     if (target === 'qa-agent' && /모드:\s*final/.test(prompt)) return deny('final 검증은 PM이 직접 호출');

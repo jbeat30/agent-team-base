@@ -184,3 +184,20 @@ test('배정 파일의 대소문자는 파일시스템 기준으로 비교', () 
   assert.equal(write(dir, 'backend-agent', 'src/mixedcase.js').allowed, process.platform !== 'linux');
   assert.equal(write(dir, 'backend-agent', reports('backend-agent-01.md')).allowed, true, '대문자 실행 ID R1 보존');
 });
+
+test('relay 모드: 리더의 하위 에이전트 호출 거부, nested 모드·PM 직접 호출은 허용', () => {
+  const dir = project();
+  const profile = (mode) => {
+    mkdirSync(join(dir, '.claude', 'team'), { recursive: true });
+    writeFileSync(join(dir, '.claude', 'team', 'profile.md'), `## 팀 설정\n\n- 실행 프로파일: full\n- 실행 모드: ${mode}\n`);
+  };
+  profile('relay');
+  const denied = call(dir, 'dev-lead', 'backend-agent');
+  assert.equal(denied.allowed, false);
+  assert.match(denied.stderr, /relay 모드/);
+  assert.equal(call(dir, 'planning-lead', 'planner-agent').allowed, false);
+  assert.equal(call(dir, undefined, 'backend-agent', card(), 'toolu_r').allowed, true, 'PM 직접 호출은 유지');
+  post(dir, 'backend-agent', 'toolu_r');
+  profile('nested');
+  assert.equal(call(dir, 'dev-lead', 'backend-agent', card(), 'toolu_n').allowed, true);
+});

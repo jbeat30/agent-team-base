@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -100,4 +101,102 @@ test('diff는 추적·미추적 변경을 원문 그대로 저장하고 실행 �
   const summary = JSON.parse(result.stdout);
   assert.deepEqual(summary.trackedFiles, ['a.txt']);
   assert.deepEqual(summary.untrackedFiles, ['new.txt']);
+});
+
+const CMD = 'node -e "0"';
+const REQUEST = '로그인 화면에 비밀번호 보기 버튼을 추가한다.\n새로고침해도 입력은 유지한다.';
+const R1 = ['R1', '비밀번호 보기 버튼', '비밀번호 보기 버튼을 추가한다'];
+const R2 = ['R2', '입력 유지', '새로고침해도 입력은 유지한다'];
+
+function tracePlan({ quote = REQUEST, rows = [R1, R2], done = ['R1', 'R2'], files = [['src/login.js', 'frontend-agent']] } = {}) {
+  const q = quote.split('\n').map((l) => `> ${l}`).join('\n');
+  const req = rows.map(([id, r, e]) => `| ${id} | ${r} | "${e}" |`).join('\n');
+  const dn = done.map((id) => `| ${id} | 로그인 화면 | 확인 | 동작 | 화면 확인 |`).join('\n');
+  const ch = files.map(([f, who], i) => `| ${i + 1} | \`${f}\` | 아니오 | 수정 | ${who} |`).join('\n');
+  return `# 기획안\n\n## 1. 사용자 요청 원문\n\n${q}\n\n## 2. 요구사항 목록\n\n| ID | 요구 | 원문 근거(인용) |\n| --- | --- | --- |\n${req}\n\n## 6. 변경 계획\n\n| 순서 | 파일 | 새 파일 여부 | 작업 | 담당 |\n| --- | --- | --- | --- | --- |\n${ch}\n\n## 7. 완료 기준\n\n| ID | Given | When | Then | 검증 방법 |\n| --- | --- | --- | --- | --- |\n${dn}\n\n## 8. 검사 명령과 부작용 분류\n\n| 명령 | 작업 경로 | 부작용 |\n| --- | --- | --- |\n| \`${CMD}\` | . | 없음 |\n`;
+}
+
+function cardText({ quote = REQUEST, ids = 'R1, R2', files = 'src/login.js', hash = '' } = {}) {
+  const q = quote.split('\n').map((l) => `> ${l}`).join('\n');
+  return `# 작업 카드\n\n- runId: ${RUN_ID}\n- 기획안 경로·해시: \`plan.md\`, ${hash}\n- 허용 파일(구체적 경로): ${files}\n- 담당 요구사항·완료 기준 ID: ${ids}\n\n## 요청 원문\n\n${q}\n`;
+}
+
+function traceProject({ planOpts, card, report, patch } = {}) {
+  const dir = project([[CMD, '.', '없음']]);
+  const runDir = join(dir, '.claude-team-docs', 'runs', RUN_ID);
+  writeFileSync(join(runDir, 'request.md'), REQUEST);
+  const text = tracePlan(planOpts);
+  writeFileSync(join(runDir, 'plan.md'), text);
+  const planHash = createHash('sha256').update(text).digest('hex');
+  if (card) {
+    mkdirSync(join(runDir, 'cards'), { recursive: true });
+    writeFileSync(join(runDir, 'cards', card.name ?? '01-frontend-agent.md'), cardText({ hash: planHash, ...card.opts }));
+  }
+  if (report) {
+    mkdirSync(join(runDir, 'reports'), { recursive: true });
+    writeFileSync(join(runDir, 'reports', 'dev-lead.md'), report);
+  }
+  if (patch) writeFileSync(join(runDir, 'changes.patch'), patch);
+  return dir;
+}
+
+const trace = (dir) => {
+  const result = run(dir, 'trace', RUN_ID);
+  return { status: result.status, json: JSON.parse(result.stdout) };
+};
+
+test('trace: 요구·카드·보고·diff가 기획안과 일치하면 통과', () => {
+  const dir = traceProject({
+    card: {},
+    report: 'R1 완료\nR2 완료\n',
+    patch: 'diff --git a/src/login.js b/src/login.js\n+x\n',
+  });
+  const result = trace(dir);
+  assert.equal(result.status, 0, JSON.stringify(result.json));
+  assert.equal(result.json.requirements, 2);
+});
+
+test('trace: 기획안의 요구 누락·원문 변형을 탐지', () => {
+  const dropped = trace(traceProject({ planOpts: { quote: '로그인 화면에 비밀번호 보기 버튼을 추가한다.' } }));
+  assert.equal(dropped.status, 1);
+  assert.ok(dropped.json.problems.includes('기획안 1장에 요청 원문 전체가 없음'));
+
+  const reworded = trace(traceProject({ planOpts: { rows: [['R1', '버튼', '비밀번호 표시 토글을 만든다'], R2] } }));
+  assert.equal(reworded.status, 1);
+  assert.ok(reworded.json.problems.includes('R1: 원문 근거가 request.md에 없음'));
+
+  const noDone = trace(traceProject({ planOpts: { done: ['R1'] } }));
+  assert.ok(noDone.json.problems.includes('R2: 7장 완료 기준 없음'));
+
+  const orphan = trace(traceProject({ planOpts: { rows: [R1], done: ['R1', 'R2'] } }));
+  assert.ok(orphan.json.problems.includes('R2: 2장에 없는 완료 기준'));
+});
+
+test('trace: 카드의 원문 축약·요구 ID·허용 파일·담당 이탈을 탐지', () => {
+  const short = trace(traceProject({ card: { opts: { quote: '비밀번호 보기 버튼 추가' } } }));
+  assert.ok(short.json.problems.some((p) => p.includes('요청 원문이 request.md와 다름')));
+
+  const unknownId = trace(traceProject({ card: { opts: { ids: 'R1, R2, R9' } } }));
+  assert.ok(unknownId.json.problems.some((p) => p.includes('기획안에 없는 요구사항 R9')));
+
+  const extraFile = trace(traceProject({ card: { opts: { files: 'src/login.js, src/auth.js' } } }));
+  assert.ok(extraFile.json.problems.some((p) => p.includes('기획안 6장에 없는 파일 src/auth.js')));
+
+  const wrongOwner = trace(traceProject({ card: { name: '01-backend-agent.md' } }));
+  assert.ok(wrongOwner.json.problems.some((p) => p.includes('담당은 frontend-agent, 카드 수신자는 backend-agent')));
+
+  const uncovered = trace(traceProject({ card: { opts: { ids: 'R1' } } }));
+  assert.ok(uncovered.json.problems.includes('R2: 어떤 실무 카드에도 배정되지 않음'));
+
+  const stale = traceProject({ card: {} });
+  const planPath = join(stale, '.claude-team-docs', 'runs', RUN_ID, 'plan.md');
+  writeFileSync(planPath, `${readFileSync(planPath, 'utf8')}\n변경\n`);
+  assert.ok(trace(stale).json.problems.some((p) => p.includes('기획안 해시가 현재 기획안과 다름')));
+});
+
+test('trace: 보고의 요구 누락과 계획 밖 diff 파일을 탐지', () => {
+  const result = trace(traceProject({ report: 'R1 완료\n', patch: 'diff --git a/src/login.js b/src/login.js\n+x\ndiff --git a/src/other.js b/src/other.js\n+y\n' }));
+  assert.equal(result.status, 1);
+  assert.ok(result.json.problems.includes('reports/dev-lead.md: R2 언급 없음'));
+  assert.ok(result.json.problems.includes('changes.patch: 기획안 6장에 없는 변경 파일 src/other.js'));
 });
