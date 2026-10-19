@@ -65,6 +65,8 @@ All ten role files are always installed. **Lite or Full is a usage mode you choo
 | Lite | The PM calls analysts, specialists, and QA directly | General work |
 | Full | A planning lead and a development lead coordinate their specialists; the PM calls QA directly | Multi-area, large, or high-risk work |
 
+Full runs in relay mode by default: leaders return call cards instead of calling specialists, and the PM calls them as written.
+
 | Role | Responsibility |
 | --- | --- |
 | pm-agent (main session) | Triage, conversation and confirmation, approved scope, check execution, final report |

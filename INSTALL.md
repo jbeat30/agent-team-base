@@ -38,6 +38,7 @@ Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치
 | 항목 | 질문 내용 | 비고 |
 | --- | --- | --- |
 | 실행 프로파일 | Lite(PM이 분석·실무·QA를 직접 호출) 또는 Full(기획 리더·개발 리더가 하위를 조율, 대형·다영역 작업 유리), 역할 파일은 둘 다 전부 설치됨 | 항상 질문 |
+| 실행 모드 | Full 선택 시만: relay(기본, 리더가 호출 카드를 반환하고 PM이 하위 역할을 호출) 또는 nested(리더가 하위를 직접 호출, 깊이 2 호출이 실제 환경에서 검증되기 전에는 권하지 않음) | Full 선택 시 기본값 안내 |
 | Context7 MCP | 설치된 버전 기준 문서 확인을 위해 `.mcp.json`에 등록할지, 실행 시 `npx @upstash/context7-mcp`를 사용하며 질의에는 라이브러리 이름·버전·일반 질문만 보냄 | 항상 질문 |
 | 감지 결과 확인 | 언어·프레임워크, 검사 명령과 부작용(자동 수정 여부), 컨벤션 근거 | 불확실한 항목만 질문 |
 | 수정 금지 영역 | 운영 설정·생성 파일·특정 경로 | 항상 질문 |
@@ -56,6 +57,7 @@ Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치
   "context7": true,
   "gitignore": true,
   "pdca": "off",
+  "executionMode": "relay | nested (full에서만, 생략 시 relay)",
   "guardMode": "advisory",
   "agentSetting": "keep | replace (기존 agent 설정이 있을 때만)",
   "stack": [{ "item": "언어·프레임워크", "value": "버전 등", "evidence": "근거 경로" }],
