@@ -372,3 +372,22 @@ test('제거 후 재설치 가능하고 사용자 프로젝트 파일은 그대�
   assert.equal(install(applyArgs(dir, file, plan.json.hash)).json.ok, true);
   assert.equal(install(['verify', '--target', dir]).json.ok, true);
 });
+
+test('plugin 채널: git 없는 배포본에서 source가 플러그인 버전 태그로 기록', async () => {
+  const { cpSync } = await import('node:fs');
+  const root = temp('plugin-copy-');
+  cpSync(join(here, '..', 'scripts'), join(root, 'scripts'), { recursive: true });
+  cpSync(join(here, '..', 'template'), join(root, 'template'), { recursive: true });
+  const dir = project();
+  const file = answersFile({ profile: 'lite' });
+  const run = (args) => spawnSync(process.execPath, [join(root, 'scripts', 'install.mjs'), ...args], {
+    encoding: 'utf8',
+    env: { ...process.env, TEAM_CLAUDE_BIN: `"${process.execPath}" "${fakeClaude}"` },
+  });
+  const plan = JSON.parse(run(planArgs(dir, file)).stdout);
+  assert.equal(run(applyArgs(dir, file, plan.hash)).status, 0);
+  const manifest = JSON.parse(readFileSync(join(dir, '.claude', 'team', 'manifest.json'), 'utf8'));
+  assert.equal(manifest.source.channel, 'plugin');
+  assert.equal(manifest.source.commit, null);
+  assert.match(manifest.source.tag, /^v[0-9]+[.][0-9]+[.][0-9]+$/);
+});

@@ -22,7 +22,17 @@ Requirement coverage, discovery of missed items, scope control, evidence, and fi
 
 ## Quick start
 
-Open Claude Code in your project and send one line:
+Install as a plugin and run the skill once (no separate repository fetch):
+
+```text
+/plugin marketplace add jbeat30/claude-team-base
+/plugin install jbeat-team-base@jbeat-team-base
+/jbeat-team-setup
+```
+
+- `/jbeat-team-setup` handles install, update, and removal; `/jbeat-team-check` verifies an install without calling Claude
+
+Without the plugin, open Claude Code in your project and ask in one line:
 
 ```text
 Read INSTALL.md at https://github.com/jbeat30/claude-team-base and set this project up

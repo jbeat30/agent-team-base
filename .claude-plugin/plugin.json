@@ -1,0 +1,25 @@
+{
+  "name": "jbeat-team-base",
+  "version": "0.1.0",
+  "description": "Jbeat Claude Code agent team base that respects existing project policies, installed through a skill.",
+  "author": {
+    "name": "jbeat",
+    "url": "https://github.com/jbeat30"
+  },
+  "repository": "https://github.com/jbeat30/claude-team-base",
+  "license": "MIT",
+  "keywords": ["claude-skill", "agent-team", "subagents", "jbeat"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Jbeat Team Base",
+    "shortDescription": "Set up a Lite or Full Claude Code agent team with one skill",
+    "developerName": "jbeat",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "/jbeat-team-setup",
+      "Set up the Jbeat agent team in this project.",
+      "Check the Jbeat agent team installation."
+    ]
+  }
+}

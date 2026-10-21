@@ -88,6 +88,10 @@ function nodeStatus() {
 }
 
 function sourceInfo() {
+  // 플러그인 캐시는 git 저장소가 아니므로 상위 저장소를 오인하지 않도록 .git 존재를 먼저 확인
+  if (!existsSync(join(repoRoot, '.git'))) {
+    return { repo: SOURCE_REPO, templateVersion: TEMPLATE_VERSION, tag: `v${TEMPLATE_VERSION}`, commit: null, channel: 'plugin' };
+  }
   const git = (...args) => spawnSync('git', ['-C', repoRoot, ...args], { encoding: 'utf8' });
   const commit = git('rev-parse', 'HEAD');
   const tag = git('describe', '--tags', '--exact-match');

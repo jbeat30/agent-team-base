@@ -1,0 +1,15 @@
+{
+  "name": "jbeat-team-base",
+  "description": "Jbeat agent team base for Claude Code.",
+  "owner": {
+    "name": "jbeat"
+  },
+  "plugins": [
+    {
+      "name": "jbeat-team-base",
+      "source": "./",
+      "description": "Jbeat Claude Code agent team base that respects existing project policies, installed through a skill.",
+      "category": "Productivity"
+    }
+  ]
+}
