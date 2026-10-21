@@ -122,6 +122,9 @@ const scorers = {
 
 Object.assign(out, await scorers[taskId]());
 // 방금 변경이 기존 동작(허용 범위 안의 visible 테스트)을 깨뜨렸는지는 별도로 npm test로 기록(알려진 실패 테스트가 있는 과제는 참고용)
-const tests = spawnSync('npm', ['test'], { cwd: dir, encoding: 'utf8', shell: true });
+// node:test 안에서 호출되면 NODE_TEST_CONTEXT가 상속되어 하위 npm test의 실패가 종료 코드에 반영되지 않으므로 제거
+const testEnv = { ...process.env };
+delete testEnv.NODE_TEST_CONTEXT;
+const tests = spawnSync('npm', ['test'], { cwd: dir, encoding: 'utf8', shell: true, env: testEnv });
 out.npmTestPass = tests.status === 0;
 console.log(JSON.stringify(out));
