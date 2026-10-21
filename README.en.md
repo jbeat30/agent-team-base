@@ -132,7 +132,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 | --- | --- | --- |
 | Q | Questions, explanations | The PM answers directly |
 | L1 | Comments, typos, wording, behavior unchanged | The PM edits directly and checks completion |
-| L2 | Ordinary behavior changes | Plan, confirm, build, final verification |
+| L2 | Ordinary behavior changes | With no risk signal the PM handles it directly and self-checks (no independent QA, no runner records); otherwise plan, confirm, build, final verification |
 | L3 | Contracts, permissions, data, security, many areas | L2 path with required impact analysis and user confirmation |
 
 - **Requirements become Given/When/Then acceptance criteria**, and failing tests are written first when testing is possible.
@@ -196,12 +196,15 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 | Experimental or optional | Full, relay execution mode, strict mode (direct approval tracking), requirement-preservation trace check (`team-check.mjs trace`) |
 
 - Experimental features are not verified in a real Claude environment, and there is no comparison yet showing they beat handling tasks directly.
+- **Following the L3 procedure depends on the prompt alone and is not enforced**: in the evaluation the PM classified a request as L3 and still edited directly without a plan, impact analysis, or user confirmation. Behavior in interactive use has not been checked.
+- **L2 direct path**: with no risk signal (other users of the changed symbols, ambiguous requirements, many files) the PM works without delegation; checks are `unrecorded` (no runner record) and there is no independent QA.
 - The skill install path (plugin install, `${CLAUDE_PLUGIN_ROOT}` substitution, skill execution) and real delegation behavior with English prompts have not been checked in real Claude yet.
 
 ![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.svg)
 
 - [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive, with Korean prompts before the English switch: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
-- There is no guarantee that the team structure improves quality over handling tasks directly; evaluation results will be published as they become available.
+- [v0.2.0 evaluation results](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean; 8 tasks, one run each, one model, raw JSON included): the team beat direct handling only on hidden-caller and implicit-requirement tasks and only added cost on easy ones. After the L2 direct path, cost fell about 5-17x on m1 (Lite, Full), m2 (Full), and m3 (Full) with the same quality, while Lite m2 rose from 0.046 to 0.089 USD. One run each is not enough to judge against the design criteria.
+- There is no guarantee that the team structure improves quality over handling tasks directly.
 
 ## Roadmap
 
@@ -209,7 +212,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 | --- | --- |
 | Skill (plugin) install | Implemented; real Claude check planned |
 | English prompts and user-language replies | Implemented; delegation evaluation planned |
-| Hard-task comparison (direct, Lite, Full, repeated runs) | To be designed; results will be published |
+| Hard-task comparison (direct, Lite, Full, repeated runs) | One run published; repeated runs not done |
 | Context slimming (shorter PM instructions) | First pass done (PM instructions about 18% smaller, a rule-list check prevents omissions); more planned |
 | Design tool MCP choice at setup (Playwright, shadcn/ui, Figma) | Implemented; real Claude and server connection check planned |
 | bkit PDCA integration | After v0.3.0 |

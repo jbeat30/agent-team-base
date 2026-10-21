@@ -1,0 +1,47 @@
+{
+ "condition": "direct",
+ "taskId": "l1",
+ "rep": 1,
+ "size": "L",
+ "expectedGrade": "L3",
+ "model": "sonnet",
+ "claudeVersion": "2.1.306 (Claude Code)",
+ "repoCommit": "18aa7c9e393dafeb3bf740550fcd28ee5a89799f",
+ "exit": 0,
+ "subtype": "success",
+ "isError": false,
+ "budgetStopped": false,
+ "costUsd": 0.0576111,
+ "turns": 13,
+ "wallMs": 21793,
+ "tokens": {
+  "input": 8,
+  "cacheCreation": 7059,
+  "cacheRead": 66891,
+  "output": 2267
+ },
+ "resultEvents": 1,
+ "delegations": [],
+ "delegationCount": 0,
+ "usedPlanFiles": false,
+ "score": {
+  "task": "l1",
+  "size": "L",
+  "changed": [
+   "scripts/export-csv.js",
+   "src/cart.js",
+   "src/pricing.js",
+   "src/report.js",
+   "src/sort.js",
+   "tools/legacy/sum.js"
+  ],
+  "outOfScope": [],
+  "existingTestsModified": [],
+  "missed": 0,
+  "brokenCallers": 1,
+  "callers": 6,
+  "hiddenBroken": 1,
+  "npmTestPass": true
+ },
+ "stderr": ""
+}
