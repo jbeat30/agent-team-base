@@ -47,7 +47,7 @@ On receiving a request, classify it into one grade and record the reason in one 
 | --- | --- | --- |
 | Q | Question, explanation, or research, no file changes | Answer directly, no delegation |
 | L1 | Comment, typo, wording, or document, single file, behavior unchanged | Edit directly, verify with the L1 checklist, report the diff |
-| L2 | Behavior change that keeps the existing contract (compatible optional argument or field additions, internal logic changes, single area) | G1 to G5 |
+| L2 | Behavior change that keeps the existing contract (compatible optional argument or field additions, internal logic changes, single area) | Direct path if no risk signal, else G1 to G5 |
 | L3 | Any L3 criterion below | G1 to G5, architecture-agent required, user confirmation dialogue required |
 
 L3 criteria. If any one applies, classify as L3 and do not lower it even if the request looks small.
@@ -59,6 +59,24 @@ L3 criteria. If any one applies, classify as L3 and do not lower it even if the 
 
 If an L1 edit reveals behavior impact, callers, or shared files, stop and raise it to L2. If mid-run evidence shows the classification was wrong, stop writing, raise the grade, and resume from the matching gate. Do not use delegation or a plan for Q and L1.
 
+# L2 direct path
+
+Both profiles. Delegation, plan files, and run records cost more than they return when nothing is at risk, so use them only when a risk signal appears. Decide before any edit and record the result in one line. If any signal applies, run the L2 and L3 procedure below.
+
+Risk signals (any one):
+- An L3 criterion applies or is doubtful.
+- Grep finds other files that use the symbols you would change (look up first, do not guess).
+- The source has more than one interpretation, or you can name a missing-item or implicit-requirement candidate (validation, boundary values, error handling, a rule that neighboring code or tests already follow).
+- More than two files must change, or existing tests must be modified.
+- A mandatory approval trigger applies, or the protection mode is `strict`.
+
+With no signal:
+1. List the requirements from the request source with IDs, quoting the source.
+2. Edit the files yourself. Delegation and plan files are not used.
+3. Run the profile's check commands directly in the shell and keep the original output; the runner records do not exist, so mark them `unrecorded`.
+4. Check each requirement against your diff and the checklist items marked `L1`, re-run Grep for callers of what you changed, and if a signal appears now, stop and switch to the L2 and L3 procedure.
+5. Report per requirement ID with changed files, checks run, and `self-checked, no independent QA`.
+
 # L2 and L3 procedure
 
 1. Intake: choose a runId (`YYYYMMDD-HHmm-slug`) and save the request source verbatim to `.claude-team-docs/runs/<runId>/request.md`. If the work creates or changes UI, read `.claude/team/design-tools.md` now.
@@ -69,7 +87,7 @@ If an L1 edit reveals behavior impact, callers, or shared files, stop and raise 
 4. Plan check: for L3 call qa-agent in plan mode (in full, planning-lead does it); for L2 check directly. Fix the plan for any finding and re-check, up to 3 rounds.
 5. G2 Confirm per the rules below. Do not edit source or config files before confirmation.
 6. G3 Develop: lite calls worker agents one at a time in the order of the confirmed change plan, attaching allowed files, completion criteria IDs, and the request source path in the handoff form; full calls dev-lead to implement the confirmed plan and receives its report. Never run write agents at the same time, even for different files.
-7. Run checks only with `node .claude/team/bin/team-check.mjs run <runId> "<command>"`, only for commands written in the plan. The runner records command, working directory, times, exit code, original output, and hashes under `.claude-team-docs/runs/<runId>/checks/NN/`, so never run checks in the shell directly and never summarize, edit, or hand-write the output. It rejects commands not in the plan and commands whose side-effect class is not `none`; for the latter, rerun with `--allow-side-effects` after user approval. If the runner is unavailable, leave the record empty and mark it unverified in the final report.
+7. Run checks only with `node .claude/team/bin/team-check.mjs run <runId> "<command>"`, only for commands written in the plan. The runner records command, working directory, times, exit code, original output, and hashes under `.claude-team-docs/runs/<runId>/checks/NN/`, so never run checks in the shell directly (the L2 direct path is the only exception) and never summarize, edit, or hand-write the output. It rejects commands not in the plan and commands whose side-effect class is not `none`; for the latter, rerun with `--allow-side-effects` after user approval. If the runner is unavailable, leave the record empty and mark it unverified in the final report.
 8. G4 Final verification: save the original diff to `changes.patch` with `node .claude/team/bin/team-check.mjs diff <runId>` and check `verify <runId>` (records and plan hash match). If either command is unavailable, do not write the result by hand; state the reason in the final report, call qa-agent directly in final mode, and attach the verify result to the call handoff. Do not pass on the plan check conclusion, to keep the judgment independent.
 9. Send failed items back as rework handoffs for those items only, and have re-verification check the whole checklist again. At the 3-round rework limit, report to the user with the unresolved list.
 10. G5 Final report: report met, unmet, and unverified per requirement ID, changed files, checks run and not run, and whether the PM self-confirmed, in text the user can read easily.
