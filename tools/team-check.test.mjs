@@ -13,7 +13,7 @@ const RUN_ID = '20260101-0000-test';
 
 function plan(rows) {
   const table = rows.map(([c, cwd, effect]) => `| \`${c}\` | ${cwd} | ${effect} |`).join('\n');
-  return `# 기획안\n\n## 7. 완료 기준\n\n| a |\n\n## 8. 검사 명령과 부작용 분류\n\n| 명령 | 작업 경로 | 부작용(자동 수정·외부 접근·상태 변경) |\n| --- | --- | --- |\n${table}\n\n## 9. 완료 체크리스트\n`;
+  return `# Plan\n\n## 7. 완료 기준\n\n| a |\n\n## 8. 검사 명령과 부작용 분류\n\n| Command | Working directory | Side effects |\n| --- | --- | --- |\n${table}\n\n## 9. 완료 체크리스트\n`;
 }
 
 function project(rows) {
@@ -33,7 +33,7 @@ const checksDir = (dir) => join(dir, '.claude-team-docs', 'runs', RUN_ID, 'check
 
 test('승인된 명령을 실행하고 exit code와 원본 출력을 기록', () => {
   const cmd = `node -e "console.log('hello');process.exit(3)"`;
-  const dir = project([[cmd, '.', '없음']]);
+  const dir = project([[cmd, '.', 'none']]);
   const result = run(dir, 'run', RUN_ID, cmd);
   assert.equal(result.status, 0, result.stderr);
   const record = JSON.parse(readFileSync(join(checksDir(dir), '01', 'record.json'), 'utf8'));
@@ -44,7 +44,7 @@ test('승인된 명령을 실행하고 exit code와 원본 출력을 기록', ()
 });
 
 test('기획안에 없는 명령은 실행하지 않음', () => {
-  const dir = project([['node -e "0"', '.', '없음']]);
+  const dir = project([['node -e "0"', '.', 'none']]);
   const result = run(dir, 'run', RUN_ID, 'node -e "1"');
   assert.equal(result.status, 2);
   assert.equal(existsSync(checksDir(dir)), false);
@@ -61,13 +61,13 @@ test('부작용 분류가 없음이 아니면 승인 플래그 없이 거부', (
 
 test('프로젝트 밖 작업 경로는 거부', () => {
   const cmd = 'node -e "0"';
-  const dir = project([[cmd, '../outside', '없음']]);
+  const dir = project([[cmd, '../outside', 'none']]);
   assert.equal(run(dir, 'run', RUN_ID, cmd).status, 2);
 });
 
 test('출력 변조와 기획안 변경을 verify가 탐지', () => {
   const cmd = 'node -e "console.log(1)"';
-  const dir = project([[cmd, '.', '없음']]);
+  const dir = project([[cmd, '.', 'none']]);
   run(dir, 'run', RUN_ID, cmd);
   assert.equal(run(dir, 'verify', RUN_ID).status, 0);
   writeFileSync(join(checksDir(dir), '01', 'stdout.txt'), 'tampered\n');
@@ -75,21 +75,21 @@ test('출력 변조와 기획안 변경을 verify가 탐지', () => {
   assert.equal(tampered.status, 1);
   assert.match(tampered.stdout, /해시 불일치/);
 
-  const dir2 = project([[cmd, '.', '없음']]);
+  const dir2 = project([[cmd, '.', 'none']]);
   run(dir2, 'run', RUN_ID, cmd);
-  writeFileSync(join(dir2, '.claude-team-docs', 'runs', RUN_ID, 'plan.md'), `${plan([[cmd, '.', '없음']])}\n변경\n`);
+  writeFileSync(join(dir2, '.claude-team-docs', 'runs', RUN_ID, 'plan.md'), `${plan([[cmd, '.', 'none']])}\n변경\n`);
   const changed = run(dir2, 'verify', RUN_ID);
   assert.equal(changed.status, 1);
   assert.match(changed.stdout, /기획안이 변경/);
 });
 
 test('검사 기록이 없으면 verify 실패', () => {
-  const dir = project([['node -e "0"', '.', '없음']]);
+  const dir = project([['node -e "0"', '.', 'none']]);
   assert.equal(run(dir, 'verify', RUN_ID).status, 1);
 });
 
 test('diff는 추적·미추적 변경을 원문 그대로 저장하고 실행 산출물은 제외', () => {
-  const dir = project([['node -e "0"', '.', '없음']]);
+  const dir = project([['node -e "0"', '.', 'none']]);
   writeFileSync(join(dir, 'a.txt'), 'base\nchanged\n');
   writeFileSync(join(dir, 'new.txt'), 'brand new\n');
   const result = run(dir, 'diff', RUN_ID);
@@ -112,17 +112,17 @@ function tracePlan({ quote = REQUEST, rows = [R1, R2], done = ['R1', 'R2'], file
   const q = quote.split('\n').map((l) => `> ${l}`).join('\n');
   const req = rows.map(([id, r, e]) => `| ${id} | ${r} | "${e}" |`).join('\n');
   const dn = done.map((id) => `| ${id} | 로그인 화면 | 확인 | 동작 | 화면 확인 |`).join('\n');
-  const ch = files.map(([f, who], i) => `| ${i + 1} | \`${f}\` | 아니오 | 수정 | ${who} |`).join('\n');
-  return `# 기획안\n\n## 1. 사용자 요청 원문\n\n${q}\n\n## 2. 요구사항 목록\n\n| ID | 요구 | 원문 근거(인용) |\n| --- | --- | --- |\n${req}\n\n## 6. 변경 계획\n\n| 순서 | 파일 | 새 파일 여부 | 작업 | 담당 |\n| --- | --- | --- | --- | --- |\n${ch}\n\n## 7. 완료 기준\n\n| ID | Given | When | Then | 검증 방법 |\n| --- | --- | --- | --- | --- |\n${dn}\n\n## 8. 검사 명령과 부작용 분류\n\n| 명령 | 작업 경로 | 부작용 |\n| --- | --- | --- |\n| \`${CMD}\` | . | 없음 |\n`;
+  const ch = files.map(([f, who], i) => `| ${i + 1} | \`${f}\` | 아니오 | modify | ${who} |`).join('\n');
+  return `# Plan\n\n## 1. User request source\n\n${q}\n\n## 2. 요구사항 목록\n\n| ID | 요구 | 원문 근거(인용) |\n| --- | --- | --- |\n${req}\n\n## 6. 변경 계획\n\n| Order | File | New file | Work | Owner |\n| --- | --- | --- | --- | --- |\n${ch}\n\n## 7. 완료 기준\n\n| ID | Given | When | Then | 검증 방법 |\n| --- | --- | --- | --- | --- |\n${dn}\n\n## 8. 검사 명령과 부작용 분류\n\n| Command | Working directory | Side effects |\n| --- | --- | --- |\n| \`${CMD}\` | . | none |\n`;
 }
 
 function cardText({ quote = REQUEST, ids = 'R1, R2', files = 'src/login.js', hash = '' } = {}) {
   const q = quote.split('\n').map((l) => `> ${l}`).join('\n');
-  return `# 작업 카드\n\n- runId: ${RUN_ID}\n- 기획안 경로·해시: \`plan.md\`, ${hash}\n- 허용 파일(구체적 경로): ${files}\n- 담당 요구사항·완료 기준 ID: ${ids}\n\n## 요청 원문\n\n${q}\n`;
+  return `# 작업 카드\n\n- runId: ${RUN_ID}\n- Plan path and hash: \`plan.md\`, ${hash}\n- Allowed files (exact paths): ${files}\n- Assigned requirements and completion criteria IDs: ${ids}\n\n## Request source\n\n${q}\n`;
 }
 
 function traceProject({ planOpts, card, report, patch } = {}) {
-  const dir = project([[CMD, '.', '없음']]);
+  const dir = project([[CMD, '.', 'none']]);
   const runDir = join(dir, '.claude-team-docs', 'runs', RUN_ID);
   writeFileSync(join(runDir, 'request.md'), REQUEST);
   const text = tracePlan(planOpts);
@@ -172,7 +172,7 @@ test('trace: 기획안의 요구 누락·원문 변형을 탐지', () => {
   assert.ok(orphan.json.problems.includes('R2: 2장에 없는 완료 기준'));
 });
 
-test('trace: 카드의 원문 축약·요구 ID·허용 파일·담당 이탈을 탐지', () => {
+test('trace: 카드의 원문 축약·요구 ID·Allowed files·담당 이탈을 탐지', () => {
   const short = trace(traceProject({ card: { opts: { quote: '비밀번호 보기 버튼 추가' } } }));
   assert.ok(short.json.problems.some((p) => p.includes('요청 원문이 request.md와 다름')));
 

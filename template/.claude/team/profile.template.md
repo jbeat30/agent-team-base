@@ -1,42 +1,42 @@
-# 프로젝트 프로필
+# Project profile
 
-설치 시 조사 결과로 생성하는 양식, 모든 에이전트가 작업 전에 읽어 재질문을 줄임
-비밀값 미포함, 근거 없는 항목은 `미확인`으로 표기, 사용자가 수정 가능
+Form generated from the install survey. Every agent reads it before work to reduce repeated questions.
+No secrets. Mark items without evidence as `unchecked`. The user may edit it.
 
-## 기술 환경
+## Tech environment
 
-| 항목 | 값 | 근거 경로 |
+| Item | Value | Evidence path |
 | --- | --- | --- |
-| 언어·프레임워크·버전 | | |
-| 패키지 관리·빌드 | | |
+| Language, framework, version | | |
+| Package manager, build | | |
 
-## 검사 명령
+## Check commands
 
-| 목적 | 명령 | 작업 경로 | 부작용(자동 수정·외부 접근·상태 변경) |
+| Purpose | Command | Working directory | Side effects (auto-fix, external access, state change) |
 | --- | --- | --- | --- |
-| 테스트 | | | |
-| 린트·포맷 | | | |
-| 타입 검사 | | | |
+| Test | | | |
+| Lint, format | | | |
+| Type check | | | |
 
-## 컨벤션
+## Conventions
 
-| 항목 | 내용 | 근거 경로 |
+| Item | Content | Evidence path |
 | --- | --- | --- |
-| 코드 스타일 | | |
-| 언어 방침(문서·주석) | | |
-| 커밋·PR 규칙 | | |
+| Code style | | |
+| Language policy (docs, comments) | | |
+| Commit and PR rules | | |
 
-## 수정 금지 영역
+## Forbidden areas
 
-| 경로 | 사유 |
+| Path | Reason |
 | --- | --- |
 
-## 팀 설정
+## Team settings
 
-- 실행 프로파일: lite | full (설치 시 사용자 선택, 역할 파일은 항상 전체 설치)
-- 실행 모드: nested | relay | 해당 없음(lite) (full 전용, nested는 깊이 2 호출 검증 후에만 선택, 기본 relay)
-- Context7 MCP: 등록 | 미등록
-- 보호 모드: 권고 | 엄격 (기본 권고, 엄격 모드는 직접 승인 기록 필요)
-- PDCA 모드: off (bkit 연동은 후속 버전 예정)
-- 설치한 역할:
-- 원본 저장소·태그·커밋:
+- Execution profile: lite | full (chosen by the user at install, all role files are always installed)
+- Execution mode: nested | relay | n/a (lite) (full only, choose nested only after a depth-2 call check, default relay)
+- Context7 MCP: registered | not registered
+- Protection mode: advisory | strict (default advisory, strict mode requires direct approval records)
+- PDCA mode: off (bkit integration planned for a later version)
+- Installed roles:
+- Source repository, tag, commit:

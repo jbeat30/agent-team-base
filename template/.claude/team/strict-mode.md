@@ -61,7 +61,7 @@ node .claude/team/bin/team-approval.mjs review-plan <runId>
 
 1. 승인 범위가 `allowPmConfirm=true`
 2. 위험도가 L1 또는 L2
-3. 기획안 10장에 `- 사용자 승인 필요: 없음` 표식과 판단 근거 존재
+3. 기획안 10장에 `- User approval required: 없음` 표식과 판단 근거 존재
 4. 구체적인 배정 파일과 검사 명령이 승인 범위 안에 있고 금지 영역을 포함하지 않음
 
 트리거의 의미상 분류는 PM 책임이며 위 표식만으로 분류 정확성을 보장하지 않음
@@ -83,7 +83,7 @@ node .claude/team/bin/team-approval.mjs verify <runId>
 메인·서브에이전트의 Write/Edit로 이 기록과 정책 파일을 직접 수정하지 않음
 
 엄격 모드의 L1은 PM 직접 처리 유지, 전체 기획·위임·QA 게이트는 생략
-다만 쓰기 전에 request.md와 간단한 plan.md에 runId·위험도 L1·confirmed·6장 파일 표(pm-agent 담당)·8장 검사 표·10장 승인 필요 여부를 기록해 정확한 허용 파일을 등록
+다만 쓰기 전에 request.md와 간단한 plan.md에 runId·위험도 L1·confirmed·6장 파일 표(pm-agent 담당)·8장 검사 표·10장 승인 필요 여부를 기록해 정확한 Allowed files을 등록
 Q는 파일 변경·등록 없이 직접 답변
 
 ## 검사와 종료

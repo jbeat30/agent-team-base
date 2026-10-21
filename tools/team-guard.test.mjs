@@ -11,8 +11,8 @@ const script = join(dirname(fileURLToPath(import.meta.url)), '..', 'template', '
 const RUN = 'R1';
 
 function plan(status, rows) {
-  const table = rows.map(([file, who]) => `| 1 | \`${file}\` | 아니오 | 수정 | ${who} |`).join('\n');
-  return `# 기획안\n\n- runId: ${RUN}\n- 상태: ${status}\n\n## 6. 변경 계획\n\n| 순서 | 파일 | 새 파일 여부 | 작업 | 담당 |\n| --- | --- | --- | --- | --- |\n${table}\n\n- 금지 영역:\n\n## 7. 완료 기준\n`;
+  const table = rows.map(([file, who]) => `| 1 | \`${file}\` | 아니오 | modify | ${who} |`).join('\n');
+  return `# Plan\n\n- runId: ${RUN}\n- Status: ${status}\n\n## 6. 변경 계획\n\n| Order | File | New file | Work | Owner |\n| --- | --- | --- | --- | --- |\n${table}\n\n- 금지 영역:\n\n## 7. 완료 기준\n`;
 }
 
 function project({ status = 'confirmed', rows = [['src/a.js', 'backend-agent'], ['test/a.test.js', 'test-agent'], ['src/*.js', 'backend-agent']] } = {}) {
@@ -137,15 +137,15 @@ test('호출 인계 검사: runId·실행 단위 필수', () => {
 test('리더의 호출 대상 제한과 final QA는 PM만', () => {
   const dir = project();
   assert.equal(call(dir, 'planning-lead', 'planner-agent').allowed, true);
-  assert.equal(call(dir, 'planning-lead', 'qa-agent', card('- 모드: plan')).allowed, true);
-  assert.equal(call(dir, 'planning-lead', 'qa-agent', card('- 모드: final')).allowed, false);
+  assert.equal(call(dir, 'planning-lead', 'qa-agent', card('- Mode: plan')).allowed, true);
+  assert.equal(call(dir, 'planning-lead', 'qa-agent', card('- Mode: final')).allowed, false);
   assert.equal(call(dir, 'planning-lead', 'dev-lead').allowed, false);
   assert.equal(call(dir, 'planning-lead', 'backend-agent').allowed, false);
   assert.equal(call(dir, 'dev-lead', 'qa-agent').allowed, false);
   assert.equal(call(dir, 'dev-lead', 'planner-agent').allowed, false);
   assert.equal(call(dir, 'dev-lead', 'frontend-agent', card(), 't9').allowed, true);
   assert.equal(call(dir, 'planner-agent', 'backend-agent').allowed, false);
-  assert.equal(call(dir, 'pm-agent', 'qa-agent', card('- 모드: final')).allowed, true);
+  assert.equal(call(dir, 'pm-agent', 'qa-agent', card('- Mode: final')).allowed, true);
 });
 
 test('이 팀 외의 에이전트는 팀 정책 파일만 보호하고 나머지는 간섭하지 않음', () => {
@@ -189,7 +189,7 @@ test('relay 모드: 리더의 하위 에이전트 호출 거부, nested 모드·
   const dir = project();
   const profile = (mode) => {
     mkdirSync(join(dir, '.claude', 'team'), { recursive: true });
-    writeFileSync(join(dir, '.claude', 'team', 'profile.md'), `## 팀 설정\n\n- 실행 프로파일: full\n- 실행 모드: ${mode}\n`);
+    writeFileSync(join(dir, '.claude', 'team', 'profile.md'), `## 팀 설정\n\n- Execution profile: full\n- Execution mode: ${mode}\n`);
   };
   profile('relay');
   const denied = call(dir, 'dev-lead', 'backend-agent');

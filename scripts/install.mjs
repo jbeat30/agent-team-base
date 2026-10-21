@@ -139,7 +139,7 @@ function detectStacks(dir) {
   const has = (name) => existsSync(join(dir, name));
   const stacks = [];
   const checks = [];
-  const sideEffect = (body) => (/--fix|--write|\bprettier\b(?!.*--check)|\bformat\b(?!.*check)/.test(body) ? '있음(자동 수정 가능)' : '없음(추정)');
+  const sideEffect = (body) => (/--fix|--write|\bprettier\b(?!.*--check)|\bformat\b(?!.*check)/.test(body) ? 'present (may auto-fix)' : 'none (assumed)');
 
   if (has('package.json')) {
     const pkg = readJson(join(dir, 'package.json')).value ?? {};
@@ -160,32 +160,32 @@ function detectStacks(dir) {
   if (has('pyproject.toml') || has('requirements.txt') || has('setup.py') || has('Pipfile')) {
     const text = ['pyproject.toml', 'requirements.txt', 'Pipfile', 'tox.ini', 'pytest.ini'].filter(has).map((f) => readFileSync(join(dir, f), 'utf8')).join('\n');
     stacks.push({ item: 'Python', value: ['pytest', 'django', 'flask', 'fastapi', 'ruff', 'mypy', 'black'].filter((k) => new RegExp(k, 'i').test(text)).join(', '), evidence: ['pyproject.toml', 'requirements.txt'].filter(has) });
-    if (/pytest/i.test(text) || has('pytest.ini')) checks.push({ purpose: '테스트', command: 'pytest', cwd: '.', sideEffect: '없음(추정)', evidence: 'pytest 설정·의존성' });
-    if (/ruff/i.test(text)) checks.push({ purpose: '린트', command: 'ruff check', cwd: '.', sideEffect: '없음(추정)', evidence: 'ruff 설정·의존성' });
-    if (/mypy/i.test(text)) checks.push({ purpose: '타입 검사', command: 'mypy .', cwd: '.', sideEffect: '없음(추정)', evidence: 'mypy 설정·의존성' });
+    if (/pytest/i.test(text) || has('pytest.ini')) checks.push({ purpose: '테스트', command: 'pytest', cwd: '.', sideEffect: 'none (assumed)', evidence: 'pytest 설정·의존성' });
+    if (/ruff/i.test(text)) checks.push({ purpose: '린트', command: 'ruff check', cwd: '.', sideEffect: 'none (assumed)', evidence: 'ruff 설정·의존성' });
+    if (/mypy/i.test(text)) checks.push({ purpose: '타입 검사', command: 'mypy .', cwd: '.', sideEffect: 'none (assumed)', evidence: 'mypy 설정·의존성' });
   }
   if (has('go.mod')) {
     stacks.push({ item: 'Go', value: readFileSync(join(dir, 'go.mod'), 'utf8').match(/^go\s+(\S+)/m)?.[1] ?? '', evidence: ['go.mod'] });
-    checks.push({ purpose: '테스트', command: 'go test ./...', cwd: '.', sideEffect: '없음(추정)', evidence: 'go.mod' });
-    checks.push({ purpose: '정적 검사', command: 'go vet ./...', cwd: '.', sideEffect: '없음(추정)', evidence: 'go.mod' });
+    checks.push({ purpose: '테스트', command: 'go test ./...', cwd: '.', sideEffect: 'none (assumed)', evidence: 'go.mod' });
+    checks.push({ purpose: '정적 검사', command: 'go vet ./...', cwd: '.', sideEffect: 'none (assumed)', evidence: 'go.mod' });
   }
   if (has('pom.xml')) {
     stacks.push({ item: 'Java (Maven)', value: '', evidence: ['pom.xml'] });
-    checks.push({ purpose: '테스트', command: 'mvn test', cwd: '.', sideEffect: '없음(추정)', evidence: 'pom.xml' });
+    checks.push({ purpose: '테스트', command: 'mvn test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'pom.xml' });
   }
   if (has('build.gradle') || has('build.gradle.kts')) {
     stacks.push({ item: 'Java/Kotlin (Gradle)', value: '', evidence: ['build.gradle(.kts)'] });
-    checks.push({ purpose: '테스트', command: has('gradlew') ? './gradlew test' : 'gradle test', cwd: '.', sideEffect: '없음(추정)', evidence: 'build.gradle' });
+    checks.push({ purpose: '테스트', command: has('gradlew') ? './gradlew test' : 'gradle test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'build.gradle' });
   }
   if (has('Cargo.toml')) {
     stacks.push({ item: 'Rust', value: '', evidence: ['Cargo.toml'] });
-    checks.push({ purpose: '테스트', command: 'cargo test', cwd: '.', sideEffect: '없음(추정)', evidence: 'Cargo.toml' });
+    checks.push({ purpose: '테스트', command: 'cargo test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'Cargo.toml' });
   }
   if (has('Gemfile')) stacks.push({ item: 'Ruby', value: '', evidence: ['Gemfile'] });
   if (has('composer.json')) stacks.push({ item: 'PHP', value: '', evidence: ['composer.json'] });
   if (readdirSync(dir).some((f) => /\.(sln|csproj)$/.test(f))) {
     stacks.push({ item: '.NET', value: '', evidence: ['*.sln|*.csproj'] });
-    checks.push({ purpose: '테스트', command: 'dotnet test', cwd: '.', sideEffect: '없음(추정)', evidence: '.sln/.csproj' });
+    checks.push({ purpose: '테스트', command: 'dotnet test', cwd: '.', sideEffect: 'none (assumed)', evidence: '.sln/.csproj' });
   }
   return { stacks, checks };
 }
@@ -249,36 +249,36 @@ function loadAnswers(options) {
 
 function renderProfile(answers, source) {
   const table = (head, rows) => [`| ${head.join(' | ')} |`, `| ${head.map(() => '---').join(' | ')} |`, ...rows.map((r) => `| ${r.map(escapeCell).join(' | ')} |`)].join('\n');
-  return `# 프로젝트 프로필
+  return `# Project profile
 
-설치 시 조사 결과와 사용자 답변으로 생성한 파일, 모든 에이전트가 작업 전에 읽어 재질문을 줄임
-비밀값 미포함, 근거 없는 항목은 \`미확인\`으로 표기, 사용자가 수정 가능
+File generated from the install survey and user answers. Every agent reads it before work to reduce repeated questions.
+No secrets. Mark items without evidence as \`unchecked\`. The user may edit it.
 
-## 기술 환경
+## Tech environment
 
-${table(['항목', '값', '근거 경로'], answers.stack.map((s) => [s.item, s.value || '미확인', [].concat(s.evidence ?? '미확인').join(', ')]))}
+${table(['Item', 'Value', 'Evidence path'], answers.stack.map((s) => [s.item, s.value || 'unchecked', [].concat(s.evidence ?? 'unchecked').join(', ')]))}
 
-## 검사 명령
+## Check commands
 
-${table(['목적', '명령', '작업 경로', '부작용(자동 수정·외부 접근·상태 변경)'], answers.checks.map((c) => [c.purpose, `\`${c.command}\``, c.cwd ?? '.', c.sideEffect ?? '미확인']))}
+${table(['Purpose', 'Command', 'Working directory', 'Side effects (auto-fix, external access, state change)'], answers.checks.map((c) => [c.purpose, `\`${c.command}\``, c.cwd ?? '.', c.sideEffect ?? 'unchecked']))}
 
-## 컨벤션
+## Conventions
 
-${table(['항목', '내용', '근거 경로'], answers.conventions.map((c) => [c.item, c.content ?? '', c.evidence ?? '미확인']))}
+${table(['Item', 'Content', 'Evidence path'], answers.conventions.map((c) => [c.item, c.content ?? '', c.evidence ?? 'unchecked']))}
 
-## 수정 금지 영역
+## Forbidden areas
 
-${table(['경로', '사유'], answers.forbidden.map((f) => [f.path, f.reason ?? '']))}
+${table(['Path', 'Reason'], answers.forbidden.map((f) => [f.path, f.reason ?? '']))}
 
-## 팀 설정
+## Team settings
 
-- 실행 프로파일: ${answers.profile}
-- 실행 모드: ${answers.executionMode ?? '해당 없음(lite)'}
-- Context7 MCP: ${answers.context7 ? '등록' : '미등록'}
-- 보호 모드: ${answers.guardMode === 'strict' ? '엄격' : '권고'}
-- PDCA 모드: ${answers.pdca}
-- 설치한 역할: ${ROLE_FILES.join(', ')} (역할 파일은 항상 전체 설치)
-- 원본 저장소·태그·커밋: ${source.repo} · ${source.tag ?? '태그 없음'} · ${source.commit ?? '미확인'}
+- Execution profile: ${answers.profile}
+- Execution mode: ${answers.executionMode ?? 'n/a (lite)'}
+- Context7 MCP: ${answers.context7 ? 'registered' : 'not registered'}
+- Protection mode: ${answers.guardMode === 'strict' ? 'strict' : 'advisory'}
+- PDCA mode: ${answers.pdca}
+- Installed roles: ${ROLE_FILES.join(', ')} (all role files are always installed)
+- Source repository, tag, commit: ${source.repo} · ${source.tag ?? 'no tag'} · ${source.commit ?? 'unchecked'}
 `;
 }
 
@@ -578,7 +578,7 @@ function verify(dir, options) {
   add('claude version', claude.status === 'ok' ? 'pass' : claude.status === 'below' ? 'fail' : 'unverified', `${claude.version ?? '확인 불가'} (최소 ${MIN_CLAUDE})`);
   const canary = guardCanary(dir);
   add('guard canary', canary.status, canary.detail);
-  const strict = existsSync(join(dir, '.claude/team/profile.md')) && /^- 보호 모드:\s*엄격\s*$/m.test(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'));
+  const strict = existsSync(join(dir, '.claude/team/profile.md')) && /^- Protection mode:\s*strict\s*$/m.test(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'));
   if (strict) add('strict approval', 'unverified', '직접 승인 범위·등록·default 대화형 실행은 별도 점검 필요, 자동 확인 완료로 취급 금지');
   if (options.live && strict) {
     add('guard live', 'unverified', '엄격 모드는 default 대화형 세션에서 직접 승인·가드 발화 점검 필요, 비대화형 호출 생략');

@@ -62,7 +62,7 @@ function parseAllowedChecks(planText) {
       .split(/(?<!\\)\|/)
       .map((c) => c.trim().replace(/\\\|/g, '|'));
     const command = (cells[0] ?? '').replace(/^`+|`+$/g, '').trim();
-    if (!command || command === '명령') continue;
+    if (!command || command === 'Command') continue;
     rows.push({ command, cwd: cells[1] ?? '', sideEffect: cells[2] ?? '' });
   }
   return rows;
@@ -70,7 +70,7 @@ function parseAllowedChecks(planText) {
 
 function resolveCwd(cell) {
   const value = cell.replace(/^`+|`+$/g, '').trim();
-  if (!value || value === '.' || value === '프로젝트 루트') return root;
+  if (!value || value === '.' || value === 'project root') return root;
   if (isAbsolute(value)) die(`작업 경로는 프로젝트 내부 상대 경로만 허용: ${value}`);
   const full = resolve(root, value);
   const rel = relative(root, full);
@@ -96,9 +96,9 @@ function cmdRun(args) {
   const registration = strictRegistration(runId);
   const entry = parseAllowedChecks(plan.text).find((row) => row.command === command);
   if (!entry) die(`기획안 8장에 없는 명령은 실행하지 않음: ${command}`);
-  const clean = /^없음/.test(entry.sideEffect);
+  const clean = /^none/.test(entry.sideEffect);
   if (!clean && !allowSideEffects) {
-    die(`부작용 분류가 '없음'이 아닌 명령(${entry.sideEffect || '미분류'}), 사용자 승인 후 --allow-side-effects 로 재실행`);
+    die(`side-effect class is not 'none' for command(${entry.sideEffect || '미분류'}), 사용자 승인 후 --allow-side-effects 로 재실행`);
   }
   const cwd = resolveCwd(entry.cwd);
 
@@ -260,15 +260,15 @@ function planQuote(planText) {
   return quoted.join('\n');
 }
 
-// 호출 카드의 `- 항목:` 값과 `## 요청 원문` 인용 블록 추출
+// 호출 카드의 `- 항목:` 값과 `## Request source` 인용 블록 추출
 function parseCard(text) {
   const field = (name) => text.match(new RegExp(`^- ${name}[^:\\n]*:[ \\t]*(.*)$`, 'm'))?.[1]?.trim() ?? '';
-  const quote = text.split(/^## 요청 원문\s*$/m)[1];
+  const quote = text.split(/^## Request source\s*$/m)[1];
   return {
     runId: field('runId'),
-    planHash: field('기획안 경로·해시').match(/\b[0-9a-f]{64}\b/)?.[0] ?? null,
-    ids: field('담당 요구사항').match(/\bR\d+\b/g) ?? [],
-    files: field('허용 파일').split(',').map((f) => stripCell(f).replace(/^\.\//, '')).filter((f) => f && f !== '없음'),
+    planHash: field('Plan path and hash').match(/\b[0-9a-f]{64}\b/)?.[0] ?? null,
+    ids: field('Assigned requirements').match(/\bR\d+\b/g) ?? [],
+    files: field('Allowed files').split(',').map((f) => stripCell(f).replace(/^\.\//, '')).filter((f) => f && f !== 'none'),
     quote: quote === undefined ? null : quote.split(/\r?\n/).filter((l) => l.startsWith('>')).map((l) => l.replace(/^>\s?/, '')).join('\n'),
   };
 }
@@ -316,7 +316,7 @@ function cmdTrace(args) {
   const planned = new Map();
   for (const row of changeRows) {
     const file = stripCell(row[1]).replace(/\\/g, '/').replace(/^\.\//, '');
-    if (!file || file === '파일') continue;
+    if (!file || file === 'File') continue;
     planned.set(file, stripCell(row[4]));
   }
 

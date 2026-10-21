@@ -2,7 +2,7 @@
 // 권고·엄격 모드 가드: PreToolUse·PostToolUse hook, 역할별 쓰기 경로와 에이전트 호출 대상·순서 검사
 // 차단은 exit 2와 stderr 메시지, 오류·파싱 실패도 차단(fail closed)
 // 보안 경계가 아닌 실수 방지 장치: 메인 세션의 Bash·사용자·hook 설정 변경은 방어하지 않음
-// 전제: 에이전트 호출 인계에 `runId: <id>`, 기획안 상태는 `- 상태: confirmed`, 변경 계획 6장 표의 담당은 역할 이름
+// 전제: 에이전트 호출 인계에 `runId: <id>`, 기획안 상태는 `- Status: confirmed`, 변경 계획 6장 표의 담당은 역할 이름
 import { existsSync, mkdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { strictMode, verifyRegistration, verifyWrite } from '../team/bin/team-policy.mjs';
@@ -82,7 +82,7 @@ function validRunId(runId) {
 function planConfirmed(root, runId) {
   const text = readText(runPaths(root, runId).plan);
   if (text === null) return false;
-  const match = text.match(/^- 상태:\s*([A-Za-z-]+)/m);
+  const match = text.match(/^- Status:\s*([A-Za-z-]+)/m);
   return match?.[1] === 'confirmed';
 }
 
@@ -98,7 +98,7 @@ function assignedFiles(root, runId, role) {
     if (!line.trim().startsWith('|') || /^\|\s*-/.test(line.trim())) continue;
     const cells = splitRow(line);
     const file = (cells[1] ?? '').replace(/\\/g, '/').replace(/^\.\//, '');
-    if (!file || file === '파일' || /[*?[\]]/.test(file) || file.startsWith('/') || file.split('/').includes('..')) continue;
+    if (!file || file === 'File' || /[*?[\]]/.test(file) || file.startsWith('/') || file.split('/').includes('..')) continue;
     if (cells[4] === role) files.push(norm(file));
   }
   return files;
@@ -202,7 +202,7 @@ function decideWrite(root, input) {
 // 프로필의 실행 모드가 relay이면 리더는 하위 에이전트를 직접 호출하지 않고 카드만 반환
 function relayMode(root) {
   const text = readText(join(root, '.claude/team/profile.md'));
-  return text !== null && /^- 실행 모드:\s*relay\b/m.test(text);
+  return text !== null && /^- Execution mode:\s*relay\b/m.test(text);
 }
 
 function decideAgent(root, input) {
@@ -218,7 +218,7 @@ function decideAgent(root, input) {
     if (relayMode(root)) return deny(`relay 모드에서 ${caller}는 하위 에이전트를 호출하지 않음, 호출 카드를 반환해 PM이 호출`);
     const allowed = CALL_TARGETS[caller] ?? [];
     if (!allowed.includes(target)) return deny(`${caller}는 ${target}을 호출할 수 없음`);
-    if (target === 'qa-agent' && /모드:\s*final/.test(prompt)) return deny('final 검증은 PM이 직접 호출');
+    if (target === 'qa-agent' && /Mode:\s*final/.test(prompt)) return deny('final 검증은 PM이 직접 호출');
   }
 
   // `runId: <id>`가 표준 형식이며 `runId <id>`·`runId=<id>`도 허용

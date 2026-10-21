@@ -1,23 +1,23 @@
-# 작업 카드
+# Work card
 
-공통 양식, 에이전트 간 호출 인계용 내부 양식이며 사용자와의 대화에는 사용하지 않음
-호출 시 prompt 본문으로 전달
-호출 직전에 `.claude-team-docs/runs/<runId>/cards/NN-<수신 역할>.md`로 저장하고 `team-check.mjs trace`가 기획안과 대조
-요약이 아닌 파일 경로를 단일 기준으로 사용, 카드와 파일이 다르면 수신자가 작업을 중단하고 차이를 보고
+Common form for internal handoff between agents, never used in conversation with the user.
+Pass it as the prompt body of a call.
+Save it right before the call to `.claude-team-docs/runs/<runId>/cards/NN-<receiving role>.md`; `team-check.mjs trace` compares it with the plan.
+Use file paths as the single source of truth, not summaries. If the card and the files differ, the receiver stops and reports the difference.
 
 - runId:
-- 요청 원문 경로: `.claude-team-docs/runs/<runId>/request.md`
-- 기획안 경로·해시: `.claude-team-docs/runs/<runId>/plan.md`, 해시
-- 모드: 해당 시 plan | final
-- 목표:
-- 허용 파일(구체적 경로):
-- 금지 파일·영역:
-- 담당 요구사항·완료 기준 ID:
-- 순서·의존: 선행 작업과 산출물 경로
-- 산출물 경로: 해당 시
-- 근거 경로: 해당 시 선행 보고·검사 기록·diff 경로
-- 재작업 시: 실패 항목 목록과 회차(한도 3회)
+- Request source path: `.claude-team-docs/runs/<runId>/request.md`
+- Plan path and hash: `.claude-team-docs/runs/<runId>/plan.md`, hash
+- Mode: if applicable plan | final
+- Goal:
+- Allowed files (exact paths):
+- Forbidden files and areas:
+- Assigned requirements and completion criteria IDs:
+- Order and dependencies: prior work and output paths
+- Output path: if applicable
+- Evidence paths: if applicable, prior reports, check records, diff paths
+- On rework: failed items and round number (limit 3)
 
-## 요청 원문
+## Request source
 
-> request.md의 원문 그대로 첨부
+> Attach the request source from request.md verbatim

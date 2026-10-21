@@ -39,9 +39,9 @@ export function paths(root, runId) {
 export function strictMode(root) {
   const file = join(root, '.claude/team/profile.md');
   if (!existsSync(file)) return false;
-  const value = read(file).match(/^- 보호 모드:\s*([^\r\n]+)/m)?.[1]?.trim();
-  if (value === undefined || value === '권고') return false;
-  if (value === '엄격') return true;
+  const value = read(file).match(/^- Protection mode:\s*([^\r\n]+)/m)?.[1]?.trim();
+  if (value === undefined || value === 'advisory') return false;
+  if (value === 'strict') return true;
   return fail('보호 모드 값 오류');
 }
 
@@ -55,7 +55,7 @@ function rows(text, number) {
 
 /** @description 사용자 확인용 승인 범위 검증, 보호 경로는 허용 범위에 포함하지 않음 */
 export function validateGrant(root, grant) {
-  if (!Array.isArray(grant.roots) || !grant.roots.length || !Array.isArray(grant.forbidden) || !Array.isArray(grant.checks) || !Array.isArray(grant.operations) || !grant.operations.length || grant.operations.some((op) => !['수정', '생성'].includes(op)) || typeof grant.allowPmConfirm !== 'boolean') fail('grant의 roots·forbidden·checks·operations 배열과 allowPmConfirm boolean 필요');
+  if (!Array.isArray(grant.roots) || !grant.roots.length || !Array.isArray(grant.forbidden) || !Array.isArray(grant.checks) || !Array.isArray(grant.operations) || !grant.operations.length || grant.operations.some((op) => !['modify', 'create'].includes(op)) || typeof grant.allowPmConfirm !== 'boolean') fail('grant의 roots·forbidden·checks·operations 배열과 allowPmConfirm boolean 필요');
   const roots = grant.roots.map((p) => safePath(root, p, true));
   const forbidden = grant.forbidden.map((p) => safePath(root, p, true));
   const checks = grant.checks.map((check) => {
@@ -80,25 +80,25 @@ export function snapshot(root, runId) {
   if (saved.schemaVersion !== 1 || normalize(saved.projectRoot ?? '') !== normalize(root)) fail('승인 범위의 프로젝트 불일치');
   const grant = validateGrant(root, saved.scope);
   const text = read(p.plan);
-  if (!/^- 상태:\s*confirmed\s*$/m.test(text)) fail('기획안 confirmed 상태 필요');
+  if (!/^- Status:\s*confirmed\s*$/m.test(text)) fail('기획안 confirmed 상태 필요');
   if (text.match(/^- runId:\s*(\S+)/m)?.[1] !== runId) fail('기획안 runId 불일치');
-  const files = rows(text, 6).filter((cells) => cells[0] !== '순서').map((cells) => {
+  const files = rows(text, 6).filter((cells) => cells[0] !== 'Order').map((cells) => {
     if (cells.length !== 5 || !WRITERS.includes(cells[4]) || !grant.operations.includes(cells[3])) fail('변경 계획은 수정/생성 작업과 담당 역할 필요, 삭제·이동은 미지원');
     return { file: checkFile(root, grant, cells[1]), operation: cells[3], role: cells[4] };
   });
   if (!files.length || new Set(files.map((f) => normalize(f.file))).size !== files.length) fail('배정 파일 누락·중복');
-  const checks = rows(text, 8).filter((cells) => cells[0] !== '명령').map((cells) => {
+  const checks = rows(text, 8).filter((cells) => cells[0] !== 'Command').map((cells) => {
     if (cells.length !== 3) fail('검사 명령 표 형식 오류');
     const cwd = safePath(root, cells[1], true);
     const scope = grant.checks.find((c) => c.command === cells[0] && normalize(c.cwd) === normalize(cwd));
-    const noSideEffect = cells[2] === '없음';
+    const noSideEffect = cells[2] === 'none';
     if (!scope || (scope.sideEffects === 'none' && !noSideEffect)) fail('승인 범위 밖 검사 명령·부작용');
     return { command: cells[0], cwd, sideEffects: noSideEffect ? 'none' : 'approved' };
   });
-  const risk = text.match(/^- 위험도:\s*(L[123])\s*$/m)?.[1];
+  const risk = text.match(/^- Risk:\s*(L[123])\s*$/m)?.[1];
   if (!risk) fail('기획안 위험도 L1/L2/L3 필요');
   // PM 판정의 의미 정확성은 행동 평가 대상이며 이 표식만으로 사용자 의도를 인증하지 않음
-  const pmEligible = grant.allowPmConfirm && risk !== 'L3' && /^- 사용자 승인 필요:\s*없음\s*$/m.test(section(text, 10));
+  const pmEligible = grant.allowPmConfirm && risk !== 'L3' && /^- User approval required:\s*none\s*$/m.test(section(text, 10));
   return { schemaVersion: 1, runId, grantSha256: hash(saved), requestSha256: hash(read(p.request)), planSha256: hash(text), files, checks, pmEligible };
 }
 
@@ -115,7 +115,7 @@ export function verifyRegistration(root, runId) {
   return active;
 }
 
-/** @description 활성 등록과 역할별 정확한 허용 파일을 대조 */
+/** @description 활성 등록과 역할별 정확한 Allowed files을 대조 */
 export function verifyWrite(root, file, role, runId) {
   const p = paths(root, runId ?? 'active');
   const active = runId ? verifyRegistration(root, runId) : verifyRegistration(root, JSON.parse(read(p.active)).runId);
