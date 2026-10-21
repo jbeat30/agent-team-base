@@ -37,6 +37,8 @@ Prompt rules **reduce risk but guarantee nothing**; only items enforced by code 
 | Interpretations go to the user | A requirement whose result depends on interpretation is not picked by the PM; it is offered as options in the confirmation dialogue | Prompt |
 | Stop without required input | If the card lacks the request source path, plan, or allowed files, do not edit and return `needs-input` | Prompt, guard hook (rejects calls without a runId) |
 | Do not invent unseen design | Never invent spacing, colors, or copy that the design or plan does not state; mark unchecked screens `unchecked` | Prompt |
+| Propose, then confirm, when no design exists | The PM proposes a design direction, records it in the plan after the user confirms, and implementation follows that record | Prompt |
+| Browser checks only with consent | A UI/UX check (a scripted walkthrough that opens the app and follows flows) runs only when the user agrees | Prompt |
 
 ## 3. Reduce unsupported answers (hallucination)
 

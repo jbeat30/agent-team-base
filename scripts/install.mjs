@@ -29,10 +29,11 @@ const DOCS_DIR = '.claude-team-docs';
 const GITIGNORE_BEGIN = '# >>> claude-team-base';
 const GITIGNORE_END = '# <<< claude-team-base';
 // 등록하는 MCP 서버, 형식은 각 공식 문서의 Claude Code 설정을 따름(Figma는 http 전송, 첫 사용 때 브라우저 로그인 필요)
-const DESIGN_TOOLS = ['playwright', 'shadcn', 'figma'];
+const DESIGN_TOOLS = ['playwright', 'chrome-devtools', 'shadcn', 'figma'];
 const MCP_SERVERS = {
   context7: { command: 'npx', args: ['-y', '@upstash/context7-mcp'] },
   playwright: { command: 'npx', args: ['@playwright/mcp@latest'] },
+  'chrome-devtools': { command: 'npx', args: ['-y', 'chrome-devtools-mcp@latest'] },
   shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] },
   figma: { type: 'http', url: 'https://mcp.figma.com/mcp' },
 };
@@ -606,7 +607,7 @@ function verify(dir, options) {
     add('guard live', live.status, live.detail);
   } else add('guard live', 'unverified', 'hook firing in Claude Code is unchecked until confirmed with --live; if unchecked, treat as no protection');
   for (const name of Object.keys(MCP_SERVERS)) {
-    if (manifest.mcp?.[name] === 'added') add(name, 'unverified', `.mcp.json registration confirmed; the actual connection needs approval after restarting Claude Code${name === 'figma' ? ' and a browser sign-in to Figma' : ''}`);
+    if (manifest.mcp?.[name] === 'added') add(name, 'unverified', `.mcp.json registration confirmed; the actual connection needs approval after restarting Claude Code${name === 'figma' ? ' and a browser sign-in to Figma' : ''}${name === 'chrome-devtools' || name === 'playwright' ? '; the tool can see browser content, so avoid personal tabs and sensitive data' : ''}`);
   }
   const ok = !checks.some((c) => c.status === 'fail');
   return output({ ok, checks }, ok ? 0 : 1);

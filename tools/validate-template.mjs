@@ -13,11 +13,11 @@ const context7 = ['mcp__context7__resolve-library-id', 'mcp__context7__query-doc
 const toolCeiling = {
   'planner-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
   'architecture-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
-  'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7, 'mcp__playwright__*', 'mcp__shadcn__*', 'mcp__figma__*'],
+  'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7, 'mcp__playwright__*', 'mcp__chrome-devtools__*', 'mcp__shadcn__*', 'mcp__figma__*'],
   'backend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
   'api-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
   'test-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
-  'qa-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7, 'mcp__playwright__*', 'mcp__figma__*'],
+  'qa-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7, 'mcp__playwright__*', 'mcp__chrome-devtools__*', 'mcp__figma__*'],
   'planning-lead': ['Read', 'Glob', 'Grep', 'Write'],
   'dev-lead': ['Read', 'Glob', 'Grep', 'Write'],
 };
