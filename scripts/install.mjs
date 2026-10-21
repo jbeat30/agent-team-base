@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = join(repoRoot, 'template');
-const TEMPLATE_VERSION = '0.1.0';
+const TEMPLATE_VERSION = '0.2.0';
 const SOURCE_REPO = 'https://github.com/jbeat30/claude-team-base';
 const MIN_CLAUDE = '2.1.302';
 const MIN_NODE = 18;
@@ -28,7 +28,15 @@ const GITIGNORE_PATH = '.gitignore';
 const DOCS_DIR = '.claude-team-docs';
 const GITIGNORE_BEGIN = '# >>> claude-team-base';
 const GITIGNORE_END = '# <<< claude-team-base';
-const CONTEXT7_SERVER = { command: 'npx', args: ['-y', '@upstash/context7-mcp'] };
+// 등록하는 MCP 서버, 형식은 각 공식 문서의 Claude Code 설정을 따름(Figma는 http 전송, 첫 사용 때 브라우저 로그인 필요)
+const DESIGN_TOOLS = ['playwright', 'chrome-devtools', 'shadcn', 'figma'];
+const MCP_SERVERS = {
+  context7: { command: 'npx', args: ['-y', '@upstash/context7-mcp'] },
+  playwright: { command: 'npx', args: ['@playwright/mcp@latest'] },
+  'chrome-devtools': { command: 'npx', args: ['-y', 'chrome-devtools-mcp@latest'] },
+  shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] },
+  figma: { type: 'http', url: 'https://mcp.figma.com/mcp' },
+};
 const ROLE_FILES = ['pm-agent', 'planning-lead', 'dev-lead', 'planner-agent', 'architecture-agent', 'frontend-agent', 'backend-agent', 'api-agent', 'test-agent', 'qa-agent'];
 // 복사하지 않는 템플릿 파일: settings는 병합, 프로필은 조사 결과로 생성
 const NOT_COPIED = new Set(['.claude/settings.fragment.json', '.claude/team/profile.template.md']);
@@ -50,7 +58,7 @@ function parseArgs(argv) {
   const [command, ...rest] = argv;
   const options = {};
   for (let i = 0; i < rest.length; i++) {
-    if (!rest[i].startsWith('--')) fail(`알 수 없는 인자: ${rest[i]}`);
+    if (!rest[i].startsWith('--')) fail(`unknown argument: ${rest[i]}`);
     const key = rest[i].slice(2);
     const next = rest[i + 1];
     if (next === undefined || next.startsWith('--')) options[key] = true;
@@ -88,6 +96,10 @@ function nodeStatus() {
 }
 
 function sourceInfo() {
+  // 플러그인 캐시는 git 저장소가 아니므로 상위 저장소를 오인하지 않도록 .git 존재를 먼저 확인
+  if (!existsSync(join(repoRoot, '.git'))) {
+    return { repo: SOURCE_REPO, templateVersion: TEMPLATE_VERSION, tag: `v${TEMPLATE_VERSION}`, commit: null, channel: 'plugin' };
+  }
   const git = (...args) => spawnSync('git', ['-C', repoRoot, ...args], { encoding: 'utf8' });
   const commit = git('rev-parse', 'HEAD');
   const tag = git('describe', '--tags', '--exact-match');
@@ -100,9 +112,9 @@ function sourceInfo() {
 }
 
 function targetDir(options) {
-  if (typeof options.target !== 'string') fail('--target <dir> 필요');
+  if (typeof options.target !== 'string') fail('--target <dir> required');
   const dir = resolve(options.target);
-  if (!existsSync(dir) || !statSync(dir).isDirectory()) fail(`대상 디렉터리 없음: ${dir}`);
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) fail(`target directory not found: ${dir}`);
   return dir;
 }
 
@@ -135,7 +147,7 @@ function detectStacks(dir) {
   const has = (name) => existsSync(join(dir, name));
   const stacks = [];
   const checks = [];
-  const sideEffect = (body) => (/--fix|--write|\bprettier\b(?!.*--check)|\bformat\b(?!.*check)/.test(body) ? '있음(자동 수정 가능)' : '없음(추정)');
+  const sideEffect = (body) => (/--fix|--write|\bprettier\b(?!.*--check)|\bformat\b(?!.*check)/.test(body) ? 'present (may auto-fix)' : 'none (assumed)');
 
   if (has('package.json')) {
     const pkg = readJson(join(dir, 'package.json')).value ?? {};
@@ -148,7 +160,7 @@ function detectStacks(dir) {
       evidence: ['package.json'],
     });
     const run = (name) => (pm === 'npm' && name === 'test' ? 'npm test' : `${pm} ${name === 'test' ? 'test' : `run ${name}`}`);
-    for (const [purpose, names] of [['테스트', ['test']], ['린트', ['lint']], ['타입 검사', ['typecheck', 'type-check', 'tsc']]]) {
+    for (const [purpose, names] of [['Test', ['test']], ['Lint', ['lint']], ['Type check', ['typecheck', 'type-check', 'tsc']]]) {
       const found = names.find((n) => pkg.scripts?.[n]);
       if (found) checks.push({ purpose, command: run(found), cwd: '.', sideEffect: sideEffect(pkg.scripts[found]), evidence: `package.json scripts.${found}` });
     }
@@ -156,32 +168,32 @@ function detectStacks(dir) {
   if (has('pyproject.toml') || has('requirements.txt') || has('setup.py') || has('Pipfile')) {
     const text = ['pyproject.toml', 'requirements.txt', 'Pipfile', 'tox.ini', 'pytest.ini'].filter(has).map((f) => readFileSync(join(dir, f), 'utf8')).join('\n');
     stacks.push({ item: 'Python', value: ['pytest', 'django', 'flask', 'fastapi', 'ruff', 'mypy', 'black'].filter((k) => new RegExp(k, 'i').test(text)).join(', '), evidence: ['pyproject.toml', 'requirements.txt'].filter(has) });
-    if (/pytest/i.test(text) || has('pytest.ini')) checks.push({ purpose: '테스트', command: 'pytest', cwd: '.', sideEffect: '없음(추정)', evidence: 'pytest 설정·의존성' });
-    if (/ruff/i.test(text)) checks.push({ purpose: '린트', command: 'ruff check', cwd: '.', sideEffect: '없음(추정)', evidence: 'ruff 설정·의존성' });
-    if (/mypy/i.test(text)) checks.push({ purpose: '타입 검사', command: 'mypy .', cwd: '.', sideEffect: '없음(추정)', evidence: 'mypy 설정·의존성' });
+    if (/pytest/i.test(text) || has('pytest.ini')) checks.push({ purpose: 'Test', command: 'pytest', cwd: '.', sideEffect: 'none (assumed)', evidence: 'pytest config and dependencies' });
+    if (/ruff/i.test(text)) checks.push({ purpose: 'Lint', command: 'ruff check', cwd: '.', sideEffect: 'none (assumed)', evidence: 'ruff config and dependencies' });
+    if (/mypy/i.test(text)) checks.push({ purpose: 'Type check', command: 'mypy .', cwd: '.', sideEffect: 'none (assumed)', evidence: 'mypy config and dependencies' });
   }
   if (has('go.mod')) {
     stacks.push({ item: 'Go', value: readFileSync(join(dir, 'go.mod'), 'utf8').match(/^go\s+(\S+)/m)?.[1] ?? '', evidence: ['go.mod'] });
-    checks.push({ purpose: '테스트', command: 'go test ./...', cwd: '.', sideEffect: '없음(추정)', evidence: 'go.mod' });
-    checks.push({ purpose: '정적 검사', command: 'go vet ./...', cwd: '.', sideEffect: '없음(추정)', evidence: 'go.mod' });
+    checks.push({ purpose: 'Test', command: 'go test ./...', cwd: '.', sideEffect: 'none (assumed)', evidence: 'go.mod' });
+    checks.push({ purpose: 'Static check', command: 'go vet ./...', cwd: '.', sideEffect: 'none (assumed)', evidence: 'go.mod' });
   }
   if (has('pom.xml')) {
     stacks.push({ item: 'Java (Maven)', value: '', evidence: ['pom.xml'] });
-    checks.push({ purpose: '테스트', command: 'mvn test', cwd: '.', sideEffect: '없음(추정)', evidence: 'pom.xml' });
+    checks.push({ purpose: 'Test', command: 'mvn test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'pom.xml' });
   }
   if (has('build.gradle') || has('build.gradle.kts')) {
     stacks.push({ item: 'Java/Kotlin (Gradle)', value: '', evidence: ['build.gradle(.kts)'] });
-    checks.push({ purpose: '테스트', command: has('gradlew') ? './gradlew test' : 'gradle test', cwd: '.', sideEffect: '없음(추정)', evidence: 'build.gradle' });
+    checks.push({ purpose: 'Test', command: has('gradlew') ? './gradlew test' : 'gradle test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'build.gradle' });
   }
   if (has('Cargo.toml')) {
     stacks.push({ item: 'Rust', value: '', evidence: ['Cargo.toml'] });
-    checks.push({ purpose: '테스트', command: 'cargo test', cwd: '.', sideEffect: '없음(추정)', evidence: 'Cargo.toml' });
+    checks.push({ purpose: 'Test', command: 'cargo test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'Cargo.toml' });
   }
   if (has('Gemfile')) stacks.push({ item: 'Ruby', value: '', evidence: ['Gemfile'] });
   if (has('composer.json')) stacks.push({ item: 'PHP', value: '', evidence: ['composer.json'] });
   if (readdirSync(dir).some((f) => /\.(sln|csproj)$/.test(f))) {
     stacks.push({ item: '.NET', value: '', evidence: ['*.sln|*.csproj'] });
-    checks.push({ purpose: '테스트', command: 'dotnet test', cwd: '.', sideEffect: '없음(추정)', evidence: '.sln/.csproj' });
+    checks.push({ purpose: 'Test', command: 'dotnet test', cwd: '.', sideEffect: 'none (assumed)', evidence: '.sln/.csproj' });
   }
   return { stacks, checks };
 }
@@ -208,34 +220,39 @@ function detect(dir) {
       hasHooks: Boolean(settings?.value?.hooks),
       mcpFile: existsSync(join(dir, MCP_PATH)),
       context7Registered: Boolean(readJson(join(dir, MCP_PATH)).value?.mcpServers?.context7),
+      registeredMcp: Object.keys(readJson(join(dir, MCP_PATH)).value?.mcpServers ?? {}),
+      componentsJson: existsSync(join(dir, 'components.json')),
       gitignore: existsSync(join(dir, GITIGNORE_PATH)),
       installed: existsSync(join(dir, MANIFEST_PATH)),
     },
-    note: '감지 결과는 추정이며 사용자 확인 후 answers 파일에 반영',
+    note: 'detection results are estimates; reflect them in the answers file after user confirmation',
   };
 }
 
 // ---------- answers · profile ----------
 
 function loadAnswers(options) {
-  if (typeof options.answers !== 'string') fail('--answers <file> 필요');
+  if (typeof options.answers !== 'string') fail('--answers <file> required');
   const parsed = readJson(resolve(options.answers));
-  if (parsed.error) fail(`answers 파일 해석 실패: ${parsed.error}`);
+  if (parsed.error) fail(`failed to parse the answers file: ${parsed.error}`);
   const a = parsed.value;
-  if (!['lite', 'full'].includes(a.profile)) fail('answers.profile은 lite 또는 full');
-  if (typeof a.context7 !== 'boolean') fail('answers.context7은 true 또는 false');
-  if (a.executionMode !== undefined && !['nested', 'relay'].includes(a.executionMode)) fail('answers.executionMode는 nested 또는 relay');
-  if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode는 advisory 또는 strict');
-  if (a.pdca !== undefined && a.pdca !== 'off') fail('v0.1.0은 answers.pdca=off만 지원, bkit PDCA 연동은 후속 버전 예정');
+  if (!['lite', 'full'].includes(a.profile)) fail('answers.profile must be lite or full');
+  if (typeof a.context7 !== 'boolean') fail('answers.context7 must be true or false');
+  if (a.executionMode !== undefined && !['nested', 'relay'].includes(a.executionMode)) fail('answers.executionMode must be nested or relay');
+  if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode must be advisory or strict');
+  if (a.designTools !== undefined && (!Array.isArray(a.designTools) || a.designTools.some((t) => !DESIGN_TOOLS.includes(t)))) fail(`answers.designTools must be an array of ${DESIGN_TOOLS.join(', ')}`);
+  if (a.pdca !== undefined && a.pdca !== 'off') fail('only answers.pdca=off is supported; bkit PDCA integration is planned for a later version');
   return {
     profile: a.profile,
     context7: a.context7,
+    designTools: [...new Set(a.designTools ?? [])],
     gitignore: a.gitignore ?? true,
     pdca: 'off',
     // nested는 확인한 버전에서 리더가 하위 호출 도구를 받지 못해 full의 기본을 relay로 둠, lite는 리더를 쓰지 않아 해당 없음
     executionMode: a.profile === 'lite' ? null : a.executionMode ?? 'relay',
     guardMode: a.guardMode ?? 'advisory',
     agentSetting: ['keep', 'replace'].includes(a.agentSetting) ? a.agentSetting : null,
+    designSystem: a.designSystem ?? [],
     stack: a.stack ?? [],
     checks: a.checks ?? [],
     conventions: a.conventions ?? [],
@@ -245,36 +262,43 @@ function loadAnswers(options) {
 
 function renderProfile(answers, source) {
   const table = (head, rows) => [`| ${head.join(' | ')} |`, `| ${head.map(() => '---').join(' | ')} |`, ...rows.map((r) => `| ${r.map(escapeCell).join(' | ')} |`)].join('\n');
-  return `# 프로젝트 프로필
+  return `# Project profile
 
-설치 시 조사 결과와 사용자 답변으로 생성한 파일, 모든 에이전트가 작업 전에 읽어 재질문을 줄임
-비밀값 미포함, 근거 없는 항목은 \`미확인\`으로 표기, 사용자가 수정 가능
+File generated from the install survey and user answers. Every agent reads it before work to reduce repeated questions.
+No secrets. Mark items without evidence as \`unchecked\`. The user may edit it.
 
-## 기술 환경
+## Tech environment
 
-${table(['항목', '값', '근거 경로'], answers.stack.map((s) => [s.item, s.value || '미확인', [].concat(s.evidence ?? '미확인').join(', ')]))}
+${table(['Item', 'Value', 'Evidence path'], answers.stack.map((s) => [s.item, s.value || 'unchecked', [].concat(s.evidence ?? 'unchecked').join(', ')]))}
 
-## 검사 명령
+## Check commands
 
-${table(['목적', '명령', '작업 경로', '부작용(자동 수정·외부 접근·상태 변경)'], answers.checks.map((c) => [c.purpose, `\`${c.command}\``, c.cwd ?? '.', c.sideEffect ?? '미확인']))}
+${table(['Purpose', 'Command', 'Working directory', 'Side effects (auto-fix, external access, state change)'], answers.checks.map((c) => [c.purpose, `\`${c.command}\``, c.cwd ?? '.', c.sideEffect ?? 'unchecked']))}
 
-## 컨벤션
+## Conventions
 
-${table(['항목', '내용', '근거 경로'], answers.conventions.map((c) => [c.item, c.content ?? '', c.evidence ?? '미확인']))}
+${table(['Item', 'Content', 'Evidence path'], answers.conventions.map((c) => [c.item, c.content ?? '', c.evidence ?? 'unchecked']))}
 
-## 수정 금지 영역
+## Forbidden areas
 
-${table(['경로', '사유'], answers.forbidden.map((f) => [f.path, f.reason ?? '']))}
+${table(['Path', 'Reason'], answers.forbidden.map((f) => [f.path, f.reason ?? '']))}
+${answers.designSystem.length ? `
+## Design system
 
-## 팀 설정
+Authoritative for all UI work. Agents follow it without deviation and never introduce values or components outside it.
 
-- 실행 프로파일: ${answers.profile}
-- 실행 모드: ${answers.executionMode ?? '해당 없음(lite)'}
-- Context7 MCP: ${answers.context7 ? '등록' : '미등록'}
-- 보호 모드: ${answers.guardMode === 'strict' ? '엄격' : '권고'}
-- PDCA 모드: ${answers.pdca}
-- 설치한 역할: ${ROLE_FILES.join(', ')} (역할 파일은 항상 전체 설치)
-- 원본 저장소·태그·커밋: ${source.repo} · ${source.tag ?? '태그 없음'} · ${source.commit ?? '미확인'}
+${table(['Item', 'Content', 'Location'], answers.designSystem.map((d) => [d.item, d.content ?? '', d.location ?? 'unchecked']))}
+` : ''}
+## Team settings
+
+- Execution profile: ${answers.profile}
+- Execution mode: ${answers.executionMode ?? 'n/a (lite)'}
+- Context7 MCP: ${answers.context7 ? 'registered' : 'not registered'}
+- Design tool MCP: ${answers.designTools.length ? answers.designTools.join(', ') : 'none'}
+- Protection mode: ${answers.guardMode === 'strict' ? 'strict' : 'advisory'}
+- PDCA mode: ${answers.pdca}
+- Installed roles: ${ROLE_FILES.join(', ')} (all role files are always installed)
+- Source repository, tag, commit: ${source.repo} · ${source.tag ?? 'no tag'} · ${source.commit ?? 'unchecked'}
 `;
 }
 
@@ -292,7 +316,7 @@ function mergeSettings(existing, fragment, answers) {
       result.agent = { action: 'replaced', previous: settings.agent };
       settings.agent = fragment.agent;
     } else if (answers.agentSetting === 'keep') result.agent.action = 'kept-user-agent';
-    else result.conflicts.push({ item: 'settings.agent', reason: `기존 agent 설정(${settings.agent})이 있음, answers.agentSetting에 keep 또는 replace 필요` });
+    else result.conflicts.push({ item: 'settings.agent', reason: `an existing agent setting (${settings.agent}) is present; answers.agentSetting needs keep or replace` });
   }
   for (const [event, groups] of Object.entries(fragment.hooks ?? {})) {
     settings.hooks ??= {};
@@ -325,13 +349,13 @@ function buildPlan(dir, answers, options) {
   const source = sourceInfo();
   const environment = { node: nodeStatus(), claude: claudeStatus() };
   const blockers = [];
-  if (environment.node.status === 'below') blockers.push(`Node ${MIN_NODE} 미만`);
-  if (environment.claude.status === 'below') blockers.push(`Claude Code ${environment.claude.version} < 최소 ${MIN_CLAUDE}, 자동 업그레이드하지 않음`);
+  if (environment.node.status === 'below') blockers.push(`Node below ${MIN_NODE}`);
+  if (environment.claude.status === 'below') blockers.push(`Claude Code ${environment.claude.version} < minimum ${MIN_CLAUDE}; no automatic upgrade`);
   const manifestFile = join(dir, MANIFEST_PATH);
   const manifest = existsSync(manifestFile) ? readJson(manifestFile).value : null;
   const recorded = new Map((manifest?.files ?? []).map((f) => [f.path, f.sha256]));
   const onConflict = options['on-conflict'] ?? null;
-  if (onConflict && !['skip', 'replace-with-backup'].includes(onConflict)) fail('--on-conflict는 skip 또는 replace-with-backup');
+  if (onConflict && !['skip', 'replace-with-backup'].includes(onConflict)) fail('--on-conflict must be skip or replace-with-backup');
 
   const operations = [];
   const conflicts = [];
@@ -349,7 +373,7 @@ function buildPlan(dir, answers, options) {
     if (current === hash) operations.push({ path: file.path, action: 'unchanged', sha256: hash, content: file.content });
     else if (recorded.get(file.path) === current) operations.push({ path: file.path, action: 'update', sha256: hash, content: file.content });
     else {
-      const reason = recorded.has(file.path) ? '설치 후 사용자가 수정한 파일' : '기존에 있는 다른 파일';
+      const reason = recorded.has(file.path) ? 'file modified by the user after install' : 'different file that already exists';
       conflicts.push({ item: file.path, reason });
       operations.push({ path: file.path, action: onConflict === 'replace-with-backup' ? 'replace-with-backup' : 'skip', sha256: hash, content: file.content, conflict: true });
     }
@@ -361,8 +385,8 @@ function buildPlan(dir, answers, options) {
   let settingsPlan = { action: 'none' };
   const existingSettings = existsSync(settingsAbs) ? readJson(settingsAbs) : { value: null };
   if (existingSettings.error) {
-    blockers.push(`${SETTINGS_PATH} JSON 해석 불가, 사용자가 수정한 뒤 다시 실행: ${existingSettings.error}`);
-    settingsPlan = { action: 'blocked', reason: '해석 불가' };
+    blockers.push(`${SETTINGS_PATH} JSON cannot be parsed; fix it and run again: ${existingSettings.error}`);
+    settingsPlan = { action: 'blocked', reason: 'unparseable' };
   } else {
     const merged = mergeSettings(existingSettings.value, fragment, answers);
     for (const c of merged.conflicts) conflicts.push(c);
@@ -370,26 +394,33 @@ function buildPlan(dir, answers, options) {
     settingsPlan = { action: merged.conflicts.length ? 'blocked' : changed ? (existingSettings.value ? 'merge' : 'create') : 'unchanged', agent: merged.agent, addedHooks: merged.added, content: merged.conflicts.length ? null : `${JSON.stringify(merged.settings, null, 2)}\n` };
   }
 
-  // MCP 등록
-  let mcpPlan = { action: 'none' };
-  if (answers.context7) {
+  // MCP 등록: Context7과 선택한 디자인 도구를 한 번에 병합, 서버별로 추가·동일·충돌 판정
+  let mcpPlan = { action: 'none', servers: {} };
+  const wanted = [...(answers.context7 ? ['context7'] : []), ...answers.designTools];
+  if (wanted.length) {
     const mcpAbs = join(dir, MCP_PATH);
     const mcp = existsSync(mcpAbs) ? readJson(mcpAbs) : { value: {} };
     if (mcp.error) {
-      conflicts.push({ item: MCP_PATH, reason: `JSON 해석 불가: ${mcp.error}` });
-      mcpPlan = { action: 'skip', reason: '해석 불가' };
+      conflicts.push({ item: MCP_PATH, reason: `JSON unparseable: ${mcp.error}` });
+      mcpPlan = { action: 'skip', reason: 'unparseable', servers: {} };
     } else {
-      const server = mcp.value.mcpServers?.context7;
-      if (!server) {
-        const next = structuredClone(mcp.value);
-        next.mcpServers ??= {};
-        next.mcpServers.context7 = CONTEXT7_SERVER;
-        mcpPlan = { action: 'add', server: CONTEXT7_SERVER, content: `${JSON.stringify(next, null, 2)}\n` };
-      } else if (JSON.stringify(server) === JSON.stringify(CONTEXT7_SERVER)) mcpPlan = { action: 'already' };
-      else {
-        conflicts.push({ item: `${MCP_PATH} context7`, reason: '다른 context7 설정이 이미 있음, 변경하지 않음' });
-        mcpPlan = { action: 'skip', reason: '기존 설정 유지' };
+      const next = structuredClone(mcp.value);
+      const servers = {};
+      for (const name of wanted) {
+        const existing = mcp.value.mcpServers?.[name];
+        if (!existing) {
+          next.mcpServers ??= {};
+          next.mcpServers[name] = MCP_SERVERS[name];
+          servers[name] = 'add';
+        } else if (JSON.stringify(existing) === JSON.stringify(MCP_SERVERS[name])) servers[name] = 'already';
+        else {
+          conflicts.push({ item: `${MCP_PATH} ${name}`, reason: `a different ${name} setting already exists; left unchanged` });
+          servers[name] = 'skip';
+        }
       }
+      const added = Object.values(servers).includes('add');
+      const allAlready = Object.values(servers).every((v) => v === 'already');
+      mcpPlan = { action: added ? 'add' : allAlready ? 'already' : 'skip', servers, content: added ? `${JSON.stringify(next, null, 2)}\n` : undefined };
     }
   }
 
@@ -410,7 +441,7 @@ function buildPlan(dir, answers, options) {
     onConflict,
     files: operations.map(({ path, action, sha256: s }) => ({ path, action, sha256: s })),
     settings: { action: settingsPlan.action, agent: settingsPlan.agent ?? null, addedHooks: settingsPlan.addedHooks ?? [], contentSha256: settingsPlan.content ? sha256(settingsPlan.content) : null },
-    mcp: { action: mcpPlan.action, contentSha256: mcpPlan.content ? sha256(mcpPlan.content) : null },
+    mcp: { action: mcpPlan.action, servers: mcpPlan.servers, contentSha256: mcpPlan.content ? sha256(mcpPlan.content) : null },
     gitignore: { action: gitignorePlan.action, contentSha256: gitignorePlan.content ? sha256(gitignorePlan.content) : null },
     conflicts,
     blockers,
@@ -421,13 +452,13 @@ function buildPlan(dir, answers, options) {
 function summarize(plan) {
   const count = (a) => plan.core.files.filter((f) => f.action === a).length;
   const lines = [
-    `원본: ${plan.source.tag ?? '태그 없음'} (${plan.source.commit?.slice(0, 7) ?? '커밋 미확인'}) · 프로파일 ${plan.core.answers.profile} · PDCA ${plan.core.answers.pdca}`,
-    `파일: 신규 ${count('create')} · 갱신 ${count('update')} · 동일 ${count('unchanged')} · 교체(백업) ${count('replace-with-backup')} · 건너뜀 ${count('skip')}`,
-    `settings: ${plan.core.settings.action}${plan.core.settings.agent?.action && plan.core.settings.agent.action !== 'none' ? ` (agent ${plan.core.settings.agent.action})` : ''}, 추가 hook ${plan.core.settings.addedHooks.length}개`,
-    `Context7 MCP(.mcp.json): ${plan.core.mcp.action} · .gitignore: ${plan.core.gitignore.action}`,
-    plan.core.conflicts.length ? `충돌 ${plan.core.conflicts.length}건: ${plan.core.conflicts.map((c) => `${c.item}(${c.reason})`).join('; ')}` : '충돌 없음',
-    plan.core.blockers.length ? `진행 불가: ${plan.core.blockers.join('; ')}` : `환경: Node ${plan.environment.node.version}, Claude Code ${plan.environment.claude.version ?? '미확인'} (${plan.environment.claude.status})`,
-    '롤백: remove 명령이 설치한 항목만 제거(사용자 수정 파일 보존), 교체한 파일의 원본은 백업 경로에 보관',
+    `source: ${plan.source.tag ?? 'no tag'} (${plan.source.commit?.slice(0, 7) ?? 'commit unchecked'}) · profile ${plan.core.answers.profile} · PDCA ${plan.core.answers.pdca}`,
+    `files: new ${count('create')} · update ${count('update')} · unchanged ${count('unchanged')} · replace (backup) ${count('replace-with-backup')} · skip ${count('skip')}`,
+    `settings: ${plan.core.settings.action}${plan.core.settings.agent?.action && plan.core.settings.agent.action !== 'none' ? ` (agent ${plan.core.settings.agent.action})` : ''}, added hooks ${plan.core.settings.addedHooks.length}`,
+    `MCP (.mcp.json): ${plan.core.mcp.action}${Object.keys(plan.core.mcp.servers ?? {}).length ? ` (${Object.entries(plan.core.mcp.servers).map(([k, v]) => `${k} ${v}`).join(', ')})` : ''} · .gitignore: ${plan.core.gitignore.action}`,
+    plan.core.conflicts.length ? `conflicts ${plan.core.conflicts.length}: ${plan.core.conflicts.map((c) => `${c.item}(${c.reason})`).join('; ')}` : 'no conflicts',
+    plan.core.blockers.length ? `blocked: ${plan.core.blockers.join('; ')}` : `environment: Node ${plan.environment.node.version}, Claude Code ${plan.environment.claude.version ?? 'unchecked'} (${plan.environment.claude.status})`,
+    'rollback: the remove command removes only installed items (files you modified are kept); originals of replaced files are kept in the backup path',
   ];
   return lines;
 }
@@ -452,10 +483,10 @@ function backup(dir, backupRoot, rel) {
 function apply(dir, options) {
   const answers = loadAnswers(options);
   const plan = buildPlan(dir, answers, options);
-  if (typeof options['plan-hash'] !== 'string') fail('--plan-hash <hash> 필요, plan 결과의 hash를 사용자 확인 후 전달');
-  if (options['plan-hash'] !== plan.hash) return output({ ok: false, reason: 'plan 이후 입력이나 프로젝트 상태가 바뀜, plan을 다시 실행해 확인', expected: plan.hash }, 1);
-  if (plan.core.blockers.length) return output({ ok: false, reason: '진행 불가', blockers: plan.core.blockers }, 1);
-  if (plan.unresolved.length) return output({ ok: false, reason: '충돌 처리 방식 필요(--on-conflict skip|replace-with-backup)', conflicts: plan.unresolved }, 1);
+  if (typeof options['plan-hash'] !== 'string') fail('--plan-hash <hash> required; pass the hash from the plan result after user confirmation');
+  if (options['plan-hash'] !== plan.hash) return output({ ok: false, reason: 'input or project state changed since plan; run plan again and confirm', expected: plan.hash }, 1);
+  if (plan.core.blockers.length) return output({ ok: false, reason: 'blocked', blockers: plan.core.blockers }, 1);
+  if (plan.unresolved.length) return output({ ok: false, reason: 'a conflict handling choice is required (--on-conflict skip|replace-with-backup)', conflicts: plan.unresolved }, 1);
 
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const backupRel = `${DOCS_DIR}/backups/${stamp}`;
@@ -477,7 +508,7 @@ function apply(dir, options) {
       doBackup(op.path);
       writeFile(dir, op.path, op.content);
       installed.push({ path: op.path, sha256: op.sha256 });
-    } else skipped.push({ path: op.path, reason: '충돌로 건너뜀' });
+    } else skipped.push({ path: op.path, reason: 'skipped because of a conflict' });
   }
 
   const previous = plan.manifest;
@@ -494,7 +525,7 @@ function apply(dir, options) {
   if (plan.mcpPlan.action === 'add') {
     doBackup(MCP_PATH);
     writeFile(dir, MCP_PATH, plan.mcpPlan.content);
-    mcpRecord = { context7: 'added' };
+    for (const [name, action] of Object.entries(plan.mcpPlan.servers)) if (action === 'add') mcpRecord = { ...mcpRecord, [name]: 'added' };
   }
   let gitignoreRecord = previous?.gitignore ?? 'none';
   if (['append', 'create'].includes(plan.gitignorePlan.action)) {
@@ -518,71 +549,73 @@ function apply(dir, options) {
     backups: backedUp.length ? backupRel : null,
   };
   writeFile(dir, MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
-  return output({ ok: true, installedFiles: installed.length, skipped, backups: manifest.backups, manifest: MANIFEST_PATH, next: 'verify 명령으로 점검' });
+  return output({ ok: true, installedFiles: installed.length, skipped, backups: manifest.backups, manifest: MANIFEST_PATH, next: 'check with the verify command' });
 }
 
 // ---------- verify ----------
 
 function guardCanary(dir) {
   const script = join(dir, '.claude', 'hooks', 'team-guard.mjs');
-  if (!existsSync(script)) return { status: 'fail', detail: 'team-guard.mjs 없음' };
+  if (!existsSync(script)) return { status: 'fail', detail: 'team-guard.mjs not found' };
   const run = (input) => spawnSync(process.execPath, [script], { cwd: dir, env: { ...process.env, CLAUDE_PROJECT_DIR: dir }, input: JSON.stringify({ cwd: dir, permission_mode: 'default', hook_event_name: 'PreToolUse', ...input }), encoding: 'utf8' });
   const denied = run({ tool_name: 'Write', agent_type: 'pm-agent', tool_input: { file_path: '.git/team-canary' } });
   const allowed = run({ tool_name: 'Write', agent_type: 'pm-agent', tool_input: { file_path: '.claude-team-docs/runs/team-canary/request.md' } });
   const broken = spawnSync(process.execPath, [script], { cwd: dir, input: '{not json', encoding: 'utf8' });
   const ok = denied.status === 2 && allowed.status === 0 && broken.status === 2;
-  return { status: ok ? 'pass' : 'fail', detail: ok ? '보호 경로 거부·PM 작업 기록 경로 허용·오류 시 차단 확인(스크립트 단독 실행, Claude의 hook 발화는 --live로 확인)' : `거부 ${denied.status}, 허용 ${allowed.status}, 오류 ${broken.status}` };
+  return { status: ok ? 'pass' : 'fail', detail: ok ? 'protected path denied, PM run record path allowed, blocks on error (script run alone; check hook firing in Claude with --live)' : `denied ${denied.status}, allowed ${allowed.status}, error ${broken.status}` };
 }
 
 function liveCanary(dir) {
   const result = runClaude(['-p', '--permission-mode', 'acceptEdits', '--output-format', 'json', '--max-turns', '4'], 'Use the Write tool to create the file .git/team-canary.txt with the content x. Then report whether the write was created or refused, quoting any refusal message.', dir);
-  if (result.status !== 0) return { status: 'unverified', detail: `claude 실행 실패(exit ${result.status})` };
+  if (result.status !== 0) return { status: 'unverified', detail: `claude run failed (exit ${result.status})` };
   let text = '';
   try {
     text = JSON.parse(result.stdout).result ?? '';
   } catch {
-    return { status: 'unverified', detail: '출력 해석 실패' };
+    return { status: 'unverified', detail: 'failed to parse output' };
   }
   const created = existsSync(join(dir, '.git', 'team-canary.txt'));
   if (created) {
     rmSync(join(dir, '.git', 'team-canary.txt'), { force: true });
-    return { status: 'fail', detail: '보호 경로에 쓰기가 허용됨, 가드 미작동' };
+    return { status: 'fail', detail: 'write to a protected path was allowed; guard not working' };
   }
-  return /team-guard/.test(text) ? { status: 'pass', detail: 'Claude Code에서 hook 발화와 차단 확인' } : { status: 'unverified', detail: '쓰기는 만들어지지 않았으나 team-guard 거부 메시지를 확인하지 못함' };
+  return /team-guard/.test(text) ? { status: 'pass', detail: 'hook firing and blocking confirmed in Claude Code' } : { status: 'unverified', detail: 'the write was not made, but no team-guard denial message was seen' };
 }
 
 function verify(dir, options) {
   const checks = [];
   const add = (name, status, detail) => checks.push({ name, status, detail });
   const manifestFile = join(dir, MANIFEST_PATH);
-  if (!existsSync(manifestFile)) return output({ ok: false, checks: [{ name: 'manifest', status: 'fail', detail: '설치 매니페스트 없음' }] }, 1);
+  if (!existsSync(manifestFile)) return output({ ok: false, checks: [{ name: 'manifest', status: 'fail', detail: 'install manifest not found' }] }, 1);
   const manifest = readJson(manifestFile).value;
   const bad = [];
   for (const f of manifest.files) {
     const abs = join(dir, f.path);
-    if (!existsSync(abs)) bad.push(`${f.path}(없음)`);
-    else if (sha256(readFileSync(abs)) !== f.sha256) bad.push(`${f.path}(수정됨)`);
+    if (!existsSync(abs)) bad.push(`${f.path}(missing)`);
+    else if (sha256(readFileSync(abs)) !== f.sha256) bad.push(`${f.path}(modified)`);
   }
-  add('files', bad.length ? 'fail' : 'pass', bad.length ? bad.join(', ') : `${manifest.files.length}개 파일 해시 일치`);
+  add('files', bad.length ? 'fail' : 'pass', bad.length ? bad.join(', ') : `${manifest.files.length} file hashes match`);
   const settings = readJson(join(dir, SETTINGS_PATH));
   const missingHooks = (manifest.settings.hooks ?? []).filter((h) => !(settings.value?.hooks?.[h.event] ?? []).some((g) => (g.hooks ?? []).some((x) => x.command === h.command)));
-  add('settings hooks', settings.error || missingHooks.length ? 'fail' : 'pass', settings.error ?? (missingHooks.length ? `누락 ${missingHooks.length}개` : 'hook 등록 확인'));
-  add('settings agent', settings.value?.agent === 'pm-agent' ? 'pass' : 'unverified', settings.value?.agent === 'pm-agent' ? 'agent=pm-agent' : `agent=${settings.value?.agent ?? '없음'}, 메인 세션이 PM으로 동작하지 않음`);
+  add('settings hooks', settings.error || missingHooks.length ? 'fail' : 'pass', settings.error ?? (missingHooks.length ? `missing ${missingHooks.length}` : 'hooks registered'));
+  add('settings agent', settings.value?.agent === 'pm-agent' ? 'pass' : 'unverified', settings.value?.agent === 'pm-agent' ? 'agent=pm-agent' : `agent=${settings.value?.agent ?? 'none'}; the main session does not act as PM`);
   const roles = ROLE_FILES.filter((r) => !existsSync(join(dir, '.claude', 'agents', `${r}.md`)));
-  add('role files', roles.length ? 'fail' : 'pass', roles.length ? `누락 ${roles.join(', ')}` : '역할 10종 존재');
+  add('role files', roles.length ? 'fail' : 'pass', roles.length ? `missing ${roles.join(', ')}` : 'all 10 role files present');
   const claude = claudeStatus();
-  add('claude version', claude.status === 'ok' ? 'pass' : claude.status === 'below' ? 'fail' : 'unverified', `${claude.version ?? '확인 불가'} (최소 ${MIN_CLAUDE})`);
+  add('claude version', claude.status === 'ok' ? 'pass' : claude.status === 'below' ? 'fail' : 'unverified', `${claude.version ?? 'unavailable'} (minimum ${MIN_CLAUDE})`);
   const canary = guardCanary(dir);
   add('guard canary', canary.status, canary.detail);
-  const strict = existsSync(join(dir, '.claude/team/profile.md')) && /^- 보호 모드:\s*엄격\s*$/m.test(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'));
-  if (strict) add('strict approval', 'unverified', '직접 승인 범위·등록·default 대화형 실행은 별도 점검 필요, 자동 확인 완료로 취급 금지');
+  const strict = existsSync(join(dir, '.claude/team/profile.md')) && /^- Protection mode:\s*strict\s*$/m.test(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'));
+  if (strict) add('strict approval', 'unverified', 'direct approval scope, registration, and default interactive runs need a separate check; never treat as automatically confirmed');
   if (options.live && strict) {
-    add('guard live', 'unverified', '엄격 모드는 default 대화형 세션에서 직접 승인·가드 발화 점검 필요, 비대화형 호출 생략');
+    add('guard live', 'unverified', 'strict mode needs direct approval and guard firing checked in a default interactive session; non-interactive call skipped');
   } else if (options.live) {
     const live = liveCanary(dir);
     add('guard live', live.status, live.detail);
-  } else add('guard live', 'unverified', 'Claude Code에서의 hook 발화는 --live로 확인하기 전까지 미확인, 미확인이면 보호 없음으로 취급');
-  if (manifest.mcp?.context7 === 'added') add('context7', 'unverified', '.mcp.json 등록 확인, 실제 연결은 Claude Code 재시작 후 승인 필요');
+  } else add('guard live', 'unverified', 'hook firing in Claude Code is unchecked until confirmed with --live; if unchecked, treat as no protection');
+  for (const name of Object.keys(MCP_SERVERS)) {
+    if (manifest.mcp?.[name] === 'added') add(name, 'unverified', `.mcp.json registration confirmed; the actual connection needs approval after restarting Claude Code${name === 'figma' ? ' and a browser sign-in to Figma' : ''}${name === 'chrome-devtools' || name === 'playwright' ? '; the tool can see browser content, so avoid personal tabs and sensitive data' : ''}`);
+  }
   const ok = !checks.some((c) => c.status === 'fail');
   return output({ ok, checks }, ok ? 0 : 1);
 }
@@ -600,7 +633,7 @@ function pruneEmptyDirs(dir, rel) {
 
 function remove(dir, options) {
   const manifestFile = join(dir, MANIFEST_PATH);
-  if (!existsSync(manifestFile)) fail('설치 매니페스트 없음', 1);
+  if (!existsSync(manifestFile)) fail('install manifest not found', 1);
   const manifest = readJson(manifestFile).value;
   const apply = options.yes === true;
   const removed = [];
@@ -614,14 +647,14 @@ function remove(dir, options) {
         unlinkSync(abs);
         pruneEmptyDirs(dir, f.path);
       }
-    } else kept.push({ path: f.path, reason: '설치 후 사용자가 수정, 삭제하지 않음' });
+    } else kept.push({ path: f.path, reason: 'modified by the user after install; not deleted' });
   }
 
   const actions = [];
   const settingsAbs = join(dir, SETTINGS_PATH);
   if (existsSync(settingsAbs)) {
     const parsed = readJson(settingsAbs);
-    if (parsed.error) kept.push({ path: SETTINGS_PATH, reason: 'JSON 해석 불가, 수동 정리 필요' });
+    if (parsed.error) kept.push({ path: SETTINGS_PATH, reason: 'JSON unparseable; clean up manually' });
     else {
       const settings = parsed.value;
       for (const h of manifest.settings?.hooks ?? []) {
@@ -630,16 +663,16 @@ function remove(dir, options) {
         for (const g of groups) g.hooks = (g.hooks ?? []).filter((x) => x.command !== h.command);
         settings.hooks[h.event] = groups.filter((g) => g.hooks.length);
         if (!settings.hooks[h.event].length) delete settings.hooks[h.event];
-        actions.push(`settings hook 제거: ${h.event}`);
+        actions.push(`removed settings hook: ${h.event}`);
       }
       if (settings.hooks && !Object.keys(settings.hooks).length) delete settings.hooks;
       const agent = manifest.settings?.agent;
       if (agent?.action === 'set' && settings.agent === 'pm-agent') {
         delete settings.agent;
-        actions.push('settings agent 제거');
+        actions.push('removed settings agent');
       } else if (agent?.action === 'replaced' && settings.agent === 'pm-agent') {
         settings.agent = agent.previous;
-        actions.push(`settings agent 복원: ${agent.previous}`);
+        actions.push(`restored settings agent: ${agent.previous}`);
       }
       if (apply) {
         if (Object.keys(settings).length) writeFileSync(settingsAbs, `${JSON.stringify(settings, null, 2)}\n`);
@@ -648,13 +681,19 @@ function remove(dir, options) {
     }
   }
   const mcpAbs = join(dir, MCP_PATH);
-  if (manifest.mcp?.context7 === 'added' && existsSync(mcpAbs)) {
+  const addedMcp = Object.keys(MCP_SERVERS).filter((name) => manifest.mcp?.[name] === 'added');
+  if (addedMcp.length && existsSync(mcpAbs)) {
     const parsed = readJson(mcpAbs);
-    if (!parsed.error && parsed.value.mcpServers?.context7) {
-      delete parsed.value.mcpServers.context7;
-      if (!Object.keys(parsed.value.mcpServers).length) delete parsed.value.mcpServers;
-      actions.push('.mcp.json context7 제거');
-      if (apply) {
+    if (!parsed.error) {
+      let changed = false;
+      for (const name of addedMcp) {
+        if (!parsed.value.mcpServers?.[name]) continue;
+        delete parsed.value.mcpServers[name];
+        actions.push(`removed .mcp.json ${name}`);
+        changed = true;
+      }
+      if (parsed.value.mcpServers && !Object.keys(parsed.value.mcpServers).length) delete parsed.value.mcpServers;
+      if (apply && changed) {
         if (Object.keys(parsed.value).length) writeFileSync(mcpAbs, `${JSON.stringify(parsed.value, null, 2)}\n`);
         else unlinkSync(mcpAbs);
       }
@@ -666,7 +705,7 @@ function remove(dir, options) {
     const pattern = new RegExp(`\\n?${GITIGNORE_BEGIN}[\\s\\S]*?${GITIGNORE_END}\\n?`);
     if (pattern.test(text)) {
       const next = text.replace(pattern, '\n').replace(/^\n+/, '');
-      actions.push('.gitignore 블록 제거');
+      actions.push('removed .gitignore block');
       if (apply) {
         if (next.trim()) writeFileSync(gAbs, next);
         else unlinkSync(gAbs);
@@ -677,13 +716,13 @@ function remove(dir, options) {
     unlinkSync(manifestFile);
     pruneEmptyDirs(dir, MANIFEST_PATH);
   }
-  return output({ ok: true, dryRun: !apply, removed, kept, actions, backups: manifest.backups, note: apply ? '작업 기록(.claude-team-docs)과 백업은 삭제하지 않음' : '--yes를 지정해야 실제로 제거' });
+  return output({ ok: true, dryRun: !apply, removed, kept, actions, backups: manifest.backups, note: apply ? 'task records (.claude-team-docs) and backups are not deleted' : 'pass --yes to actually remove' });
 }
 
 // ---------- 진입 ----------
 
 const { command, options } = parseArgs(process.argv.slice(2));
-if (!command) fail('사용법: detect | plan | apply | verify | remove --target <dir> ...');
+if (!command) fail('usage: detect | plan | apply | verify | remove --target <dir> ...');
 const dir = targetDir(options);
 if (command === 'detect') output(detect(dir));
 else if (command === 'plan') {
@@ -692,4 +731,4 @@ else if (command === 'plan') {
 } else if (command === 'apply') apply(dir, options);
 else if (command === 'verify') verify(dir, options);
 else if (command === 'remove') remove(dir, options);
-else fail(`알 수 없는 명령: ${command}`);
+else fail(`unknown command: ${command}`);

@@ -6,7 +6,7 @@
 ## 개발 환경
 
 - Node 18 이상, 의존성 설치 없음
-- `npm test`로 정적 검사와 단위 테스트 실행, 통과 결과와 실행하지 못한 검사를 PR에 명시
+- `npm test`로 정적 검사와 단위 테스트 실행, 통과 결과와 실행하지 못한 검사를 PR에 명시, 전체 검사 방법은 [검사 방법](../docs/verification/TESTING.md)
 - `template/`은 사용자 프로젝트에 복사되는 배포 원본, 역할 정의를 바꾸면 `tools/validate-template.mjs`도 함께 갱신
 
 ## 검사 종류
