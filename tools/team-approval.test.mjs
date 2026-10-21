@@ -22,7 +22,7 @@ function run(script, dir, args, input) {
 const cli = (dir, ...args) => run(approval, dir, args);
 const guard = (dir, input) => run(guardScript, dir, [], { cwd: dir, permission_mode: 'default', hook_event_name: 'PreToolUse', ...input });
 const write = (dir, file, role = 'pm-agent', extra = {}) => guard(dir, { tool_name: 'Write', agent_type: role, tool_input: { file_path: file }, ...extra });
-const call = (dir) => guard(dir, { tool_name: 'Agent', agent_type: 'pm-agent', tool_use_id: 'write-1', tool_input: { subagent_type: 'backend-agent', prompt: '- runId: R1' } });
+const call = (dir) => guard(dir, { tool_name: 'Agent', agent_type: 'pm-agent', tool_use_id: 'write-1', tool_input: { subagent_type: 'backend-agent', prompt: '- runId: R1', run_in_background: false } });
 const location = (dir, name) => join(dir, '.claude-team-docs/.guard', name);
 const planPath = (dir) => join(dir, '.claude-team-docs/runs/R1/plan.md');
 const getJson = (file) => JSON.parse(readFileSync(file, 'utf8'));

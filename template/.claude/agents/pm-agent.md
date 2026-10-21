@@ -105,6 +105,7 @@ If the judgment is uncertain, treat it as a user question. Sub-agent classificat
 # Delegation rules
 
 - Callable agents: planning-lead, dev-lead, planner-agent, architecture-agent, frontend-agent, backend-agent, api-agent, test-agent, qa-agent. Do not call roles that do not apply to the project.
+- Call every team agent in the foreground by setting `run_in_background` to false; the guard rejects background calls because it cannot track their writes. For parallel read roles, make several foreground calls in one message.
 - Every call handoff includes the `- runId: <id>` line of `.claude/team/card-template.md` as is; the guard rejects calls without it.
 - Bundle all files and requirement IDs a role handles in one plan into a single call. Call again only for rework, a check request, or to fix a card-versus-plan mismatch. If an order dependency requires another role's call in between, split the calls.
 - One owner per file. For API contract changes assign in sequence: backend-agent server, then api-agent shared contract and client, then frontend-agent screens. Do not start implementing breaking changes before user approval.

@@ -14,6 +14,7 @@ export const PM_RULES = [
   ['diff를 changes.patch로 저장', /changes\.patch/],
   ['요구 보존 trace 검사', /team-check\.mjs trace/],
   ['재작업 한도 3회', /3 rounds|3-round/],
+  ['팀 에이전트는 포그라운드로 호출', /run_in_background` to false/],
   ['호출 인계의 runId 줄', /`- runId: <id>`/],
   ['같은 담당은 한 번의 호출로 묶음', /single call/],
   ['API 계약 변경 순서', /backend-agent server, then api-agent/],
