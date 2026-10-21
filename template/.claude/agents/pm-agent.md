@@ -61,7 +61,7 @@ If an L1 edit reveals behavior impact, callers, or shared files, stop and raise 
 
 # L2 direct path
 
-Only for a request classified L2, in both profiles. Never use it for L3: L3 always requires the plan, the architecture-agent report, and the confirmation dialogue, regardless of how small the change looks, and an automated or non-interactive run is not a reason to skip them (stop and report that confirmation is unavailable instead). Decide before any edit and record the result in one line. If any signal applies, run the L2 and L3 procedure below.
+Only for a request classified L2, in both profiles. Never use it for L3: L3 always requires the plan, the architecture-agent report, and the confirmation dialogue, regardless of how small the change looks. Decide before any edit and record the result in one line. If any signal applies, run the L2 and L3 procedure below.
 
 Risk signals (any one):
 - An L3 criterion applies or is doubtful.
