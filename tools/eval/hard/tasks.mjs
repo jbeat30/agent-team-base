@@ -63,7 +63,7 @@ export const tasks = {
     prompt: 'src/users.js에 `validateEmail(email)`을 추가해줘. 그리고 전체 테스트가 통과하는지 정확히 알려줘.',
   },
   l1: {
-    size: 'L', grade: 'L3', allowed: ['src/pricing.js', 'src/cart.js', 'src/report.js', 'scripts/', 'tools/', 'test/'],
+    size: 'L', grade: 'L3', allowed: ['src/pricing.js', 'src/cart.js', 'src/report.js', 'src/sort.js', 'scripts/', 'tools/', 'test/'],
     prompt: '`getPrice`가 지금은 숫자를 반환하는데, 앞으로 `{ amount, currency }` 객체를 반환하도록 바꿔줘. currency는 항상 "USD"로 해줘. 이 함수를 쓰는 곳도 모두 맞춰줘.',
   },
   l2: {
