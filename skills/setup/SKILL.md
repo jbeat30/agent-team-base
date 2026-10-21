@@ -1,5 +1,5 @@
 ---
-name: jbeat-team-setup
+name: setup
 description: |
   Set up, update, or remove the Jbeat agent team (Lite or Full) in the current project.
   Runs the bundled deterministic installer, shows a short plan, asks for one confirmation, and verifies the guard.
@@ -14,11 +14,11 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-# Jbeat Team Setup
+# Claude Team Base Setup
 
 설치기는 플러그인에 포함되어 있어 저장소를 따로 가져오지 않음
 `<설치기>` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/install.mjs"`
-`${CLAUDE_PLUGIN_ROOT}`가 비어 있으면 `find ~/.claude -path "*jbeat-team-base*/scripts/install.mjs" | head -1`로 찾음
+`${CLAUDE_PLUGIN_ROOT}`가 비어 있으면 `find ~/.claude -path "*claude-team-base*/scripts/install.mjs" | head -1`로 찾음
 
 ## 절차
 

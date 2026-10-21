@@ -1,5 +1,5 @@
 {
-  "name": "jbeat-team-base",
+  "name": "claude-team-base",
   "version": "0.1.0",
   "description": "Jbeat Claude Code agent team base that respects existing project policies, installed through a skill.",
   "author": {
@@ -11,13 +11,13 @@
   "keywords": ["claude-skill", "agent-team", "subagents", "jbeat"],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Jbeat Team Base",
+    "displayName": "Claude Team Base",
     "shortDescription": "Set up a Lite or Full Claude Code agent team with one skill",
     "developerName": "jbeat",
     "category": "Productivity",
     "capabilities": ["Interactive", "Read", "Write"],
     "defaultPrompt": [
-      "/jbeat-team-setup",
+      "/claude-team-base:setup",
       "Set up the Jbeat agent team in this project.",
       "Check the Jbeat agent team installation."
     ]
