@@ -38,8 +38,8 @@ if (condition !== 'direct') {
   writeFileSync(answers, JSON.stringify({
     profile: condition, executionMode: EXEC_MODE, context7: CONTEXT7, gitignore: true, pdca: 'off', guardMode: 'advisory',
     stack: [{ item: 'Node.js', value: 'node:test', evidence: 'package.json' }],
-    checks: [{ purpose: '테스트', command: 'npm test', cwd: '.', sideEffect: '없음' }],
-    conventions: [], forbidden: [{ path: 'dist/', reason: '생성 파일' }],
+    checks: [{ purpose: 'Test', command: 'npm test', cwd: '.', sideEffect: 'none' }],
+    conventions: [], forbidden: [{ path: 'dist/', reason: 'generated file' }],
   }));
   const install = (args) => spawnSync(process.execPath, [join(repo, 'scripts', 'install.mjs'), ...args], { encoding: 'utf8' });
   const plan = JSON.parse(install(['plan', '--target', work, '--answers', answers]).stdout);
