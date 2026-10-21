@@ -1,5 +1,5 @@
 > [!NOTE]
-> **Preview (v0.1.0)**
+> **Preview**
 > A preview release verified on a small fixture. It can cost far more time and money than handling tasks directly, and its usefulness is still to be evaluated. Read the limits in the [run record](docs/verification/2026-10-19-small-fixture.md) (Korean) before using it.
 
 <p align="center">
@@ -16,13 +16,21 @@
 
 <p align="center"><a href="README.md">한국어</a></p>
 
-A Claude Code agent team that respects your project's existing rules and tools. A main-session PM, specialist agents, and an independent QA work through stage gates.
+# claude-team-base
+
+**A plugin that sets up a Claude Code agent team in your project with one skill.**
+
+It installs a team in which a main-session PM, specialist agents, and an independent QA work through stage gates, while respecting your project's existing rules and tools.
 Requirement coverage, discovery of missed items, scope control, evidence, and finishing quality come before speed.
 
+- Ask in natural language; the PM classifies the request and calls only the roles it needs.
+- Small requests are handled directly without the team; large ones go through plan, confirm, build, verify.
+- The skill guides install, update, and removal in conversation and asks for confirmation of the change plan only once.
+- Existing files are never overwritten, and global settings and your feature code are left alone.
 
 ## Quick start
 
-Install as a plugin and run the skill once (no separate repository fetch):
+Requirements: Claude Code 2.1.302 or later, Node 18 or later.
 
 ```text
 /plugin marketplace add jbeat30/jbeat-conventions
@@ -30,36 +38,60 @@ Install as a plugin and run the skill once (no separate repository fetch):
 /claude-team-base:setup
 ```
 
-- `/claude-team-base:setup` handles install, update, and removal; `/claude-team-base:check` verifies an install without calling Claude
+1. Install the plugin and run `/claude-team-base:setup` in your project.
+2. The skill surveys the project and asks only what it needs.
+3. It shows the change plan in 10 lines or fewer and asks for confirmation **once**.
+4. The installer copies and merges files, then checks the guard.
+5. From the next session, just ask in natural language.
 
-Without the plugin, open Claude Code in your project and ask in one line:
+You can also fetch the repository directly. In Claude Code, ask:
 
 ```text
 Read INSTALL.md at https://github.com/jbeat30/claude-team-base and set this project up
 ```
 
-![Install flow: from one line to natural-language use](docs/assets/install-flow.en.png)
+## Skills
 
-- Claude reads [INSTALL.md](INSTALL.md), pins a release tag, fetches it, and inspects your project
-- It asks only what it needs, in chat: Lite or Full, Context7 MCP registration, protected areas, and corrections to what it detected
-- It shows the change plan in ten lines or fewer and asks for **one final setup confirmation** (missing information, conflicts, or failures may need separate questions)
-- An installer script copies and merges files deterministically, then checks the guard with a real Claude call
-- Requirements: Claude Code 2.1.302 or later, Node 18 or later
-- Existing files are never overwritten, and global settings and feature code are not changed. You can remove it at any time
+| Skill | Purpose | Cost |
+| --- | --- | --- |
+| `/claude-team-base:setup` | **Install, update, or remove** the team; pass `install`, `update`, or `remove` as an argument | One Claude call for the guard check after install |
+| `/claude-team-base:check` | Check the installation (file hashes, hook registration, role files, version) | None; it does not call Claude without `--live` |
 
-After setup, start a new session and ask in plain language:
+Plain requests work too: "set up the agent team", "check the team installation", "remove the team".
+
+## What you choose at setup
+
+`setup` asks these in conversation and does not re-ask what detection already shows.
+
+| Choice | Options | Default or recommendation |
+| --- | --- | --- |
+| Usage mode | **Lite**: the PM calls only the needed roles directly<br>**Full**: planning and development leaders coordinate sub-roles; better for large multi-area work | Lite |
+| Full execution mode | **relay**: the leader returns call cards and the PM makes the calls | relay |
+| Context7 MCP | Register it in `.mcp.json` to check docs against the installed version | Asked |
+| Forbidden areas | Production config, generated files, specific paths | None |
+| Protection mode | **Advisory**: the guard hook blocks violations<br>**Strict**: tracks direct approval records (optional; you run the approval commands yourself) | Advisory |
+| Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
+| Conflict handling | If files collide, per item: skip or replace with backup; keep or replace an existing `agent` setting | Asked on conflict |
+
+All 10 role files are always installed regardless of mode; the mode only changes how the team is used.
+
+## Using it after install
+
+No extra commands. From the next session, ask in natural language.
 
 ```text
-Add a password visibility toggle to the existing login screen. Follow our UI rules.
+Add a show/hide password toggle to the existing login screen. Follow the current UI rules.
 ```
 
 ```text
-Add delivery status to the order API and connect it to the screen. Start with the contract and impact.
+Add shipping status to the order API response and wire it to the screen. Start by laying out the contract and impact.
 ```
 
 ```text
 Explain what this function does.
 ```
+
+The PM answers and asks questions in the language you write in.
 
 ## How it works
 
@@ -68,100 +100,114 @@ Explain what this function does.
 ![Agent team: Lite and Full](docs/assets/agent-team.en.png)
 
 The main session acts as the PM (`pm-agent`), talks with you, and calls only the roles it needs.
-All ten role files are always installed. **Lite or Full is a usage mode you choose at setup.**
 
 | Mode | Structure | Fits |
 | --- | --- | --- |
-| Lite | The PM calls analysts, specialists, and QA directly | General work |
-| Full | A planning lead and a development lead coordinate their specialists; the PM calls QA directly | Multi-area, large, or high-risk work |
+| Lite | The PM calls analysis, worker, and QA roles directly | General work |
+| Full | Planning and development leaders coordinate sub-roles; the PM calls QA directly | Multi-area, large, or high-risk work |
 
-Full runs in relay mode: leaders return call cards instead of calling specialists, and the PM calls them as written. Nested mode (leaders calling specialists directly) did not work in the version we checked, so it is not recommended.
+Full runs in relay mode: leaders do not call sub-roles directly but return call cards, and the PM calls them as written. Nested mode, where the leader calls sub-roles, did not work in the version checked and is not recommended.
 
 | Role | Responsibility |
 | --- | --- |
-| pm-agent (main session) | Triage, conversation and confirmation, approved scope, check execution, final report |
-| planning-lead · dev-lead | Full only: coordinate planning · coordinate implementation |
-| planner-agent | Requirement breakdown, items you may have missed, acceptance criteria |
-| architecture-agent | Callers, contracts, regression, and side-effect analysis |
-| frontend · backend · api · test | Edit only assigned files, write tests |
-| qa-agent | Plan review; independent review of changes, check records, and the completion checklist |
+| pm-agent (main session) | Request classification, user conversation and confirmation, approval scope, running checks, final report |
+| planning-lead, dev-lead | Planning and development coordination in Full |
+| planner-agent | Requirement breakdown, finding items users may miss, acceptance criteria |
+| architecture-agent | Analysis of callers, contracts, regressions, and side effects |
+| frontend, backend, api, test | Edit only assigned files, write tests |
+| qa-agent | Independent verification of the plan, changes, check records, and completion checklist |
 
 ### Workflow
 
-![Workflow: from intake to the final report](docs/assets/task-workflow.en.png)
+![Workflow: from intake to final report](docs/assets/task-workflow.en.png)
 
-| Level | Example | Path |
+| Grade | Example | Path |
 | --- | --- | --- |
-| Q | Questions and explanations | The PM answers directly |
-| L1 | Comments, typos, wording; behavior unchanged | The PM edits directly and runs a completion check |
-| L2 | General behavior changes | Plan → confirm → build → final verification |
-| L3 | Contracts, permissions, data, security, many areas | L2 path with mandatory impact analysis and user confirmation |
+| Q | Questions, explanations | The PM answers directly |
+| L1 | Comments, typos, wording, behavior unchanged | The PM edits directly and checks completion |
+| L2 | Ordinary behavior changes | Plan, confirm, build, final verification |
+| L3 | Contracts, permissions, data, security, many areas | L2 path with required impact analysis and user confirmation |
 
-- **Requirements become Given/When/Then acceptance criteria**; where tests are possible, failing tests are written first
-- **Every agent reads the original request and the plan file directly**, so requirements do not drift through summaries
-- Scope changes, policy decisions, compatibility changes, security, and external effects are confirmed with you first; otherwise the PM confirms and says so
-- No source edits before confirmation; failed verification returns to development, at most three rework rounds
-- Approved commands only are run by the **check runner**, which records exit code, timestamps, output, and hashes; QA reads those originals instead of the PM's summary
-- Library and framework behavior is checked against the installed version through Context7; anything unchecked is marked `unverified`
+- **Requirements become Given/When/Then acceptance criteria**, and failing tests are written first when testing is possible.
+- **Every agent reads the request source and the plan file directly**, so summaries cannot distort requirements.
+- Scope changes, policy decisions, compatibility changes, security, and external effects are confirmed with you first; otherwise the PM self-confirms and says so.
+- No source edits before confirmation. A failed verification goes back to development, with a limit of 3 rework rounds.
+- Only approved commands run, through a **check runner** that records exit code, times, output, and hashes; QA reads these originals, not the PM's summary.
+- Library and framework behavior is checked against the installed version through Context7; anything unchecked is marked `unchecked`.
+
+### Token efficiency
+
+- Agent prompts (roles, forms, guard messages) are written in English, about 26% fewer always-injected tokens than the Korean version (measured on all 10 roles plus forms, one model).
+- Simple requests (Q and L1) never call the team.
+- Files and requirements of the same owner are bundled into one call.
 
 ## What gets installed
 
 ```text
 .claude/
-  agents/        ten role definitions
+  agents/        10 role definitions
   hooks/         guard hook
   team/          forms, project profile, check runner, install manifest
-  settings.json  agent=pm-agent and hook registration (merged with your settings)
-.claude-team-docs/   per-task records (request, plan, reports, check records, diff); optional .gitignore entry
-.mcp.json            Context7 registration (optional, merged with your settings)
+  settings.json  agent=pm-agent and hook registration (merged with existing settings)
+.claude-team-docs/   per-task records (request source, plan, reports, check records, diff); adding it to .gitignore is optional
+.mcp.json            Context7 registration (optional, merged with existing settings)
 ```
+
+## Update and removal
+
+```text
+/claude-team-base:setup update
+/claude-team-base:setup remove
+```
+
+- Update: **fully replaces** the installed team files with the new version. It shows the changes as a plan and applies them after confirmation. Files you edited after install are never overwritten automatically; you choose skip or replace with backup.
+- Removal: shows a preview and, after confirmation, reverts only what was installed. Files you edited are kept, and task records (`.claude-team-docs`) and backups are not deleted.
+- From v0.2.0 prompts and record labels are English, so runs left in progress by an older version are not read by the new one. Finish them before updating.
 
 ## Safeguards and limits
 
-- **Guard hook (advisory mode)**: checks per-role write paths, source writes only after the plan is confirmed, assigned files only, leads' call targets, and sequential writer execution; it blocks on errors
-- **A safeguard against mistakes, not a security boundary**: it does not stop shell commands from the main session or changes to user or hook settings
-- Check records come from a runner executed by the main session and are not fully tamper-proof; QA reports state the source
-- Right after install the guard is checked with a real Claude call; if that is not confirmed, treat it as no protection
-- Report vulnerabilities privately through [SECURITY.md](SECURITY.md)
+- **Guard hook (advisory mode)**: checks per-role write paths, source writes only after the plan is confirmed, edits only to assigned files, leaders' call targets, and sequential writing agents, and blocks on error.
+- **A mistake-prevention aid, not a security boundary**: it does not stop main-session shell commands or changes to user and hook settings.
+- Check records are results the main session ran through the runner and are not fully tamper-proof; the QA report states the source.
+- Right after install the guard is checked with a real Claude call; if that is not confirmed, treat it as `no protection`.
+- Report vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
 ### Feature maturity
 
 | Level | Features |
 | --- | --- |
-| Core | Lite, role files, install, update and removal, advisory-mode guard, check runner |
-| Experimental, optional | Full, relay execution mode, strict mode (direct approval tracking), requirement-preservation trace (`team-check.mjs trace`) |
+| Core | Skill install, update, and removal, Lite, role files, advisory-mode guard, check runner |
+| Experimental or optional | Full, relay execution mode, strict mode (direct approval tracking), requirement-preservation trace check (`team-check.mjs trace`) |
 
-- Experimental features have not been verified in a real Claude environment, and there is no comparison yet showing they beat direct handling.
+- Experimental features are not verified in a real Claude environment, and there is no comparison yet showing they beat handling tasks directly.
+- The skill install path (plugin install, `${CLAUDE_PLUGIN_ROOT}` substitution, skill execution) and real delegation behavior with English prompts have not been checked in real Claude yet.
+
 ![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.svg)
 
-- [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
-- The team structure is not guaranteed to improve quality over direct handling; evaluation results will be published when available.
+- [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive, with Korean prompts before the English switch: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
+- There is no guarantee that the team structure improves quality over handling tasks directly; evaluation results will be published as they become available.
 
-## Removal and updates
+## Roadmap
 
-Ask Claude the same way you installed. It fetches the installer again at the tag recorded in the install manifest.
-
-```text
-Read INSTALL.md at https://github.com/jbeat30/claude-team-base and remove it from this project
-```
-
-```text
-Read INSTALL.md at https://github.com/jbeat30/claude-team-base and update this project to the latest version
-```
-
-- Removal: shows a preview, then removes only what was installed after you confirm; files you edited since install are kept, and task records (`.claude-team-docs`) and backups are not deleted
-- Update: shows the differences between the new tag and your installation as a plan before applying; files you edited are never overwritten automatically and are reported as conflicts
+| Item | Status |
+| --- | --- |
+| Skill (plugin) install | Implemented; real Claude check planned |
+| English prompts and user-language replies | Implemented; delegation evaluation planned |
+| Hard-task comparison (direct, Lite, Full, repeated runs) | To be designed; results will be published |
+| Context slimming (shorter PM instructions) | Planned |
+| Design tool MCP choice at setup (Playwright and shadcn/ui; Figma when you have Figma designs) | Planned |
+| bkit PDCA integration | After v0.3.0 |
 
 ## Contributing
 
-Issues and fork PRs are welcome. Only the owner has write access; every change is reviewed and merged by the owner.
+Issues and fork PRs are welcome. Only the owner has write access, and every change is merged after the owner reviews and approves it.
 
-- Bugs and feature ideas: [Issues](https://github.com/jbeat30/claude-team-base/issues/new/choose)
-- Changes: fork and open a PR against the `feature/vX.Y.Z` branch the owner designates
-- `main`, `release`, and `feature` branches require PRs and forbid force pushes; outside contributors cannot push or merge directly
-- Fork PR workflows from all external contributors require maintainer approval, regardless of contribution history
-- Development needs Node 18 or later; run `npm test` for static checks and unit tests (all test methods, in Korean: [TESTING.md](docs/verification/TESTING.md))
-- Details (in Korean): [Contributing](.github/CONTRIBUTING.md) · [Branch strategy](.github/BRANCH_STRATEGY.md) · [Development rules](AGENTS.md)
+- Bug reports and feature ideas: [Issues](https://github.com/jbeat30/claude-team-base/issues/new/choose)
+- Proposing changes: fork, then open a PR against the `feature/vX.Y.Z` branch the owner names.
+- `main`, `release`, and `feature` require PRs and forbid force pushes; outside contributors cannot push or merge directly.
+- Fork PR workflows from outside contributors need the owner's approval to run, regardless of contribution history.
+- Development needs Node 18 or later; `npm test` runs static checks and unit tests. See [Testing](docs/verification/TESTING.md) (Korean) for the full method up to real Claude measurement.
+- Details: [Contributing](.github/CONTRIBUTING.md), [Branch strategy](.github/BRANCH_STRATEGY.md), [Development rules](AGENTS.md)
 
 ## License
 

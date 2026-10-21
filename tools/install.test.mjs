@@ -185,7 +185,7 @@ test('해석할 수 없는 settings.json은 진행 불가', () => {
   const dir = project({ '.claude/settings.json': '{ broken' });
   const plan = install(planArgs(dir, answersFile()));
   assert.equal(plan.json.ok, false);
-  assert.match(plan.json.blockers[0], /해석 불가/);
+  assert.match(plan.json.blockers[0], /cannot be parsed/);
   assert.equal(install(applyArgs(dir, answersFile(), plan.json.hash)).status, 1);
 });
 
@@ -194,7 +194,7 @@ test('Claude Code 최소 버전 미만이면 진행 불가, 확인 불가는 미
   const file = answersFile();
   const below = install(planArgs(dir, file), { FAKE_CLAUDE_VERSION: '2.1.100 (Claude Code)' });
   assert.equal(below.json.ok, false);
-  assert.match(below.json.blockers[0], /최소/);
+  assert.match(below.json.blockers[0], /minimum/);
   assert.equal(install(applyArgs(dir, file, below.json.hash), { FAKE_CLAUDE_VERSION: '2.1.100' }).status, 1);
   const unknown = install(planArgs(dir, file), { FAKE_CLAUDE_VERSION: '버전 없음' });
   assert.equal(unknown.json.ok, true);
@@ -223,7 +223,7 @@ test('verify는 수정·삭제를 탐지', () => {
   writeFileSync(join(dir, '.claude', 'agents', 'qa-agent.md'), '변조\n');
   const modified = install(['verify', '--target', dir]);
   assert.equal(modified.json.ok, false);
-  assert.match(modified.json.checks.find((c) => c.name === 'files').detail, /qa-agent\.md\(수정됨\)/);
+  assert.match(modified.json.checks.find((c) => c.name === 'files').detail, /qa-agent\.md\(modified\)/);
 });
 
 test('잘못된 answers는 거부하고 매니페스트 없는 verify·remove는 실패', () => {
@@ -244,7 +244,7 @@ test('v0.1.0은 미지원 PDCA 입력을 적용 전에 거부', () => {
     const file = answersFile({ pdca });
     const result = install(planArgs(dir, file));
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /off만 지원/);
+    assert.match(result.stderr, /only answers.pdca=off/);
     assert.deepEqual(readdirSync(dir), ['keep.txt']);
   }
 });
@@ -324,7 +324,7 @@ test('갱신: 사용자가 수정한 설치 파일은 충돌로 보고하고 기
   writeFileSync(join(dir, rel), mine);
   const plan = install(planArgs(dir, file));
   assert.equal(plan.json.ok, false, '결정 전에는 진행 불가');
-  assert.ok(plan.json.conflicts.some((c) => c.item === rel && /사용자가 수정/.test(c.reason)));
+  assert.ok(plan.json.conflicts.some((c) => c.item === rel && /modified by the user/.test(c.reason)));
 
   const skip = install(planArgs(dir, file, ['--on-conflict', 'skip']));
   assert.equal(install(applyArgs(dir, file, skip.json.hash, ['--on-conflict', 'skip'])).json.ok, true);
