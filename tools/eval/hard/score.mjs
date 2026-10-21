@@ -56,6 +56,9 @@ const scorers = {
       // 암묵 요구: 총액은 음수가 되지 않음, 알 수 없는 코드는 예외 없이 거부
       check(() => { const r = applyCode(3, 'FIVE', new Date('2024-06-01')); return r.ok === true && r.total === 0; }),
       check(() => applyCode(100, 'NOPE', new Date('2024-06-01')).ok === false),
+      // 암묵 요구: 유효 기간 마지막 날은 포함, 음수 총액은 거부
+      check(() => { const r = applyCode(100, 'WINTER', new Date('2024-12-31T12:00:00Z')); return r.ok === true && r.total === 80; }),
+      check(() => applyCode(-5, 'SAVE10', new Date('2024-06-01')).ok === false),
     ]);
     return { missed: count(results), requirements: results.length, explicitMissed: count(results.slice(0, 3)), implicitMissed: count(results.slice(3)) };
   },
@@ -87,12 +90,16 @@ const scorers = {
     const { reportLine } = await load('src/report.js');
     const { csvRow } = await load('scripts/export-csv.js');
     const { sumPrices } = await load('tools/legacy/sum.js');
+    const { byPrice } = await load('src/sort.js');
+    const { priceTotal } = await load('scripts/run-report.mjs');
     const contract = await check(() => { const p = getPrice({ price: 5 }); return typeof p === 'object' && p.amount === 5 && p.currency === 'USD'; });
     const callers = await Promise.all([
       check(() => cartTotal([{ price: 2, qty: 3 }, { price: 1.5, qty: 2 }]) === 9),
       check(() => reportLine({ name: 'Pen', price: 1.5, qty: 2 }) === 'Pen: 1.50 x 2'),
       check(() => csvRow({ name: 'Pen', price: 1.5, qty: 2 }) === 'Pen,1.5,2'),
       check(() => sumPrices([{ price: 1 }, { price: 2 }]) === 3),
+      check(() => JSON.stringify([{ price: 3 }, { price: 1 }].sort(byPrice).map((i) => i.price)) === '[1,3]'),
+      check(async () => (await priceTotal([{ price: 1 }, { price: 2 }])) === 3),
     ]);
     return { missed: contract ? 0 : 1, brokenCallers: count(callers), callers: callers.length, hiddenBroken: count(callers.slice(2)) };
   },

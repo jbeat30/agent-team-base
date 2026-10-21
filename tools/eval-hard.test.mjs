@@ -42,7 +42,9 @@ const priceObj = {
 };
 const priceHidden = {
   'scripts/export-csv.js': "import * as pricing from '../src/pricing.js';\nexport function csvRow(item) {\n  return [item.name, pricing.getPrice(item).amount, item.qty].join(',');\n}\n",
-  'tools/legacy/sum.js': "import { getPrice as price } from '../../src/pricing.js';\nexport function sumPrices(items) {\n  let total = 0;\n  for (const item of items) total += price(item).amount;\n  return total;\n}\n",
+  'tools/legacy/sum.js': "import { getPrice as price } from '../../src/pricing.js';\nexport function sumPrices(items) {\n  return items.map(price).reduce((a, b) => a + b.amount, 0);\n}\n",
+  'src/sort.js': "import { getPrice } from './pricing.js';\nexport const byPrice = (a, b) => getPrice(a).amount - getPrice(b).amount;\n",
+  'scripts/run-report.mjs': "import { readFileSync } from 'node:fs';\nconst config = JSON.parse(readFileSync(new URL('../config/reports.json', import.meta.url), 'utf8'));\nexport async function priceTotal(items) {\n  const pricing = await import('../src/pricing.js');\n  const price = pricing[config.priceFn];\n  return items.reduce((sum, item) => sum + price(item).amount, 0);\n}\n",
 };
 
 test('s1: 원본은 오탈자 미수정, 주석 한 줄만 고치면 통과', () => {
@@ -67,9 +69,9 @@ test('s2: 설명에 반올림이 있으면 통과', () => {
   assert.equal(score('s2', dir, '소수점 둘째 자리까지 반올림합니다').missed, 0);
 });
 
-test('m1: 원본은 5건 모두 누락, 정답은 0, 암묵 요구 누락은 따로 집계', () => {
+test('m1: 원본은 7건 모두 누락, 정답은 0, 암묵 요구 누락은 따로 집계', () => {
   const dir = workdir('m1');
-  assert.equal(score('m1', dir).missed, 5);
+  assert.equal(score('m1', dir).missed, 7);
   const partial = "import { percentOff } from './discount-base.js';\n";
   void partial;
   const base = "export function percentOff(total, pct) {\n  return Math.round(total * (100 - pct)) / 100;\n}\n";
@@ -78,8 +80,10 @@ test('m1: 원본은 5건 모두 누락, 정답은 0, 암묵 요구 누락은 따
   put(dir, { 'src/discount.js': `${base}${codes}export function applyCode(total, code, now) {\n  const c = CODES[code];\n  if (c.until && now > c.until) return { ok: false, total, reason: 'expired' };\n  const next = c.type === 'pct' ? percentOff(total, c.value) : total - c.value;\n  return { ok: true, total: next, reason: null };\n}\n` });
   const explicitOnly = score('m1', dir);
   assert.equal(explicitOnly.explicitMissed, 0);
-  assert.equal(explicitOnly.implicitMissed, 2);
+  assert.equal(explicitOnly.implicitMissed, 3);
   put(dir, { 'src/discount.js': `${base}${codes}export function applyCode(total, code, now) {\n  const c = CODES[code];\n  if (!c) return { ok: false, total, reason: 'unknown code' };\n  if (c.until && now > c.until) return { ok: false, total, reason: 'expired' };\n  const next = c.type === 'pct' ? percentOff(total, c.value) : Math.max(0, Math.round((total - c.value) * 100) / 100);\n  return { ok: true, total: next, reason: null };\n}\n` });
+  assert.equal(score('m1', dir).missed, 1);
+  put(dir, { 'src/discount.js': `${base}${codes}export function applyCode(total, code, now) {\n  if (!(total >= 0)) return { ok: false, total, reason: 'invalid total' };\n  const c = CODES[code];\n  if (!c) return { ok: false, total, reason: 'unknown code' };\n  if (c.until && now > c.until) return { ok: false, total, reason: 'expired' };\n  const next = c.type === 'pct' ? percentOff(total, c.value) : Math.max(0, Math.round((total - c.value) * 100) / 100);\n  return { ok: true, total: next, reason: null };\n}\n` });
   assert.equal(score('m1', dir).missed, 0);
 });
 
@@ -113,8 +117,8 @@ test('l1: 일부 호출처만 고치면 숨은 호출처가 깨진 것으로 집
   put(dir, priceObj);
   const partial = score('l1', dir);
   assert.equal(partial.missed, 0);
-  assert.equal(partial.brokenCallers, 2);
-  assert.equal(partial.hiddenBroken, 2);
+  assert.equal(partial.brokenCallers, 4);
+  assert.equal(partial.hiddenBroken, 4);
   put(dir, priceHidden);
   const full = score('l1', dir);
   assert.equal(full.brokenCallers, 0);

@@ -45,6 +45,7 @@ if (condition !== 'direct') {
 }
 
 const version = spawnSync(CLAUDE, ['--version'], { encoding: 'utf8' }).stdout?.trim();
+const repoCommit = repo ? spawnSync('git', ['-C', repo, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout?.trim() : null;
 const started = Date.now();
 const run = sh(CLAUDE, [
   '-p', task.prompt + AUTOMATION_NOTE, '--output-format', 'stream-json', '--verbose', '--model', MODEL,
@@ -82,7 +83,7 @@ try {
 
 const delegations = calls.filter((c) => c.name === 'Agent' || c.name === 'Task').map((c) => c.agent);
 const summary = {
-  condition, taskId, rep: Number(rep), size: task.size, expectedGrade: task.grade, model: MODEL, claudeVersion: version,
+  condition, taskId, rep: Number(rep), size: task.size, expectedGrade: task.grade, model: MODEL, claudeVersion: version, repoCommit,
   exit: run.status, subtype: result.subtype ?? null, isError: result.is_error ?? null, budgetStopped: result.subtype === 'error_max_budget_usd',
   costUsd: result.total_cost_usd ?? null, turns: result.num_turns ?? null, wallMs,
   tokens: { input: usage.input_tokens ?? 0, cacheCreation: usage.cache_creation_input_tokens ?? 0, cacheRead: usage.cache_read_input_tokens ?? 0, output: usage.output_tokens ?? 0 },
