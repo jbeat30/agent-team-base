@@ -28,7 +28,14 @@ const GITIGNORE_PATH = '.gitignore';
 const DOCS_DIR = '.claude-team-docs';
 const GITIGNORE_BEGIN = '# >>> claude-team-base';
 const GITIGNORE_END = '# <<< claude-team-base';
-const CONTEXT7_SERVER = { command: 'npx', args: ['-y', '@upstash/context7-mcp'] };
+// 등록하는 MCP 서버, 형식은 각 공식 문서의 Claude Code 설정을 따름(Figma는 http 전송, 첫 사용 때 브라우저 로그인 필요)
+const DESIGN_TOOLS = ['playwright', 'shadcn', 'figma'];
+const MCP_SERVERS = {
+  context7: { command: 'npx', args: ['-y', '@upstash/context7-mcp'] },
+  playwright: { command: 'npx', args: ['@playwright/mcp@latest'] },
+  shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] },
+  figma: { type: 'http', url: 'https://mcp.figma.com/mcp' },
+};
 const ROLE_FILES = ['pm-agent', 'planning-lead', 'dev-lead', 'planner-agent', 'architecture-agent', 'frontend-agent', 'backend-agent', 'api-agent', 'test-agent', 'qa-agent'];
 // 복사하지 않는 템플릿 파일: settings는 병합, 프로필은 조사 결과로 생성
 const NOT_COPIED = new Set(['.claude/settings.fragment.json', '.claude/team/profile.template.md']);
@@ -212,6 +219,8 @@ function detect(dir) {
       hasHooks: Boolean(settings?.value?.hooks),
       mcpFile: existsSync(join(dir, MCP_PATH)),
       context7Registered: Boolean(readJson(join(dir, MCP_PATH)).value?.mcpServers?.context7),
+      registeredMcp: Object.keys(readJson(join(dir, MCP_PATH)).value?.mcpServers ?? {}),
+      componentsJson: existsSync(join(dir, 'components.json')),
       gitignore: existsSync(join(dir, GITIGNORE_PATH)),
       installed: existsSync(join(dir, MANIFEST_PATH)),
     },
@@ -230,10 +239,12 @@ function loadAnswers(options) {
   if (typeof a.context7 !== 'boolean') fail('answers.context7 must be true or false');
   if (a.executionMode !== undefined && !['nested', 'relay'].includes(a.executionMode)) fail('answers.executionMode must be nested or relay');
   if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode must be advisory or strict');
+  if (a.designTools !== undefined && (!Array.isArray(a.designTools) || a.designTools.some((t) => !DESIGN_TOOLS.includes(t)))) fail(`answers.designTools must be an array of ${DESIGN_TOOLS.join(', ')}`);
   if (a.pdca !== undefined && a.pdca !== 'off') fail('only answers.pdca=off is supported; bkit PDCA integration is planned for a later version');
   return {
     profile: a.profile,
     context7: a.context7,
+    designTools: [...new Set(a.designTools ?? [])],
     gitignore: a.gitignore ?? true,
     pdca: 'off',
     // nested는 확인한 버전에서 리더가 하위 호출 도구를 받지 못해 full의 기본을 relay로 둠, lite는 리더를 쓰지 않아 해당 없음
@@ -275,6 +286,7 @@ ${table(['Path', 'Reason'], answers.forbidden.map((f) => [f.path, f.reason ?? ''
 - Execution profile: ${answers.profile}
 - Execution mode: ${answers.executionMode ?? 'n/a (lite)'}
 - Context7 MCP: ${answers.context7 ? 'registered' : 'not registered'}
+- Design tool MCP: ${answers.designTools.length ? answers.designTools.join(', ') : 'none'}
 - Protection mode: ${answers.guardMode === 'strict' ? 'strict' : 'advisory'}
 - PDCA mode: ${answers.pdca}
 - Installed roles: ${ROLE_FILES.join(', ')} (all role files are always installed)
@@ -374,26 +386,33 @@ function buildPlan(dir, answers, options) {
     settingsPlan = { action: merged.conflicts.length ? 'blocked' : changed ? (existingSettings.value ? 'merge' : 'create') : 'unchanged', agent: merged.agent, addedHooks: merged.added, content: merged.conflicts.length ? null : `${JSON.stringify(merged.settings, null, 2)}\n` };
   }
 
-  // MCP 등록
-  let mcpPlan = { action: 'none' };
-  if (answers.context7) {
+  // MCP 등록: Context7과 선택한 디자인 도구를 한 번에 병합, 서버별로 추가·동일·충돌 판정
+  let mcpPlan = { action: 'none', servers: {} };
+  const wanted = [...(answers.context7 ? ['context7'] : []), ...answers.designTools];
+  if (wanted.length) {
     const mcpAbs = join(dir, MCP_PATH);
     const mcp = existsSync(mcpAbs) ? readJson(mcpAbs) : { value: {} };
     if (mcp.error) {
       conflicts.push({ item: MCP_PATH, reason: `JSON unparseable: ${mcp.error}` });
-      mcpPlan = { action: 'skip', reason: 'unparseable' };
+      mcpPlan = { action: 'skip', reason: 'unparseable', servers: {} };
     } else {
-      const server = mcp.value.mcpServers?.context7;
-      if (!server) {
-        const next = structuredClone(mcp.value);
-        next.mcpServers ??= {};
-        next.mcpServers.context7 = CONTEXT7_SERVER;
-        mcpPlan = { action: 'add', server: CONTEXT7_SERVER, content: `${JSON.stringify(next, null, 2)}\n` };
-      } else if (JSON.stringify(server) === JSON.stringify(CONTEXT7_SERVER)) mcpPlan = { action: 'already' };
-      else {
-        conflicts.push({ item: `${MCP_PATH} context7`, reason: 'a different context7 setting already exists; left unchanged' });
-        mcpPlan = { action: 'skip', reason: 'existing setting kept' };
+      const next = structuredClone(mcp.value);
+      const servers = {};
+      for (const name of wanted) {
+        const existing = mcp.value.mcpServers?.[name];
+        if (!existing) {
+          next.mcpServers ??= {};
+          next.mcpServers[name] = MCP_SERVERS[name];
+          servers[name] = 'add';
+        } else if (JSON.stringify(existing) === JSON.stringify(MCP_SERVERS[name])) servers[name] = 'already';
+        else {
+          conflicts.push({ item: `${MCP_PATH} ${name}`, reason: `a different ${name} setting already exists; left unchanged` });
+          servers[name] = 'skip';
+        }
       }
+      const added = Object.values(servers).includes('add');
+      const allAlready = Object.values(servers).every((v) => v === 'already');
+      mcpPlan = { action: added ? 'add' : allAlready ? 'already' : 'skip', servers, content: added ? `${JSON.stringify(next, null, 2)}\n` : undefined };
     }
   }
 
@@ -414,7 +433,7 @@ function buildPlan(dir, answers, options) {
     onConflict,
     files: operations.map(({ path, action, sha256: s }) => ({ path, action, sha256: s })),
     settings: { action: settingsPlan.action, agent: settingsPlan.agent ?? null, addedHooks: settingsPlan.addedHooks ?? [], contentSha256: settingsPlan.content ? sha256(settingsPlan.content) : null },
-    mcp: { action: mcpPlan.action, contentSha256: mcpPlan.content ? sha256(mcpPlan.content) : null },
+    mcp: { action: mcpPlan.action, servers: mcpPlan.servers, contentSha256: mcpPlan.content ? sha256(mcpPlan.content) : null },
     gitignore: { action: gitignorePlan.action, contentSha256: gitignorePlan.content ? sha256(gitignorePlan.content) : null },
     conflicts,
     blockers,
@@ -428,7 +447,7 @@ function summarize(plan) {
     `source: ${plan.source.tag ?? 'no tag'} (${plan.source.commit?.slice(0, 7) ?? 'commit unchecked'}) · profile ${plan.core.answers.profile} · PDCA ${plan.core.answers.pdca}`,
     `files: new ${count('create')} · update ${count('update')} · unchanged ${count('unchanged')} · replace (backup) ${count('replace-with-backup')} · skip ${count('skip')}`,
     `settings: ${plan.core.settings.action}${plan.core.settings.agent?.action && plan.core.settings.agent.action !== 'none' ? ` (agent ${plan.core.settings.agent.action})` : ''}, added hooks ${plan.core.settings.addedHooks.length}`,
-    `Context7 MCP(.mcp.json): ${plan.core.mcp.action} · .gitignore: ${plan.core.gitignore.action}`,
+    `MCP (.mcp.json): ${plan.core.mcp.action}${Object.keys(plan.core.mcp.servers ?? {}).length ? ` (${Object.entries(plan.core.mcp.servers).map(([k, v]) => `${k} ${v}`).join(', ')})` : ''} · .gitignore: ${plan.core.gitignore.action}`,
     plan.core.conflicts.length ? `conflicts ${plan.core.conflicts.length}: ${plan.core.conflicts.map((c) => `${c.item}(${c.reason})`).join('; ')}` : 'no conflicts',
     plan.core.blockers.length ? `blocked: ${plan.core.blockers.join('; ')}` : `environment: Node ${plan.environment.node.version}, Claude Code ${plan.environment.claude.version ?? 'unchecked'} (${plan.environment.claude.status})`,
     'rollback: the remove command removes only installed items (files you modified are kept); originals of replaced files are kept in the backup path',
@@ -498,7 +517,7 @@ function apply(dir, options) {
   if (plan.mcpPlan.action === 'add') {
     doBackup(MCP_PATH);
     writeFile(dir, MCP_PATH, plan.mcpPlan.content);
-    mcpRecord = { context7: 'added' };
+    for (const [name, action] of Object.entries(plan.mcpPlan.servers)) if (action === 'add') mcpRecord = { ...mcpRecord, [name]: 'added' };
   }
   let gitignoreRecord = previous?.gitignore ?? 'none';
   if (['append', 'create'].includes(plan.gitignorePlan.action)) {
@@ -586,7 +605,9 @@ function verify(dir, options) {
     const live = liveCanary(dir);
     add('guard live', live.status, live.detail);
   } else add('guard live', 'unverified', 'hook firing in Claude Code is unchecked until confirmed with --live; if unchecked, treat as no protection');
-  if (manifest.mcp?.context7 === 'added') add('context7', 'unverified', '.mcp.json registration confirmed; the actual connection needs approval after restarting Claude Code');
+  for (const name of Object.keys(MCP_SERVERS)) {
+    if (manifest.mcp?.[name] === 'added') add(name, 'unverified', `.mcp.json registration confirmed; the actual connection needs approval after restarting Claude Code${name === 'figma' ? ' and a browser sign-in to Figma' : ''}`);
+  }
   const ok = !checks.some((c) => c.status === 'fail');
   return output({ ok, checks }, ok ? 0 : 1);
 }
@@ -652,13 +673,19 @@ function remove(dir, options) {
     }
   }
   const mcpAbs = join(dir, MCP_PATH);
-  if (manifest.mcp?.context7 === 'added' && existsSync(mcpAbs)) {
+  const addedMcp = Object.keys(MCP_SERVERS).filter((name) => manifest.mcp?.[name] === 'added');
+  if (addedMcp.length && existsSync(mcpAbs)) {
     const parsed = readJson(mcpAbs);
-    if (!parsed.error && parsed.value.mcpServers?.context7) {
-      delete parsed.value.mcpServers.context7;
-      if (!Object.keys(parsed.value.mcpServers).length) delete parsed.value.mcpServers;
-      actions.push('removed .mcp.json context7');
-      if (apply) {
+    if (!parsed.error) {
+      let changed = false;
+      for (const name of addedMcp) {
+        if (!parsed.value.mcpServers?.[name]) continue;
+        delete parsed.value.mcpServers[name];
+        actions.push(`removed .mcp.json ${name}`);
+        changed = true;
+      }
+      if (parsed.value.mcpServers && !Object.keys(parsed.value.mcpServers).length) delete parsed.value.mcpServers;
+      if (apply && changed) {
         if (Object.keys(parsed.value).length) writeFileSync(mcpAbs, `${JSON.stringify(parsed.value, null, 2)}\n`);
         else unlinkSync(mcpAbs);
       }

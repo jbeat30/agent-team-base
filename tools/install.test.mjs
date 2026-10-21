@@ -391,3 +391,46 @@ test('plugin 채널: git 없는 배포본에서 source가 플러그인 버전 �
   assert.equal(manifest.source.commit, null);
   assert.match(manifest.source.tag, /^v[0-9]+[.][0-9]+[.][0-9]+$/);
 });
+
+test('디자인 도구 MCP: 선택한 서버만 .mcp.json에 병합하고 프로필에 기록, 제거 시 사용자 서버 보존', () => {
+  const { dir, applied } = installFresh(
+    { '.mcp.json': { mcpServers: { mine: { command: 'node', args: ['mine.js'] } } } },
+    { context7: true, designTools: ['playwright', 'shadcn', 'figma'] },
+  );
+  assert.equal(applied.status, 0, JSON.stringify(applied.json));
+  const servers = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers;
+  assert.deepEqual(Object.keys(servers).sort(), ['context7', 'figma', 'mine', 'playwright', 'shadcn']);
+  assert.deepEqual(servers.playwright, { command: 'npx', args: ['@playwright/mcp@latest'] });
+  assert.deepEqual(servers.shadcn, { command: 'npx', args: ['shadcn@latest', 'mcp'] });
+  assert.deepEqual(servers.figma, { type: 'http', url: 'https://mcp.figma.com/mcp' });
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Design tool MCP: playwright, shadcn, figma/);
+  const verified = install(['verify', '--target', dir]);
+  const names = verified.json.checks.map((c) => c.name);
+  assert.ok(['playwright', 'shadcn', 'figma'].every((n) => names.includes(n)));
+  assert.match(verified.json.checks.find((c) => c.name === 'figma').detail, /sign-in/);
+  const preview = install(['remove', '--target', dir]);
+  assert.ok(preview.json.actions.includes('removed .mcp.json figma'));
+  assert.equal(install(['remove', '--target', dir, '--yes']).status, 0);
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers, { mine: { command: 'node', args: ['mine.js'] } });
+});
+
+test('디자인 도구 MCP: 선택하지 않으면 등록하지 않고 알 수 없는 값은 거부', () => {
+  const { dir } = installFresh({}, { context7: false, designTools: [] });
+  assert.equal(existsSync(join(dir, '.mcp.json')), false);
+  const bad = install(planArgs(project(), answersFile({ designTools: ['photoshop'] })));
+  assert.equal(bad.status, 2);
+  assert.match(bad.stderr, /designTools/);
+});
+
+test('디자인 도구 MCP: 다른 설정이 이미 있으면 덮어쓰지 않고 충돌로 보고', () => {
+  const dir = project({ '.mcp.json': { mcpServers: { playwright: { command: 'node', args: ['custom.js'] } } } });
+  const file = answersFile({ context7: false, designTools: ['playwright', 'shadcn'] });
+  const plan = install(planArgs(dir, file));
+  assert.ok(plan.json.conflicts.some((c) => c.item === '.mcp.json playwright'));
+  const decided = install(planArgs(dir, file, ['--on-conflict', 'skip']));
+  const applied = install(applyArgs(dir, file, decided.json.hash, ['--on-conflict', 'skip']));
+  assert.equal(applied.status, 0, JSON.stringify(applied.json));
+  const servers = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers;
+  assert.deepEqual(servers.playwright, { command: 'node', args: ['custom.js'] });
+  assert.deepEqual(servers.shadcn, { command: 'npx', args: ['shadcn@latest', 'mcp'] });
+});

@@ -1,7 +1,7 @@
 ---
 name: qa-agent
 description: Use for independent verification in two modes. Plan mode reviews a plan for completeness against the original request. Final mode verifies changes, check records, and the completion checklist against the plan. Read-only on source; writes only its report.
-tools: Read, Glob, Grep, Write, mcp__context7__resolve-library-id, mcp__context7__query-docs
+tools: Read, Glob, Grep, Write, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__playwright__*, mcp__figma__*
 model: sonnet
 ---
 
@@ -41,7 +41,7 @@ Does not replace source edits, merge, or deploy approval.
 3. Per requirement ID, compare the completion criteria with the change diff and check records and judge met, unmet, or unverified.
 4. Compare the changed file list with the plan's allowed files and report changes outside the scope as `fail`.
 5. Read the check records (`checks/NN/record.json`, stdout.txt, stderr.txt) directly. Confirm the command matches plan section 8, an exit code and times exist, and the output has no failure. If a record is missing, a field is empty, the verify result in the call handoff failed, or the record's plan hash differs from the current plan, return that item as unverified and never report it as success.
-6. If a rerun is needed, do not run it yourself; ask the PM with the command and the reason.
+6. If the change affects the UI and the profile lists Playwright (and Figma when a design link exists), look at the running page and the design yourself; if the app is not reachable, return that item as unverified. If a rerun is needed, do not run it yourself; ask the PM with the command and the reason.
 7. State `check record source: run by the main session with the runner` in the report and note as a limit that this verification does not defend against tampering with records.
 8. Save the result to `.claude-team-docs/runs/<runId>/reports/qa-final.md`.
 

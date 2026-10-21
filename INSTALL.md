@@ -42,6 +42,7 @@ Ask only the needed items in chat and do not re-ask what detection already shows
 | Execution profile | Lite (the PM calls analysis, worker, and QA roles directly) or Full (planning and development leaders coordinate sub-roles; better for large multi-area work). All role files are installed in both cases. | Always ask. If the work size is unknown, recommend the lighter, cheaper Lite as the default. |
 | Execution mode | Full only: relay (default; the leader returns call cards and the PM calls the sub-roles) or nested (the leader calls sub-roles directly; in the Claude Code 2.1.303 check the leader did not receive the sub-call tool and it did not work, so do not recommend it, do not offer it in the question, and allow it only when the user states it explicitly). | State the default when Full is chosen. |
 | Context7 MCP | Whether to register it in `.mcp.json` to check documentation against the installed version. Tool permission is still up to the user even if registered; if not allowed, the PM marks `unchecked`. It runs `npx @upstash/context7-mcp` and queries carry only library names, versions, and general questions. | Always ask. |
+| Design tools (optional) | Only when the project has a UI (a frontend stack was detected); skip for backend-only projects. Whether to register design MCP servers in `.mcp.json` for UI work: **Playwright** (recommended; lets frontend-agent and qa-agent open and look at the running page, so the app must be running), **shadcn/ui** (recommended when `detect` reports `componentsJson: true`; the server needs a `components.json`), **Figma** (only if the user has Figma designs; the first use needs a browser sign-in to Figma). Tell the user each one runs through `npx` (Figma is a remote server) and adds its tool definitions to every frontend-agent and qa-agent call, which costs tokens. | Optional; recommend Playwright and shadcn/ui, offer Figma only on request or when the user mentions Figma designs. |
 | Detection confirmation | Language and framework, check commands and side effects (whether they auto-fix), convention evidence | Ask only uncertain items. |
 | Forbidden areas | Production config, generated files, specific paths | Always ask. |
 | Protection mode | Advisory (default) or strict (optional direct-approval tracking). In strict the user runs the approval commands personally; it is not a security boundary against forgery from the main shell. | State the default. If strict is chosen, confirm the user accepts running the commands directly. |
@@ -60,6 +61,7 @@ Save it as JSON at a temporary path outside the project. No secrets.
   "gitignore": true,
   "pdca": "off",
   "executionMode": "relay | nested (full only, relay if omitted)",
+  "designTools": ["playwright", "shadcn", "figma"],
   "guardMode": "advisory",
   "agentSetting": "keep | replace (only when an agent setting already exists)",
   "stack": [{ "item": "language and framework", "value": "version, etc.", "evidence": "evidence path" }],
@@ -69,7 +71,7 @@ Save it as JSON at a temporary path outside the project. No secrets.
 }
 ```
 
-`profile` and `context7` are required. If you do not know a check command's side-effect class, write `unchecked`.
+`profile` and `context7` are required; `designTools` is optional (any of `playwright`, `shadcn`, `figma`; omit or leave empty to register none). If you do not know a check command's side-effect class, write `unchecked`.
 
 ## 6. Plan and user confirmation
 
