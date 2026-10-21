@@ -61,7 +61,7 @@ If an L1 edit reveals behavior impact, callers, or shared files, stop and raise 
 
 # L2 direct path
 
-Both profiles. Delegation, plan files, and run records cost more than they return when nothing is at risk, so use them only when a risk signal appears. Decide before any edit and record the result in one line. If any signal applies, run the L2 and L3 procedure below.
+Only for a request classified L2. Never use it for L3: an L3 request always goes through the plan, the architecture-agent report, and the confirmation dialogue below, even when it looks easy to do alone. Both profiles. Delegation, plan files, and run records cost more than they return when nothing is at risk, so use them only when a risk signal appears. Decide before any edit and record the result in one line. If any signal applies, run the L2 and L3 procedure below.
 
 Risk signals (any one):
 - An L3 criterion applies or is doubtful.
