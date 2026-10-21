@@ -47,7 +47,7 @@ Ask only the needed items in chat and do not re-ask what detection already shows
 | Detection confirmation | Language and framework, check commands and side effects (whether they auto-fix), convention evidence | Ask only uncertain items. |
 | Forbidden areas | Production config, generated files, specific paths | Always ask. |
 | Protection mode | Advisory (default) or strict (optional direct-approval tracking). In strict the user runs the approval commands personally; it is not a security boundary against forgery from the main shell. | State the default. If strict is chosen, confirm the user accepts running the commands directly. |
-| PDCA | v0.1.0 supports only off; bkit integration is planned for a later version. | Skip the question; the team's own plan and verification gates stay. |
+| PDCA | this version supports only off; bkit integration is planned for a later version. | Skip the question; the team's own plan and verification gates stay. |
 | gitignore | Whether to add `.claude-team-docs/` (task records) to `.gitignore`; default is yes. | State the default. |
 | Conflicts | If the plan reports conflicts, per item: skip or replace-with-backup. For an existing `agent` setting: keep or replace. | Only when conflicts exist. |
 

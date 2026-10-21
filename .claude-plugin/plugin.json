@@ -1,6 +1,6 @@
 {
   "name": "claude-team-base",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Jbeat Claude Code agent team base that respects existing project policies, installed through a skill.",
   "author": {
     "name": "jbeat",
