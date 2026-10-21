@@ -2,6 +2,7 @@
 // 문구 포함 여부만 확인하며 권한 차단·위임 정확도의 검증이 아님
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { PM_RULES } from './pm-rules.mjs';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'template');
@@ -130,6 +131,14 @@ for (const file of agentFiles) {
   for (const field of reportFields) {
     if (!new RegExp(`^${field}:`, 'm').test(body)) fail(file, `보고 필드 ${field} 없음`);
   }
+}
+
+// PM 지침의 필수 규칙: 분리된 참조 파일까지 합친 본문에서 확인
+const pmText = ['agents/pm-agent.md', 'team/relay-mode.md', 'team/design-tools.md', 'team/strict-mode.md']
+  .map((p) => (existsSync(join(root, '.claude', p)) ? readFileSync(join(root, '.claude', p), 'utf8') : ''))
+  .join('\n');
+for (const [label, re] of PM_RULES) {
+  if (!re.test(pmText)) fail('pm-agent 규칙', `필수 규칙 없음: ${label}`);
 }
 
 // 문체와 참조 검사
