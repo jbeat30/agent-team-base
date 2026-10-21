@@ -31,6 +31,13 @@ No secrets. Mark items without evidence as `unchecked`. The user may edit it.
 | Path | Reason |
 | --- | --- |
 
+## Design system (only when the user has one)
+
+Authoritative for all UI work. Agents follow it without deviation.
+
+| Item | Content | Location |
+| --- | --- | --- |
+
 ## Team settings
 
 - Execution profile: lite | full (chosen by the user at install, all role files are always installed)

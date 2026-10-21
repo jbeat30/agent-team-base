@@ -435,3 +435,13 @@ test('디자인 도구 MCP: 다른 설정이 이미 있으면 덮어쓰지 않�
   assert.deepEqual(servers.playwright, { command: 'node', args: ['custom.js'] });
   assert.deepEqual(servers.shadcn, { command: 'npx', args: ['shadcn@latest', 'mcp'] });
 });
+
+test('디자인 시스템: answers에 있으면 프로필에 권위 있는 기준으로 기록, 없으면 섹션 생략', () => {
+  const withDs = installFresh({}, { designSystem: [{ item: 'Component library', content: '@acme/ui, tokens in tokens.json', location: 'packages/ui' }] });
+  const profile = readFileSync(join(withDs.dir, '.claude/team/profile.md'), 'utf8');
+  assert.match(profile, /## Design system/);
+  assert.match(profile, /Authoritative for all UI work/);
+  assert.match(profile, /@acme\/ui, tokens in tokens\.json/);
+  const without = installFresh();
+  assert.doesNotMatch(readFileSync(join(without.dir, '.claude/team/profile.md'), 'utf8'), /## Design system/);
+});

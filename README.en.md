@@ -68,6 +68,7 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | Usage mode | **Lite**: the PM calls only the needed roles directly<br>**Full**: planning and development leaders coordinate sub-roles; better for large multi-area work | Lite |
 | Full execution mode | **relay**: the leader returns call cards and the PM makes the calls | relay |
 | Context7 MCP | Register it in `.mcp.json` to check docs against the installed version | Asked |
+| Design system (UI projects) | Where your tokens, component library, Storybook, Figma library, or brand guide live. If you have one it is the **top authority for all UI work** and agents never deviate from it | Only if you have one |
 | Design tool MCP (optional) | **Playwright**: open and look at the running page<br>**Chrome DevTools**: inspect the page, console, network, and performance in Chrome; useful for UI/UX checks<br>**shadcn/ui**: reuse vetted components (needs `components.json`)<br>**Figma**: when you have Figma designs; browser sign-in on first use | Asked only for projects with a UI; Playwright and shadcn/ui recommended |
 | Forbidden areas | Production config, generated files, specific paths | None |
 | Protection mode | **Advisory**: the guard hook blocks violations<br>**Strict**: tracks direct approval records (optional; you run the approval commands yourself) | Advisory |
@@ -154,6 +155,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 - Agent prompts (roles, forms, guard messages) are written in English, about 26% fewer always-injected tokens than the Korean version (measured on all 10 roles plus forms, one model).
 - Simple requests (Q and L1) never call the team.
 - Files and requirements of the same owner are bundled into one call.
+- The relay procedure and design-work guidance live in files read only when that work happens (PM instruction input about 18% smaller, measured on one model), and a checker confirms the required rules by list.
 
 ## What gets installed
 
@@ -208,7 +210,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 | Skill (plugin) install | Implemented; real Claude check planned |
 | English prompts and user-language replies | Implemented; delegation evaluation planned |
 | Hard-task comparison (direct, Lite, Full, repeated runs) | To be designed; results will be published |
-| Context slimming (shorter PM instructions) | Planned |
+| Context slimming (shorter PM instructions) | First pass done (PM instructions about 18% smaller, a rule-list check prevents omissions); more planned |
 | Design tool MCP choice at setup (Playwright, shadcn/ui, Figma) | Implemented; real Claude and server connection check planned |
 | bkit PDCA integration | After v0.3.0 |
 

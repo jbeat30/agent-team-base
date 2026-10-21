@@ -252,6 +252,7 @@ function loadAnswers(options) {
     executionMode: a.profile === 'lite' ? null : a.executionMode ?? 'relay',
     guardMode: a.guardMode ?? 'advisory',
     agentSetting: ['keep', 'replace'].includes(a.agentSetting) ? a.agentSetting : null,
+    designSystem: a.designSystem ?? [],
     stack: a.stack ?? [],
     checks: a.checks ?? [],
     conventions: a.conventions ?? [],
@@ -281,7 +282,13 @@ ${table(['Item', 'Content', 'Evidence path'], answers.conventions.map((c) => [c.
 ## Forbidden areas
 
 ${table(['Path', 'Reason'], answers.forbidden.map((f) => [f.path, f.reason ?? '']))}
+${answers.designSystem.length ? `
+## Design system
 
+Authoritative for all UI work. Agents follow it without deviation and never introduce values or components outside it.
+
+${table(['Item', 'Content', 'Location'], answers.designSystem.map((d) => [d.item, d.content ?? '', d.location ?? 'unchecked']))}
+` : ''}
 ## Team settings
 
 - Execution profile: ${answers.profile}

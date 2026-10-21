@@ -13,6 +13,7 @@ The light L1 checklist is limited to items marked `L1`.
 | Types, lint, format | Only when a record of the project-defined command exists | |
 | Tests added or changed, with run record | Check the original check record | |
 | Accessibility, wording, i18n | Check when the UI changed | L1 |
+| Design system followed (tokens, components, naming) | Compare the diff with the profile's Design system entries; any value or component outside it fails | L1 |
 | No leftover unused code, temporary logs, TODOs | Search the diff | L1 |
 | Docs, comments, change log updated | Check when the project has a rule | |
 | No secrets or sensitive data exposed | Check the diff | |
