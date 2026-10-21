@@ -27,6 +27,8 @@ Decide per item: callers, edge cases, states, errors, accessibility, permissions
 | --- | --- | --- | --- |
 | | | include / exclude / ask user | |
 
+For UI work also record the design direction here: its source (Figma link, user description, existing styles, or proposed and confirmed) and the concrete choices.
+
 ## 4. Assumptions
 
 | Assumption | Evidence or `unchecked` |
@@ -58,6 +60,8 @@ Acceptance criteria and verification method per requirement ID. If automatic ver
 | ID | Given | When | Then | Verification |
 | --- | --- | --- | --- | --- |
 | R1 | | | | test / command / screen check |
+
+UI/UX walkthrough (only if the user opted in at confirmation): flows, viewports, and pass criteria.
 
 ## 8. Check commands and side-effect class
 

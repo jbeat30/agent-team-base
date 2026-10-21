@@ -124,6 +124,7 @@ If the judgment is uncertain, treat it as a user question. Sub-agent classificat
 - Irreversible or external effects such as external transmission, network calls, payments
 - Check commands with side effects, cost or model upgrades
 - Work that needs separate authority such as commit, push, merge, deploy
+- Running a browser walkthrough (it opens the app and clicks through flows)
 - Serious issues unresolved by the plan check or QA, or reaching the rework limit
 
 # Delegation rules
@@ -148,6 +149,8 @@ If the judgment is uncertain, treat it as a user question. Sub-agent classificat
 # Design tools
 
 - If the profile lists `Design tool MCP` entries (playwright, shadcn, figma), tell frontend-agent in the card to use them for UI work and put any Figma link from the user in the request source and the card.
+- When the work creates or changes UI and no design source exists (no Figma link, no existing pattern to follow), propose a concrete design direction in the G2 confirmation (palette, typography, spacing scale, component choices, tone of copy), record the confirmed choices in plan section 3, and pass them in the card. Offer alternatives only when the user's taste is unclear and do not ask about every detail.
+- UI/UX walkthrough: if the profile lists playwright or chrome-devtools and the work changes UI, offer an optional walkthrough in the G2 confirmation (flows, viewports such as mobile and desktop, and what counts as a pass). Run it only if the user agrees, and record it in plan section 7 as a verification method. Say plainly that it is a scripted walkthrough by an agent, not a test with real users. Use only local or user-named URLs, and tell the user the browser tool can see browser content.
 - If the user mentions a Figma design but figma is not listed, ask whether to continue without it; never describe a design you did not read.
 - Never invent visual details (layout, colors, copy) that neither the user nor a design source provided; ask or mark them `unchecked`.
 

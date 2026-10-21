@@ -68,7 +68,7 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | Usage mode | **Lite**: the PM calls only the needed roles directly<br>**Full**: planning and development leaders coordinate sub-roles; better for large multi-area work | Lite |
 | Full execution mode | **relay**: the leader returns call cards and the PM makes the calls | relay |
 | Context7 MCP | Register it in `.mcp.json` to check docs against the installed version | Asked |
-| Design tool MCP (optional) | **Playwright**: open and look at the running page<br>**shadcn/ui**: reuse vetted components (needs `components.json`)<br>**Figma**: when you have Figma designs; browser sign-in on first use | Asked only for projects with a UI; Playwright and shadcn/ui recommended |
+| Design tool MCP (optional) | **Playwright**: open and look at the running page<br>**Chrome DevTools**: inspect the page, console, network, and performance in Chrome; useful for UI/UX checks<br>**shadcn/ui**: reuse vetted components (needs `components.json`)<br>**Figma**: when you have Figma designs; browser sign-in on first use | Asked only for projects with a UI; Playwright and shadcn/ui recommended |
 | Forbidden areas | Production config, generated files, specific paths | None |
 | Protection mode | **Advisory**: the guard hook blocks violations<br>**Strict**: tracks direct approval records (optional; you run the approval commands yourself) | Advisory |
 | Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
@@ -76,7 +76,10 @@ Plain requests work too: "set up the agent team", "check the team installation",
 
 All 10 role files are always installed regardless of mode; the mode only changes how the team is used.
 
-Only `frontend-agent` and `qa-agent` use the design tools. A registered server's tool definitions are added to every call of those two roles, which costs tokens, and `npx` runs external packages, so choose them only when you need them. The agents never invent spacing, colors, or copy that the design does not state, and mark visual checks they could not make as `unchecked`.
+Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwright, Chrome DevTools) can see the content of the browser they open, so avoid personal tabs and sensitive data. A registered server's tool definitions are added to every call of those two roles, which costs tokens, and `npx` runs external packages, so choose them only when you need them. The agents never invent spacing, colors, or copy that the design does not state, and mark visual checks they could not make as `unchecked`.
+
+- **No design provided**: during confirmation the PM proposes a concrete design direction (palette, typography, spacing, components, tone of copy) and records the confirmed choices in the plan; `frontend-agent` builds from that record.
+- **UI/UX check (optional)**: when a browser tool is registered and the work changes UI, the PM asks during confirmation whether to run one. Only if you agree, `qa-agent` walks the agreed flows and screen sizes and reports problems with evidence. It is a scripted walkthrough by an agent, not a test with real users, and it never enters real credentials, places orders or payments, or changes data.
 
 ## Using it after install
 

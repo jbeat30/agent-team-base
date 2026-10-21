@@ -395,18 +395,19 @@ test('plugin 채널: git 없는 배포본에서 source가 플러그인 버전 �
 test('디자인 도구 MCP: 선택한 서버만 .mcp.json에 병합하고 프로필에 기록, 제거 시 사용자 서버 보존', () => {
   const { dir, applied } = installFresh(
     { '.mcp.json': { mcpServers: { mine: { command: 'node', args: ['mine.js'] } } } },
-    { context7: true, designTools: ['playwright', 'shadcn', 'figma'] },
+    { context7: true, designTools: ['playwright', 'chrome-devtools', 'shadcn', 'figma'] },
   );
   assert.equal(applied.status, 0, JSON.stringify(applied.json));
   const servers = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers;
-  assert.deepEqual(Object.keys(servers).sort(), ['context7', 'figma', 'mine', 'playwright', 'shadcn']);
+  assert.deepEqual(Object.keys(servers).sort(), ['chrome-devtools', 'context7', 'figma', 'mine', 'playwright', 'shadcn']);
+  assert.deepEqual(servers['chrome-devtools'], { command: 'npx', args: ['-y', 'chrome-devtools-mcp@latest'] });
   assert.deepEqual(servers.playwright, { command: 'npx', args: ['@playwright/mcp@latest'] });
   assert.deepEqual(servers.shadcn, { command: 'npx', args: ['shadcn@latest', 'mcp'] });
   assert.deepEqual(servers.figma, { type: 'http', url: 'https://mcp.figma.com/mcp' });
-  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Design tool MCP: playwright, shadcn, figma/);
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Design tool MCP: playwright, chrome-devtools, shadcn, figma/);
   const verified = install(['verify', '--target', dir]);
   const names = verified.json.checks.map((c) => c.name);
-  assert.ok(['playwright', 'shadcn', 'figma'].every((n) => names.includes(n)));
+  assert.ok(['playwright', 'chrome-devtools', 'shadcn', 'figma'].every((n) => names.includes(n)));
   assert.match(verified.json.checks.find((c) => c.name === 'figma').detail, /sign-in/);
   const preview = install(['remove', '--target', dir]);
   assert.ok(preview.json.actions.includes('removed .mcp.json figma'));
