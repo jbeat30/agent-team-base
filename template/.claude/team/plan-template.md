@@ -1,94 +1,95 @@
-# 기획안
+# Plan
 
-공통 양식, 대상 프로젝트 자동 설치·실행 전
-실행 단위 디렉터리 `.claude-team-docs/runs/<runId>/plan.md`에 복사해 작성
-12개 구성이 하나라도 비면 G1 통과 불가
+Common form, before automatic install and execution in the target project.
+Copy it to the run directory `.claude-team-docs/runs/<runId>/plan.md` and fill it in.
+G1 cannot pass if any of the 12 sections is empty.
 
 - runId:
-- 위험도: L2 | L3
-- 작성자: pm-agent
-- 상태: draft | confirmed
+- Risk: L2 | L3
+- Author: pm-agent
+- Status: draft | confirmed
 
-## 1. 사용자 요청 원문
+## 1. User request source
 
-> 요청 원문 그대로 인용, 요약·재진술 금지
+> Quote the request source verbatim, no summary or restatement
 
-## 2. 요구사항 목록
+## 2. Requirements
 
-| ID | 요구 | 원문 근거(인용) |
+| ID | Requirement | Source quote |
 | --- | --- | --- |
 | R1 | | |
 
-## 3. 사용자가 말하지 않은 항목
+## 3. Items the user did not mention
 
-호출처·엣지 케이스·상태·오류·접근성·권한·마이그레이션·문구·테스트 후보를 항목별로 판정
+Decide per item: callers, edge cases, states, errors, accessibility, permissions, migration, wording, test candidates.
 
-| 항목 | 분류 | 처리 | 사유 |
+| Item | Category | Handling | Reason |
 | --- | --- | --- | --- |
-| | | 포함 / 제외 / 사용자 질문 | |
+| | | include / exclude / ask user | |
 
-## 4. 가정
+## 4. Assumptions
 
-| 가정 | 근거 또는 `미확인` |
+| Assumption | Evidence or `unchecked` |
 | --- | --- |
 | | |
 
-## 5. 영향 범위·사이드이펙트
+## 5. Impact and side effects
 
-호출처·공유 모듈·계약·데이터·보안·성능·회귀 위험
+Callers, shared modules, contracts, data, security, performance, regression risk.
 
-## 6. 변경 계획
+## 6. Change plan
 
-허용 파일은 glob 없이 구체적 경로만 기재, 파일별 수정 담당은 한 명
+List allowed files as exact paths without globs. One owner per file.
 
-| 순서 | 파일 | 새 파일 여부 | 작업 | 담당 |
+| Order | File | New file | Work | Owner |
 | --- | --- | --- | --- | --- |
 | 1 | | | | |
 
-- 금지 영역:
-- 쓰기는 한 번에 한 담당씩 순차 진행
-- 담당 열에는 역할 이름(예: backend-agent)만 기재, 가드가 이 표로 파일별 쓰기 권한을 검사
-- 표 셀 안에 `|` 문자를 쓰지 않음(열 구분자로 읽혀 가드 검사가 실패), 필요하면 `\|`로 표기
+- Forbidden areas:
+- Writes run one owner at a time, in sequence.
+- In the Work column write only `modify` or `create`; strict mode rejects other values.
+- Put only the role name (for example backend-agent) in the Owner column; the guard checks per-file write permission with this table.
+- Do not use the `|` character inside table cells (it is read as a column separator and the guard check fails); write `\|` if needed.
 
-## 7. 완료 기준
+## 7. Completion criteria
 
-요구사항 ID별 인수 기준과 검증 방법, 자동 검증이 불가능하면 수동 확인 절차와 사유 기재
+Acceptance criteria and verification method per requirement ID. If automatic verification is impossible, state the manual procedure and the reason.
 
-| ID | Given | When | Then | 검증 방법 |
+| ID | Given | When | Then | Verification |
 | --- | --- | --- | --- | --- |
-| R1 | | | | 테스트 / 명령 / 화면 확인 |
+| R1 | | | | test / command / screen check |
 
-## 8. 검사 명령과 부작용 분류
+## 8. Check commands and side-effect class
 
-| 명령 | 작업 경로 | 부작용(자동 수정·외부 접근·상태 변경) |
+| Command | Working directory | Side effects (auto-fix, external access, state change) |
 | --- | --- | --- |
-| | | 없음 / 있음(별도 승인) |
+| | | none / present (separate approval) |
 
-## 9. 완료 체크리스트
+## 9. Completion checklist
 
-`.claude/team/checklist.md` 적용 항목과 프로젝트 추가 항목
+Items applied from `.claude/team/checklist.md` plus project-specific items.
 
-## 10. 사용자 승인 필요 항목
+## 10. Items requiring user approval
 
-- 사용자 승인 필요: 없음 | 있음
+- User approval required: none | required
 
-없으면 `없음`과 판단 근거를 기재, 있으면 항목·선택지·권장안
-엄격 모드의 PM 자체 등록은 이 표식이 `없음`이고 위험도가 L1/L2이며 승인 범위가 자체 컨펌을 허용할 때만 가능
+If none, write `none` with the reasoning. If required, list items, options, and a recommendation.
+In strict mode, PM self-registration is possible only when this marker is `none`, the risk is L1/L2, and the approval scope allows self-confirmation.
 
-## 11. 근거
+## 11. Evidence
 
-파일 경로·줄, 문서 URL·버전, 근거 없는 항목은 `미확인`
+File paths and lines, document URLs and versions. Mark items without evidence as `unchecked`.
 
-## 12. 부록
+## 12. Appendix
 
-원본 보고 파일의 경로·해시 참조, 전문 복사 금지
+Reference paths and hashes of the original report files. Do not copy them in full.
 
 - reports/planner-agent-01.md:
 - reports/architecture-agent-01.md:
 - reports/qa-plan.md:
 
-## 컨펌 기록
+## Confirmation record
 
 - confirmedBy: user | pm-agent
-- PM 독립 확인: 원문 대조 / 완료 기준 검증 가능성 / 허용 파일 범위 / 승인 트리거 재판정 / 미해결 지적 없음
-- 기획 해시:
+- PM independent check: source comparison / verifiability of completion criteria / allowed file scope / approval trigger re-judgment / no unresolved findings
+- Plan hash:

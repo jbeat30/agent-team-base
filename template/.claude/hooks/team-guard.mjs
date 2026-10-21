@@ -2,7 +2,7 @@
 // 권고·엄격 모드 가드: PreToolUse·PostToolUse hook, 역할별 쓰기 경로와 에이전트 호출 대상·순서 검사
 // 차단은 exit 2와 stderr 메시지, 오류·파싱 실패도 차단(fail closed)
 // 보안 경계가 아닌 실수 방지 장치: 메인 세션의 Bash·사용자·hook 설정 변경은 방어하지 않음
-// 전제: 에이전트 호출 인계에 `runId: <id>`, 기획안 상태는 `- 상태: confirmed`, 변경 계획 6장 표의 담당은 역할 이름
+// 전제: 에이전트 호출 인계에 `runId: <id>`, 기획안 상태는 `- Status: confirmed`, 변경 계획 6장 표의 담당은 역할 이름
 import { existsSync, mkdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { strictMode, verifyRegistration, verifyWrite } from '../team/bin/team-policy.mjs';
@@ -30,7 +30,7 @@ function readInput() {
   try {
     return JSON.parse(readFileSync(0, 'utf8'));
   } catch {
-    return deny('hook 입력을 해석할 수 없음');
+    return deny('cannot parse hook input');
   }
 }
 
@@ -42,19 +42,19 @@ function projectRoot(input) {
 
 // 프로젝트 내부의 일반 경로만 허용: 밖으로 나가는 경로·UNC·다른 드라이브·symlink·junction 거부
 function toRelative(root, filePath) {
-  if (typeof filePath !== 'string' || !filePath) return deny('파일 경로 없음');
-  if (filePath.startsWith('\\\\') || filePath.startsWith('//')) return deny(`UNC 경로 미지원: ${filePath}`);
+  if (typeof filePath !== 'string' || !filePath) return deny('file path missing');
+  if (filePath.startsWith('\\\\') || filePath.startsWith('//')) return deny(`UNC paths are not supported: ${filePath}`);
   const abs = resolve(root, filePath);
   const rel = relative(root, abs);
-  if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) return deny(`프로젝트 밖 경로: ${filePath}`);
+  if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) return deny(`path outside the project: ${filePath}`);
   let ancestor = abs;
   while (!existsSync(ancestor)) {
     const parent = dirname(ancestor);
-    if (parent === ancestor) return deny(`경로 해석 실패: ${filePath}`);
+    if (parent === ancestor) return deny(`path resolution failed: ${filePath}`);
     ancestor = parent;
   }
   const expected = join(root, relative(root, ancestor));
-  if (norm(realpathSync.native(ancestor)) !== norm(expected)) return deny(`symlink·junction 경로 미지원: ${filePath}`);
+  if (norm(realpathSync.native(ancestor)) !== norm(expected)) return deny(`symlink and junction paths are not supported: ${filePath}`);
   return rel.split(sep).join('/');
 }
 
@@ -82,7 +82,7 @@ function validRunId(runId) {
 function planConfirmed(root, runId) {
   const text = readText(runPaths(root, runId).plan);
   if (text === null) return false;
-  const match = text.match(/^- 상태:\s*([A-Za-z-]+)/m);
+  const match = text.match(/^- Status:\s*([A-Za-z-]+)/m);
   return match?.[1] === 'confirmed';
 }
 
@@ -98,7 +98,7 @@ function assignedFiles(root, runId, role) {
     if (!line.trim().startsWith('|') || /^\|\s*-/.test(line.trim())) continue;
     const cells = splitRow(line);
     const file = (cells[1] ?? '').replace(/\\/g, '/').replace(/^\.\//, '');
-    if (!file || file === '파일' || /[*?[\]]/.test(file) || file.startsWith('/') || file.split('/').includes('..')) continue;
+    if (!file || file === 'File' || /[*?[\]]/.test(file) || file.startsWith('/') || file.split('/').includes('..')) continue;
     if (cells[4] === role) files.push(norm(file));
   }
   return files;
@@ -126,11 +126,11 @@ function acquireLock(root, entry) {
       if (error.code !== 'EEXIST') throw error;
       const current = readLock(root);
       const stale = !current || Date.now() - (current.startedAt ?? 0) > LOCK_TTL_MS;
-      if (!stale) return deny(`다른 쓰기 에이전트(${current.subagentType})가 실행 중, 쓰기는 순차로 호출`);
+      if (!stale) return deny(`another writing agent (${current.subagentType}) is running; call writers one at a time`);
       unlinkSync(lockPath(root));
     }
   }
-  return deny('쓰기 잠금 획득 실패');
+  return deny('failed to acquire the write lock');
 }
 
 // 모든 호출자에게 거부하는 보호 경로
@@ -169,40 +169,40 @@ function decideWrite(root, input) {
   const isPm = role === 'main' || role === 'pm-agent';
   // 권고 모드의 프로필 수정은 사용자 요청을 받은 PM에게만 허용
   const strict = strictMode(root);
-  if (strict && input.permission_mode !== 'default') return deny('엄격 모드는 default 권한 모드만 허용, 자동 하향 전환 금지');
+  if (strict && input.permission_mode !== 'default') return deny('strict mode allows only the default permission mode; do not downgrade automatically');
   const pmProfile = !strict && isPm && rl === '.claude/team/profile.md';
-  if (!pmProfile && isProtectedFor(role, rl)) return deny(`보호 경로는 수정할 수 없음: ${rel}`);
+  if (!pmProfile && isProtectedFor(role, rl)) return deny(`protected path cannot be modified: ${rel}`);
 
   if (isPm) {
-    if (new RegExp(`^${DOCS}/runs/[^/]+/reports/`).test(rl)) return deny('보고 파일은 담당 에이전트만 작성할 수 있음(PM의 재작성·저장 금지)');
+    if (new RegExp(`^${DOCS}/runs/[^/]+/reports/`).test(rl)) return deny('only the owning agent may write a report file (the PM must not rewrite or re-save it)');
     if (strict && !rl.startsWith(`${DOCS}/runs/`)) verifyWrite(root, rel, 'pm-agent');
     return;
   }
 
   if (!SUBAGENT_ROLES.includes(role)) {
-    if (strict) return deny('엄격 모드에서 미등록 역할의 파일 수정 거부');
+    if (strict) return deny('strict mode rejects file edits by unregistered roles');
     return; // 권고 모드에서는 이 팀 외의 에이전트에 간섭하지 않음
   }
 
   // runId는 대소문자를 구분하는 파일시스템에서 실제 폴더명과 일치해야 하므로 원래 경로(rel)에서 추출
   const reportRun = ownReportRunId(role, rel);
   if (reportRun !== null) {
-    if (!validRunId(reportRun) || !existsSync(runPaths(root, reportRun).request)) return deny(`실행 단위(request.md)가 없음: ${reportRun}`);
+    if (!validRunId(reportRun) || !existsSync(runPaths(root, reportRun).request)) return deny(`run unit (request.md) not found: ${reportRun}`);
     return;
   }
-  if (!WRITERS.includes(role)) return deny(`${role}은 자신의 보고 파일에만 쓸 수 있음: ${rel}`);
+  if (!WRITERS.includes(role)) return deny(`${role} may write only its own report file: ${rel}`);
 
   const lock = readLock(root);
-  if (!lock || lock.subagentType !== role) return deny(`${role}은 PM·dev-lead의 호출로 활성화된 경우에만 쓸 수 있음`);
+  if (!lock || lock.subagentType !== role) return deny(`${role} may write only when activated by a call from the PM or dev-lead`);
   if (strict) verifyWrite(root, rel, role, lock.runId);
-  if (!planConfirmed(root, lock.runId)) return deny('기획안이 confirmed 상태가 아니라 소스·설정 쓰기를 시작할 수 없음');
-  if (!assignedFiles(root, lock.runId, role).includes(norm(rel))) return deny(`기획안 변경 계획(6장 표)에서 ${role}에 배정되지 않은 파일: ${rel}, 표 셀 안의 | 는 \\| 로 표기하고 담당 열은 역할 이름만 기재`);
+  if (!planConfirmed(root, lock.runId)) return deny('the plan is not in confirmed status, so source and config writes cannot start');
+  if (!assignedFiles(root, lock.runId, role).includes(norm(rel))) return deny(`file not assigned to ${role} in the plan's change table (section 6): ${rel}. Write | inside a table cell as \\| and put only the role name in the Owner column`);
 }
 
 // 프로필의 실행 모드가 relay이면 리더는 하위 에이전트를 직접 호출하지 않고 카드만 반환
 function relayMode(root) {
   const text = readText(join(root, '.claude/team/profile.md'));
-  return text !== null && /^- 실행 모드:\s*relay\b/m.test(text);
+  return text !== null && /^- Execution mode:\s*relay\b/m.test(text);
 }
 
 function decideAgent(root, input) {
@@ -210,27 +210,27 @@ function decideAgent(root, input) {
   const target = input.tool_input?.subagent_type;
   const prompt = input.tool_input?.prompt ?? '';
   if (!ROLES.includes(target)) {
-    if (strictMode(root)) return deny('엄격 모드에서 미등록 역할 호출 거부');
+    if (strictMode(root)) return deny('strict mode rejects calls to unregistered roles');
     return; // 권고 모드에서는 이 팀 외의 호출에 간섭하지 않음
   }
 
   if (SUBAGENT_ROLES.includes(caller)) {
-    if (relayMode(root)) return deny(`relay 모드에서 ${caller}는 하위 에이전트를 호출하지 않음, 호출 카드를 반환해 PM이 호출`);
+    if (relayMode(root)) return deny(`in relay mode ${caller} must not call sub-agents; return call cards for the PM to call`);
     const allowed = CALL_TARGETS[caller] ?? [];
-    if (!allowed.includes(target)) return deny(`${caller}는 ${target}을 호출할 수 없음`);
-    if (target === 'qa-agent' && /모드:\s*final/.test(prompt)) return deny('final 검증은 PM이 직접 호출');
+    if (!allowed.includes(target)) return deny(`${caller} cannot call ${target}`);
+    if (target === 'qa-agent' && /Mode:\s*final/.test(prompt)) return deny('the PM must call final verification directly');
   }
 
   // `runId: <id>`가 표준 형식이며 `runId <id>`·`runId=<id>`도 허용
   // 문장 끝의 마침표·하이픈은 runId에서 제외
   const runId = prompt.match(/runId[\s:=]+([A-Za-z0-9][A-Za-z0-9._-]*)/)?.[1]?.replace(/[._-]+$/, '');
-  if (!runId) return deny('호출 인계에 `- runId: <id>` 줄이 필요');
-  if (!existsSync(runPaths(root, runId).request)) return deny(`실행 단위(request.md)가 없음: ${runId}`);
+  if (!runId) return deny('the call handoff needs a `- runId: <id>` line');
+  if (!existsSync(runPaths(root, runId).request)) return deny(`run unit (request.md) not found: ${runId}`);
 
   if (target === 'dev-lead' || WRITERS.includes(target)) {
-    if (!planConfirmed(root, runId)) return deny('기획안이 confirmed 상태가 아니라 개발 호출을 시작할 수 없음');
+    if (!planConfirmed(root, runId)) return deny('the plan is not in confirmed status, so development calls cannot start');
     if (strictMode(root)) {
-      if (input.permission_mode !== 'default') return deny('엄격 모드는 default 권한 모드만 허용, 자동 하향 전환 금지');
+      if (input.permission_mode !== 'default') return deny('strict mode allows only the default permission mode; do not downgrade automatically');
       verifyRegistration(root, runId);
     }
   }
@@ -258,5 +258,5 @@ try {
   }
   process.exit(0);
 } catch (error) {
-  deny(`가드 오류: ${error.message}`);
+  deny(`guard error: ${error.message}`);
 }

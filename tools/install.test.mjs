@@ -14,7 +14,7 @@ const fakeClaude = join(realpathSync(mkdtempSync(join(tmpdir(), 'fake-claude-'))
 writeFileSync(fakeClaude, "console.log(process.env.FAKE_CLAUDE_VERSION ?? '2.1.302 (Claude Code)');\n");
 
 const temp = (prefix = 'team-install-') => realpathSync(mkdtempSync(join(tmpdir(), prefix)));
-const answersFor = (over = {}) => ({ profile: 'full', context7: true, gitignore: true, pdca: 'off', stack: [{ item: 'Node.js', value: 'npm', evidence: 'package.json' }], checks: [{ purpose: '테스트', command: 'npm test', cwd: '.', sideEffect: '없음(추정)' }], conventions: [], forbidden: [{ path: 'dist/', reason: '생성 파일' }], ...over });
+const answersFor = (over = {}) => ({ profile: 'full', context7: true, gitignore: true, pdca: 'off', stack: [{ item: 'Node.js', value: 'npm', evidence: 'package.json' }], checks: [{ purpose: '테스트', command: 'npm test', cwd: '.', sideEffect: 'none (assumed)' }], conventions: [], forbidden: [{ path: 'dist/', reason: '생성 파일' }], ...over });
 
 function project(files = {}) {
   const dir = temp();
@@ -67,8 +67,8 @@ test('detect: 스택·검사 명령·부작용 분류를 읽기 전용으로 감
   const { json } = install(['detect', '--target', dir]);
   assert.deepEqual(json.stacks.map((s) => s.item).sort(), ['Go', 'JavaScript/TypeScript (Node.js)', 'Python']);
   const byPurpose = Object.fromEntries(json.suggestedChecks.filter((c) => c.evidence.startsWith('package.json')).map((c) => [c.purpose, c]));
-  assert.equal(byPurpose['테스트'].command, 'pnpm test');
-  assert.match(byPurpose['린트'].sideEffect, /^있음/);
+  assert.equal(byPurpose['Test'].command, 'pnpm test');
+  assert.match(byPurpose['Lint'].sideEffect, /^present/);
   assert.ok(json.suggestedChecks.some((c) => c.command === 'go test ./...'));
   assert.deepEqual(json.conventionFiles, ['CONTRIBUTING.md']);
   assert.equal(json.existing.installed, false);
@@ -105,8 +105,8 @@ test('신규 설치: 파일·settings·MCP·gitignore·프로필·매니페스�
   assert.equal(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers.context7.command, 'npx');
   assert.match(readFileSync(join(dir, '.gitignore'), 'utf8'), /\.claude-team-docs\//);
   const profile = readFileSync(join(dir, '.claude', 'team', 'profile.md'), 'utf8');
-  assert.match(profile, /실행 프로파일: full/);
-  assert.match(profile, /실행 모드: relay/);
+  assert.match(profile, /Execution profile: full/);
+  assert.match(profile, /Execution mode: relay/);
   assert.match(profile, /`npm test`/);
   assert.match(profile, /dist\//);
   const verified = install(['verify', '--target', dir]);
@@ -251,12 +251,12 @@ test('v0.1.0은 미지원 PDCA 입력을 적용 전에 거부', () => {
 
 test('PDCA 생략 시 off로 계획·설치', () => {
   const { dir } = installFresh({}, { pdca: undefined });
-  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /PDCA 모드: off/);
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /PDCA mode: off/);
 });
 
 test('엄격 모드 설치는 승인 기록을 만들지 않고 실제 점검은 미확인으로 유지', () => {
   const { dir } = installFresh({}, { guardMode: 'strict' });
-  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /보호 모드: 엄격/);
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Protection mode: strict/);
   assert.equal(existsSync(join(dir, '.claude/team/bin/team-approval.mjs')), true);
   assert.equal(existsSync(join(dir, '.claude-team-docs/.guard/grant.json')), false);
   const result = install(['verify', '--target', dir, '--live']);

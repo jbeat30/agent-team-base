@@ -97,7 +97,7 @@ for (const file of agentFiles) {
         if (target === 'pm-agent') fail(file, 'pm-agent는 자신을 호출 불가');
       }
     }
-    for (const needle of ['# relay 모드', '# 요구 보존 점검', 'team-check.mjs trace']) {
+    for (const needle of ['# Relay mode', '# Requirement preservation check', 'team-check.mjs trace']) {
       if (!body.includes(needle)) fail(file, `${needle} 없음`);
     }
     continue;
@@ -121,10 +121,10 @@ for (const file of agentFiles) {
   }
   if (allowedTargets && !tools.some((t) => t.startsWith('Agent('))) fail(file, '리더는 Agent(...) 필요');
   if (allowedTargets) {
-    if (!body.includes('# relay 모드')) fail(file, 'relay 모드 절차 없음');
+    if (!body.includes('# Relay mode')) fail(file, 'relay 모드 절차 없음');
     if (!/^status: .*needs-dispatch/m.test(body)) fail(file, '보고 형식에 needs-dispatch 필요');
   }
-  for (const heading of ['## 공통 규칙', '## 보고 형식']) {
+  for (const heading of ['## Common rules', '## Report format']) {
     if (!body.includes(heading)) fail(file, `${heading} 구간 없음`);
   }
   for (const field of reportFields) {
@@ -141,6 +141,8 @@ function walk(dir) {
 for (const path of walk(root).filter((p) => p.endsWith('.md'))) {
   const text = readFileSync(path, 'utf8');
   const rel = path.slice(root.length + 1);
+  // 프롬프트(역할·양식)는 영어 기본, 한글이 섞이면 토큰 효율과 검사 라벨 일관성이 깨지므로 거부
+  if (/[가-힣]/.test(text)) fail(rel, '프롬프트는 영어로 작성(한글 포함)');
   for (const phrase of bannedPhrases) {
     if (text.includes(phrase)) fail(rel, `지양 문구 "${phrase}" 포함`);
   }

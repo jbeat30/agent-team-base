@@ -1,27 +1,27 @@
-# 완료 체크리스트
+# Completion checklist
 
-공통 양식, 프로젝트 적용 항목은 `profile.md` 근거로 보완하고 근거 없는 항목은 추정해 추가하지 않음
-qa-agent가 항목별 `pass` / `fail` / `n.a.`와 근거를 반환
-L1 경량 체크리스트는 `L1` 표시 항목으로 한정
+Common form. Complete project items from `profile.md` evidence and never add items by guessing.
+qa-agent returns `pass` / `fail` / `n.a.` with evidence per item.
+The light L1 checklist is limited to items marked `L1`.
 
-| 항목 | 확인 방법 | L1 |
+| Item | How to check | L1 |
 | --- | --- | --- |
-| 요구사항 ID별 충족 | 기획안 완료 기준과 변경 diff·검사 기록 대조 | L1 |
-| 허용 파일 외 변경 없음 | 변경 파일 목록과 허용 파일 대조 | L1 |
-| 호출처·영향 범위 확인 | 기획안의 영향 목록과 변경 diff 대조 | |
-| 오류·빈 상태·경계 값 처리 | 해당 시 코드·테스트 확인 | |
-| 타입·린트·포맷 | 프로젝트에 정의된 명령의 기록이 있을 때만 확인 | |
-| 테스트 추가·수정과 실행 기록 | 검사 기록 원본 확인 | |
-| 접근성·문구·다국어 | UI 변경 시 확인 | L1 |
-| 미사용 코드·임시 로그·TODO 잔존 | diff 검색 | L1 |
-| 문서·주석·변경 기록 갱신 | 프로젝트 규칙이 있을 때 확인 | |
-| 비밀값·민감정보 노출 없음 | diff 확인 | |
-| 의존성·설정 변경 없음 또는 승인됨 | 변경 파일과 승인 기록 대조 | |
-| 미검증 항목 명시 | 보고의 `unverified` 확인 | L1 |
+| Each requirement ID is met | Compare plan completion criteria with the diff and check records | L1 |
+| No changes outside allowed files | Compare changed file list with allowed files | L1 |
+| Callers and impact checked | Compare the plan's impact list with the diff | |
+| Errors, empty states, boundary values handled | Check code and tests where applicable | |
+| Types, lint, format | Only when a record of the project-defined command exists | |
+| Tests added or changed, with run record | Check the original check record | |
+| Accessibility, wording, i18n | Check when the UI changed | L1 |
+| No leftover unused code, temporary logs, TODOs | Search the diff | L1 |
+| Docs, comments, change log updated | Check when the project has a rule | |
+| No secrets or sensitive data exposed | Check the diff | |
+| No dependency or config change, or approved | Compare changed files with the approval record | |
+| Unverified items stated | Check `unverified` in the report | L1 |
 
-## 프로젝트 추가 항목
+## Project-specific items
 
-설치 시 프로젝트 근거(기존 규칙·검사 도구)가 있는 항목만 아래에 추가
+Add only items that have project evidence at install time (existing rules, check tools).
 
-| 항목 | 확인 방법 | 근거 경로 |
+| Item | How to check | Evidence path |
 | --- | --- | --- |

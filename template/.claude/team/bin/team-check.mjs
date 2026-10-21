@@ -34,15 +34,15 @@ function strictRegistration(runId) {
 }
 
 function runDir(runId) {
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId ?? '')) die(`runId 형식 오류: ${runId}`);
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId ?? '')) die(`invalid runId format: ${runId}`);
   const dir = join(root, '.claude-team-docs', 'runs', runId);
-  if (!existsSync(dir)) die(`실행 단위 디렉터리 없음: ${dir}`);
+  if (!existsSync(dir)) die(`run directory not found: ${dir}`);
   return dir;
 }
 
 function readPlan(dir) {
   const planPath = join(dir, 'plan.md');
-  if (!existsSync(planPath)) die('plan.md 없음');
+  if (!existsSync(planPath)) die('plan.md not found');
   const buffer = readFileSync(planPath);
   return { text: buffer.toString('utf8'), hash: sha256(buffer) };
 }
@@ -50,7 +50,7 @@ function readPlan(dir) {
 // 기획안 8장 표에서 승인된 검사 명령을 추출, 셀 안의 \| 는 | 로 복원
 function parseAllowedChecks(planText) {
   const start = planText.search(/^## 8\./m);
-  if (start < 0) die('기획안에 8장(검사 명령) 없음');
+  if (start < 0) die('plan section 8 (check commands) not found');
   const rest = planText.slice(start).split(/\r?\n/).slice(1);
   const rows = [];
   for (const line of rest) {
@@ -62,7 +62,7 @@ function parseAllowedChecks(planText) {
       .split(/(?<!\\)\|/)
       .map((c) => c.trim().replace(/\\\|/g, '|'));
     const command = (cells[0] ?? '').replace(/^`+|`+$/g, '').trim();
-    if (!command || command === '명령') continue;
+    if (!command || command === 'Command') continue;
     rows.push({ command, cwd: cells[1] ?? '', sideEffect: cells[2] ?? '' });
   }
   return rows;
@@ -70,12 +70,12 @@ function parseAllowedChecks(planText) {
 
 function resolveCwd(cell) {
   const value = cell.replace(/^`+|`+$/g, '').trim();
-  if (!value || value === '.' || value === '프로젝트 루트') return root;
-  if (isAbsolute(value)) die(`작업 경로는 프로젝트 내부 상대 경로만 허용: ${value}`);
+  if (!value || value === '.' || value === 'project root') return root;
+  if (isAbsolute(value)) die(`working directory must be a relative path inside the project: ${value}`);
   const full = resolve(root, value);
   const rel = relative(root, full);
-  if (rel.startsWith('..') || isAbsolute(rel)) die(`작업 경로가 프로젝트 밖: ${value}`);
-  if (!existsSync(full)) die(`작업 경로 없음: ${value}`);
+  if (rel.startsWith('..') || isAbsolute(rel)) die(`working directory is outside the project: ${value}`);
+  if (!existsSync(full)) die(`working directory not found: ${value}`);
   return full;
 }
 
@@ -90,15 +90,15 @@ function cmdRun(args) {
   const positional = args.filter((a) => a !== '--allow-side-effects');
   const [runId, ...commandParts] = positional;
   const command = commandParts.join(' ').trim();
-  if (!command) die('검사 명령 필요');
+  if (!command) die('check command required');
   const dir = runDir(runId);
   const plan = readPlan(dir);
   const registration = strictRegistration(runId);
   const entry = parseAllowedChecks(plan.text).find((row) => row.command === command);
-  if (!entry) die(`기획안 8장에 없는 명령은 실행하지 않음: ${command}`);
-  const clean = /^없음/.test(entry.sideEffect);
+  if (!entry) die(`commands not in plan section 8 are not run: ${command}`);
+  const clean = /^none/.test(entry.sideEffect);
   if (!clean && !allowSideEffects) {
-    die(`부작용 분류가 '없음'이 아닌 명령(${entry.sideEffect || '미분류'}), 사용자 승인 후 --allow-side-effects 로 재실행`);
+    die(`side-effect class is not 'none' for command(${entry.sideEffect || 'unclassified'}); rerun with --allow-side-effects after user approval`);
   }
   const cwd = resolveCwd(entry.cwd);
 
@@ -129,7 +129,7 @@ function cmdRun(args) {
     stderrSha256: sha256(stderr),
     runner: `team-check ${VERSION}`,
     nodeVersion: process.version,
-    source: '검사 기록 출처: 메인이 실행기로 실행',
+    source: 'check record source: run by the main session with the runner',
   };
   writeFileSync(join(outDir, 'record.json'), `${JSON.stringify(record, null, 2)}\n`);
   if (registration) {
@@ -149,7 +149,7 @@ function cmdVerify(args) {
   const checksDir = join(dir, 'checks');
   const indices = existsSync(checksDir) ? readdirSync(checksDir).filter((n) => /^\d+$/.test(n)).sort() : [];
   if (!indices.length) {
-    console.log(JSON.stringify({ ok: false, reason: '검사 기록 없음' }));
+    console.log(JSON.stringify({ ok: false, reason: 'no check record' }));
     process.exit(1);
   }
   const problems = [];
@@ -157,22 +157,22 @@ function cmdVerify(args) {
     const base = join(checksDir, index);
     const recordPath = join(base, 'record.json');
     if (!existsSync(recordPath)) {
-      problems.push(`${index}: record.json 없음`);
+      problems.push(`${index}: record.json not found`);
       continue;
     }
     const record = JSON.parse(readFileSync(recordPath, 'utf8'));
     for (const [file, key] of [['stdout.txt', 'stdoutSha256'], ['stderr.txt', 'stderrSha256']]) {
       const path = join(base, file);
-      if (!existsSync(path)) problems.push(`${index}: ${file} 없음`);
-      else if (sha256(readFileSync(path)) !== record[key]) problems.push(`${index}: ${file} 해시 불일치`);
+      if (!existsSync(path)) problems.push(`${index}: ${file} not found`);
+      else if (sha256(readFileSync(path)) !== record[key]) problems.push(`${index}: ${file} hash mismatch`);
     }
     if (registration) {
       const indexPath = join(approvalPaths(root, runId).guard, `check-index-${runId}.json`);
       const indexData = existsSync(indexPath) ? JSON.parse(readFileSync(indexPath, 'utf8')) : {};
-      if (indexData[`checks/${index}`] !== approvalHash(readFileSync(recordPath))) problems.push(`${index}: 검사 기록 해시 불일치`);
-      if (record.registrationSha256 !== approvalHash(registration)) problems.push(`${index}: 승인 등록 변경`);
+      if (indexData[`checks/${index}`] !== approvalHash(readFileSync(recordPath))) problems.push(`${index}: check record hash mismatch`);
+      if (record.registrationSha256 !== approvalHash(registration)) problems.push(`${index}: approval registration changed`);
     }
-    if (record.planSha256 !== planHash) problems.push(`${index}: 기록 이후 기획안이 변경됨`);
+    if (record.planSha256 !== planHash) problems.push(`${index}: the plan changed after the record`);
   }
   console.log(JSON.stringify({ ok: problems.length === 0, records: indices.length, problems }));
   process.exit(problems.length ? 1 : 0);
@@ -189,19 +189,19 @@ function cmdDiff(args) {
   const positional = baseIndex >= 0 ? args.filter((_, i) => i !== baseIndex && i !== baseIndex + 1) : args;
   const runId = positional[0];
   const dir = runDir(runId);
-  if (git(['rev-parse', '--is-inside-work-tree']).status !== 0) die('git 저장소가 아님');
-  if (git(['rev-parse', '--verify', `${base}^{commit}`]).status !== 0) die(`기준 커밋을 찾을 수 없음: ${base}`);
+  if (git(['rev-parse', '--is-inside-work-tree']).status !== 0) die('not a git repository');
+  if (git(['rev-parse', '--verify', `${base}^{commit}`]).status !== 0) die(`base commit not found: ${base}`);
 
   const exclude = ':(exclude).claude-team-docs/runs';
   const tracked = git(['diff', '--no-color', '--no-ext-diff', base, '--', '.', exclude]);
-  if (tracked.status !== 0) die(`git diff 실패: ${tracked.stderr}`);
+  if (tracked.status !== 0) die(`git diff failed: ${tracked.stderr}`);
   const listed = git(['ls-files', '--others', '--exclude-standard', '-z', '--', '.', exclude]);
   const untracked = listed.stdout.toString('utf8').split('\0').filter(Boolean);
 
   const chunks = [tracked.stdout];
   for (const file of untracked) {
     const added = git(['diff', '--no-color', '--no-index', '--', '/dev/null', file]);
-    if (added.status !== 0 && added.status !== 1) die(`신규 파일 diff 실패(${file}): ${added.stderr}`);
+    if (added.status !== 0 && added.status !== 1) die(`new file diff failed (${file}): ${added.stderr}`);
     chunks.push(added.stdout);
   }
   const patch = Buffer.concat(chunks);
@@ -260,15 +260,15 @@ function planQuote(planText) {
   return quoted.join('\n');
 }
 
-// 호출 카드의 `- 항목:` 값과 `## 요청 원문` 인용 블록 추출
+// 호출 카드의 `- 항목:` 값과 `## Request source` 인용 블록 추출
 function parseCard(text) {
   const field = (name) => text.match(new RegExp(`^- ${name}[^:\\n]*:[ \\t]*(.*)$`, 'm'))?.[1]?.trim() ?? '';
-  const quote = text.split(/^## 요청 원문\s*$/m)[1];
+  const quote = text.split(/^## Request source\s*$/m)[1];
   return {
     runId: field('runId'),
-    planHash: field('기획안 경로·해시').match(/\b[0-9a-f]{64}\b/)?.[0] ?? null,
-    ids: field('담당 요구사항').match(/\bR\d+\b/g) ?? [],
-    files: field('허용 파일').split(',').map((f) => stripCell(f).replace(/^\.\//, '')).filter((f) => f && f !== '없음'),
+    planHash: field('Plan path and hash').match(/\b[0-9a-f]{64}\b/)?.[0] ?? null,
+    ids: field('Assigned requirements').match(/\bR\d+\b/g) ?? [],
+    files: field('Allowed files').split(',').map((f) => stripCell(f).replace(/^\.\//, '')).filter((f) => f && f !== 'none'),
     quote: quote === undefined ? null : quote.split(/\r?\n/).filter((l) => l.startsWith('>')).map((l) => l.replace(/^>\s?/, '')).join('\n'),
   };
 }
@@ -280,43 +280,43 @@ function cmdTrace(args) {
   const dir = runDir(runId);
   const plan = readPlan(dir);
   const requestPath = join(dir, 'request.md');
-  if (!existsSync(requestPath)) die('request.md 없음');
+  if (!existsSync(requestPath)) die('request.md not found');
   const request = readFileSync(requestPath, 'utf8');
   const problems = [];
   const notes = [];
 
-  if (!squash(request)) problems.push('request.md가 비어 있음');
-  else if (!squash(planQuote(plan.text) ?? '').includes(squash(request))) problems.push('기획안 1장에 요청 원문 전체가 없음');
+  if (!squash(request)) problems.push('request.md is empty');
+  else if (!squash(planQuote(plan.text) ?? '').includes(squash(request))) problems.push('plan section 1 does not contain the full request source');
 
   const reqRows = planTable(plan.text, 2);
   const doneRows = planTable(plan.text, 7);
-  if (!reqRows || !doneRows) die('기획안 2장 또는 7장 표 없음');
+  if (!reqRows || !doneRows) die('plan section 2 or 7 table not found');
   const ids = reqRows.map((r) => stripCell(r[0])).filter((id) => /^R\d+$/.test(id));
-  if (!ids.length) problems.push('2장에 요구사항 ID 없음');
-  if (new Set(ids).size !== ids.length) problems.push('2장 요구사항 ID 중복');
+  if (!ids.length) problems.push('no requirement ID in section 2');
+  if (new Set(ids).size !== ids.length) problems.push('duplicate requirement ID in section 2');
   const flat = squash(request);
   for (const row of reqRows) {
     const id = stripCell(row[0]);
     if (!/^R\d+$/.test(id)) continue;
     const evidence = squash(stripCell(row[2]).replace(/^["“>]+|["”]+$/g, ''));
-    if (!evidence) problems.push(`${id}: 원문 근거 인용 없음`);
-    else if (!flat.includes(evidence)) problems.push(`${id}: 원문 근거가 request.md에 없음`);
+    if (!evidence) problems.push(`${id}: no source quote`);
+    else if (!flat.includes(evidence)) problems.push(`${id}: the source quote is not in request.md`);
   }
   const doneIds = new Set();
   for (const row of doneRows) {
     const id = stripCell(row[0]);
     if (!/^R\d+$/.test(id)) continue;
     doneIds.add(id);
-    if (![1, 2, 3].every((i) => stripCell(row[i]))) problems.push(`${id}: 완료 기준 Given/When/Then 비어 있음`);
+    if (![1, 2, 3].every((i) => stripCell(row[i]))) problems.push(`${id}: completion criteria Given/When/Then is empty`);
   }
-  for (const id of ids) if (!doneIds.has(id)) problems.push(`${id}: 7장 완료 기준 없음`);
-  for (const id of doneIds) if (!ids.includes(id)) problems.push(`${id}: 2장에 없는 완료 기준`);
+  for (const id of ids) if (!doneIds.has(id)) problems.push(`${id}: no completion criteria in section 7`);
+  for (const id of doneIds) if (!ids.includes(id)) problems.push(`${id}: completion criteria for an ID not in section 2`);
 
   const changeRows = planTable(plan.text, 6) ?? [];
   const planned = new Map();
   for (const row of changeRows) {
     const file = stripCell(row[1]).replace(/\\/g, '/').replace(/^\.\//, '');
-    if (!file || file === '파일') continue;
+    if (!file || file === 'File') continue;
     planned.set(file, stripCell(row[4]));
   }
 
@@ -326,36 +326,36 @@ function cmdTrace(args) {
   for (const name of cardFiles) {
     const role = name.slice(3, -3);
     const card = parseCard(readFileSync(join(cardsDir, name), 'utf8'));
-    if (card.runId !== runId) problems.push(`cards/${name}: runId 불일치`);
-    if (card.quote === null || squash(card.quote) !== flat) problems.push(`cards/${name}: 카드의 요청 원문이 request.md와 다름`);
-    if (card.planHash && card.planHash !== plan.hash) problems.push(`cards/${name}: 카드의 기획안 해시가 현재 기획안과 다름`);
+    if (card.runId !== runId) problems.push(`cards/${name}: runId mismatch`);
+    if (card.quote === null || squash(card.quote) !== flat) problems.push(`cards/${name}: the card's request source differs from request.md`);
+    if (card.planHash && card.planHash !== plan.hash) problems.push(`cards/${name}: the card's plan hash differs from the current plan`);
     for (const id of card.ids) {
-      if (!ids.includes(id)) problems.push(`cards/${name}: 기획안에 없는 요구사항 ${id}`);
+      if (!ids.includes(id)) problems.push(`cards/${name}: requirement not in the plan ${id}`);
       else covered.add(id);
     }
     for (const file of card.files) {
-      if (!planned.has(file)) problems.push(`cards/${name}: 기획안 6장에 없는 파일 ${file}`);
-      else if (planned.get(file) !== role) problems.push(`cards/${name}: ${file}의 담당은 ${planned.get(file)}, 카드 수신자는 ${role}`);
+      if (!planned.has(file)) problems.push(`cards/${name}: file not in plan section 6 ${file}`);
+      else if (planned.get(file) !== role) problems.push(`cards/${name}: ${file} is owned by ${planned.get(file)}, but the card receiver is ${role}`);
     }
   }
   const writerCards = cardFiles.filter((n) => /-(frontend|backend|api|test)-agent\.md$/.test(n));
-  if (writerCards.length) for (const id of ids) if (!covered.has(id)) problems.push(`${id}: 어떤 실무 카드에도 배정되지 않음`);
-  if (!cardFiles.length) notes.push('호출 카드 기록 없음(cards/NN-<역할>.md), 카드 단계 대조 생략');
+  if (writerCards.length) for (const id of ids) if (!covered.has(id)) problems.push(`${id}: not assigned to any worker card`);
+  if (!cardFiles.length) notes.push('no call card records (cards/NN-<role>.md); card stage comparison skipped');
 
   const reportsDir = join(dir, 'reports');
   for (const name of ['dev-lead.md', 'qa-final.md']) {
     const path = join(reportsDir, name);
     if (!existsSync(path)) continue;
     const text = readFileSync(path, 'utf8');
-    for (const id of ids) if (!new RegExp(`\\b${id}\\b`).test(text)) problems.push(`reports/${name}: ${id} 언급 없음`);
+    for (const id of ids) if (!new RegExp(`\\b${id}\\b`).test(text)) problems.push(`reports/${name}: ${id} not mentioned`);
   }
 
   const patchPath = join(dir, 'changes.patch');
   if (existsSync(patchPath)) {
     const patch = readFileSync(patchPath, 'utf8');
     const changed = new Set([...patch.matchAll(/^diff --git a\/(.+?) b\/(.+)$/gm)].map((m) => m[2]));
-    for (const file of changed) if (!planned.has(file)) problems.push(`changes.patch: 기획안 6장에 없는 변경 파일 ${file}`);
-  } else notes.push('changes.patch 없음, 파일 범위 diff 대조 생략');
+    for (const file of changed) if (!planned.has(file)) problems.push(`changes.patch: changed file not in plan section 6 ${file}`);
+  } else notes.push('no changes.patch; file scope diff comparison skipped');
 
   console.log(JSON.stringify({ ok: problems.length === 0, requirements: ids.length, cards: cardFiles.length, problems, notes }));
   process.exit(problems.length ? 1 : 0);
@@ -366,4 +366,4 @@ if (command === 'run') cmdRun(rest);
 else if (command === 'verify') cmdVerify(rest);
 else if (command === 'diff') cmdDiff(rest);
 else if (command === 'trace') cmdTrace(rest);
-else die('사용법: run <runId> "<명령>" | verify <runId> | diff <runId> [--base <ref>] | trace <runId>');
+else die('usage: run <runId> "<command>" | verify <runId> | diff <runId> [--base <ref>] | trace <runId>');
