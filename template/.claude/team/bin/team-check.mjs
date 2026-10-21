@@ -129,7 +129,7 @@ function cmdRun(args) {
     stderrSha256: sha256(stderr),
     runner: `team-check ${VERSION}`,
     nodeVersion: process.version,
-    source: '검사 기록 출처: 메인이 실행기로 실행',
+    source: 'check record source: run by the main session with the runner',
   };
   writeFileSync(join(outDir, 'record.json'), `${JSON.stringify(record, null, 2)}\n`);
   if (registration) {
