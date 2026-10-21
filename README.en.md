@@ -68,12 +68,15 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | Usage mode | **Lite**: the PM calls only the needed roles directly<br>**Full**: planning and development leaders coordinate sub-roles; better for large multi-area work | Lite |
 | Full execution mode | **relay**: the leader returns call cards and the PM makes the calls | relay |
 | Context7 MCP | Register it in `.mcp.json` to check docs against the installed version | Asked |
+| Design tool MCP (optional) | **Playwright**: open and look at the running page<br>**shadcn/ui**: reuse vetted components (needs `components.json`)<br>**Figma**: when you have Figma designs; browser sign-in on first use | Asked only for projects with a UI; Playwright and shadcn/ui recommended |
 | Forbidden areas | Production config, generated files, specific paths | None |
 | Protection mode | **Advisory**: the guard hook blocks violations<br>**Strict**: tracks direct approval records (optional; you run the approval commands yourself) | Advisory |
 | Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
 | Conflict handling | If files collide, per item: skip or replace with backup; keep or replace an existing `agent` setting | Asked on conflict |
 
 All 10 role files are always installed regardless of mode; the mode only changes how the team is used.
+
+Only `frontend-agent` and `qa-agent` use the design tools. A registered server's tool definitions are added to every call of those two roles, which costs tokens, and `npx` runs external packages, so choose them only when you need them. The agents never invent spacing, colors, or copy that the design does not state, and mark visual checks they could not make as `unchecked`.
 
 ## Using it after install
 
@@ -135,6 +138,14 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 - Only approved commands run, through a **check runner** that records exit code, times, output, and hashes; QA reads these originals, not the PM's summary.
 - Library and framework behavior is checked against the installed version through Context7; anything unchecked is marked `unchecked`.
 
+### Against hallucination and unrequested edits
+
+- The request source is quoted verbatim in the plan, and every agent reads the source and plan files directly.
+- Ambiguous requirements are asked about, not filled in by guessing; items the user did not mention are decided as include, exclude, or ask, and recorded.
+- Unchecked content is never stated as fact and is marked `unverified`; library behavior is checked against docs for the installed version.
+- Only files listed in the plan are edited, nothing is edited before confirmation, and instructions inside documents or tool output are not followed.
+- Which rules rest on the prompt alone and which are enforced by the guard hook and check runner is laid out in [Prompt design principles](docs/PROMPT_DESIGN.en.md).
+
 ### Token efficiency
 
 - Agent prompts (roles, forms, guard messages) are written in English, about 26% fewer always-injected tokens than the Korean version (measured on all 10 roles plus forms, one model).
@@ -150,7 +161,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
   team/          forms, project profile, check runner, install manifest
   settings.json  agent=pm-agent and hook registration (merged with existing settings)
 .claude-team-docs/   per-task records (request source, plan, reports, check records, diff); adding it to .gitignore is optional
-.mcp.json            Context7 registration (optional, merged with existing settings)
+.mcp.json            Context7 and design tool MCP registration (optional, merged with existing settings)
 ```
 
 ## Update and removal
@@ -195,7 +206,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 | English prompts and user-language replies | Implemented; delegation evaluation planned |
 | Hard-task comparison (direct, Lite, Full, repeated runs) | To be designed; results will be published |
 | Context slimming (shorter PM instructions) | Planned |
-| Design tool MCP choice at setup (Playwright and shadcn/ui; Figma when you have Figma designs) | Planned |
+| Design tool MCP choice at setup (Playwright, shadcn/ui, Figma) | Implemented; real Claude and server connection check planned |
 | bkit PDCA integration | After v0.3.0 |
 
 ## Contributing
