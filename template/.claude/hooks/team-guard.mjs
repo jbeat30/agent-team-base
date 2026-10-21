@@ -3,7 +3,7 @@
 // 차단은 exit 2와 stderr 메시지, 오류·파싱 실패도 차단(fail closed)
 // 보안 경계가 아닌 실수 방지 장치: 메인 세션의 Bash·사용자·hook 설정 변경은 방어하지 않음
 // 전제: 에이전트 호출 인계에 `runId: <id>`, 기획안 상태는 `- Status: confirmed`, 변경 계획 6장 표의 담당은 역할 이름
-import { existsSync, mkdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { strictMode, verifyRegistration, verifyWrite } from '../team/bin/team-policy.mjs';
 
@@ -84,6 +84,14 @@ function planConfirmed(root, runId) {
   if (text === null) return false;
   const match = text.match(/^- Status:\s*([A-Za-z-]+)/m);
   return match?.[1] === 'confirmed';
+}
+
+// L3 기획은 개발 호출 전에 architecture-agent 보고가 있어야 함(위험도는 기획안 `- Risk:` 줄)
+function needsArchitectureReport(root, runId) {
+  const risk = readText(runPaths(root, runId).plan)?.match(/^- Risk:\s*(L[123])/m)?.[1];
+  if (risk !== 'L3') return false;
+  const dir = join(runPaths(root, runId).dir, 'reports');
+  return !(existsSync(dir) && readdirSync(dir).some((name) => /^architecture-agent-\d{2}\.md$/.test(name)));
 }
 
 // 기획안 6장 표에서 역할에 배정된 구체적 파일 경로 추출, glob은 제외
@@ -214,6 +222,9 @@ function decideAgent(root, input) {
     return; // 권고 모드에서는 이 팀 외의 호출에 간섭하지 않음
   }
 
+  // 백그라운드 호출은 즉시 반환되어 쓰기 잠금이 풀리고 가드가 서브에이전트의 쓰기를 추적하지 못하므로 포그라운드만 허용
+  if (input.tool_input?.run_in_background !== false) return deny('call team agents in the foreground: set run_in_background to false (a background call returns at once, so the guard cannot track its writes)');
+
   if (SUBAGENT_ROLES.includes(caller)) {
     if (relayMode(root)) return deny(`in relay mode ${caller} must not call sub-agents; return call cards for the PM to call`);
     const allowed = CALL_TARGETS[caller] ?? [];
@@ -229,6 +240,7 @@ function decideAgent(root, input) {
 
   if (target === 'dev-lead' || WRITERS.includes(target)) {
     if (!planConfirmed(root, runId)) return deny('the plan is not in confirmed status, so development calls cannot start');
+    if (needsArchitectureReport(root, runId)) return deny('an L3 plan needs an architecture-agent report in reports/ before development calls; call architecture-agent first');
     if (strictMode(root)) {
       if (input.permission_mode !== 'default') return deny('strict mode allows only the default permission mode; do not downgrade automatically');
       verifyRegistration(root, runId);

@@ -38,8 +38,8 @@ function guard(dir, input) {
 const write = (dir, agent, filePath) =>
   guard(dir, { hook_event_name: 'PreToolUse', tool_name: 'Write', agent_type: agent, tool_input: { file_path: filePath } });
 const card = (extra = '') => `# 작업 카드\n\n- runId: ${RUN}\n${extra}`;
-const call = (dir, caller, target, prompt = card(), toolUseId = 'toolu_1') =>
-  guard(dir, { hook_event_name: 'PreToolUse', tool_name: 'Agent', agent_type: caller, tool_use_id: toolUseId, tool_input: { subagent_type: target, prompt } });
+const call = (dir, caller, target, prompt = card(), toolUseId = 'toolu_1', background = false) =>
+  guard(dir, { hook_event_name: 'PreToolUse', tool_name: 'Agent', agent_type: caller, tool_use_id: toolUseId, tool_input: { subagent_type: target, prompt, run_in_background: background } });
 const post = (dir, target, toolUseId = 'toolu_1') =>
   guard(dir, { hook_event_name: 'PostToolUse', tool_name: 'Agent', tool_use_id: toolUseId, tool_input: { subagent_type: target } });
 const reports = (name) => join('.claude-team-docs', 'runs', RUN, 'reports', name);
@@ -200,4 +200,33 @@ test('relay 모드: 리더의 하위 에이전트 호출 거부, nested 모드·
   post(dir, 'backend-agent', 'toolu_r');
   profile('nested');
   assert.equal(call(dir, 'dev-lead', 'backend-agent', card(), 'toolu_n').allowed, true);
+});
+
+test('백그라운드 호출은 거부하고 포그라운드(run_in_background false)만 허용', () => {
+  const dir = project();
+  const denied = call(dir, 'pm-agent', 'backend-agent', card(), 'toolu_bg', true);
+  assert.equal(denied.allowed, false);
+  assert.match(denied.stderr, /foreground/);
+  const unset = guard(dir, { hook_event_name: 'PreToolUse', tool_name: 'Agent', agent_type: 'pm-agent', tool_use_id: 'toolu_u', tool_input: { subagent_type: 'backend-agent', prompt: card() } });
+  assert.equal(unset.allowed, false);
+  assert.equal(call(dir, 'pm-agent', 'backend-agent', card(), 'toolu_fg', false).allowed, true);
+});
+
+test('L3 기획은 architecture-agent 보고가 있어야 개발 호출을 허용', () => {
+  const dir = project();
+  const planPath = join(dir, '.claude-team-docs', 'runs', RUN, 'plan.md');
+  writeFileSync(planPath, readFileSync(planPath, 'utf8').replace('- Status: confirmed', '- Risk: L3\n- Status: confirmed'));
+  const denied = call(dir, 'pm-agent', 'backend-agent');
+  assert.equal(denied.allowed, false);
+  assert.match(denied.stderr, /architecture-agent/);
+  mkdirSync(join(dir, '.claude-team-docs', 'runs', RUN, 'reports'), { recursive: true });
+  writeFileSync(join(dir, '.claude-team-docs', 'runs', RUN, 'reports', 'architecture-agent-01.md'), 'status: done\n');
+  assert.equal(call(dir, 'pm-agent', 'backend-agent', card(), 'toolu_l3').allowed, true);
+});
+
+test('L2 기획은 architecture-agent 보고 없이도 개발 호출 허용', () => {
+  const dir = project();
+  const planPath = join(dir, '.claude-team-docs', 'runs', RUN, 'plan.md');
+  writeFileSync(planPath, readFileSync(planPath, 'utf8').replace('- Status: confirmed', '- Risk: L2\n- Status: confirmed'));
+  assert.equal(call(dir, 'pm-agent', 'backend-agent').allowed, true);
 });

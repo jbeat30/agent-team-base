@@ -62,7 +62,9 @@ for (const e of events) {
     if (c.type === 'tool_use') calls.push({ name: c.name, nested: Boolean(e.parent_tool_use_id), agent: c.input?.subagent_type ?? null });
   }
 }
-const result = events.find((e) => e.type === 'result') ?? {};
+// 백그라운드 서브에이전트가 있으면 result 이벤트가 여러 번 나오므로 마지막 것이 최종 결과(앞의 것은 중간 보고, 비용도 부분 값)
+const results = events.filter((e) => e.type === 'result');
+const result = results.at(-1) ?? {};
 const usage = result.usage ?? {};
 const finalText = result.result ?? '';
 
@@ -84,7 +86,7 @@ const summary = {
   exit: run.status, subtype: result.subtype ?? null, isError: result.is_error ?? null, budgetStopped: result.subtype === 'error_max_budget_usd',
   costUsd: result.total_cost_usd ?? null, turns: result.num_turns ?? null, wallMs,
   tokens: { input: usage.input_tokens ?? 0, cacheCreation: usage.cache_creation_input_tokens ?? 0, cacheRead: usage.cache_read_input_tokens ?? 0, output: usage.output_tokens ?? 0 },
-  delegations, delegationCount: delegations.length,
+  resultEvents: results.length, delegations, delegationCount: delegations.length,
   usedPlanFiles: calls.some((c) => c.name === 'Write') && events.some((e) => JSON.stringify(e).includes('.claude-team-docs/runs/')),
   score, workdir: work, stderr: (run.stderr ?? '').slice(0, 1000),
 };
