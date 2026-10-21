@@ -163,7 +163,7 @@ test('엄격 모드 검사 실행과 검증은 현재 등록과 기록 해시를
   writeFileSync(recordPath, JSON.stringify(record));
   const verified = run(checkScript, dir, ['verify', 'R1']);
   assert.equal(verified.status, 1);
-  assert.match(JSON.stringify(verified.json), /검사 기록 해시 불일치/);
+  assert.match(JSON.stringify(verified.json), /check record hash mismatch/);
 });
 
 test('등록 해제와 새 승인 범위 기록 이후 쓰기 차단', () => {

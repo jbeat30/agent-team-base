@@ -47,6 +47,7 @@ List allowed files as exact paths without globs. One owner per file.
 
 - Forbidden areas:
 - Writes run one owner at a time, in sequence.
+- In the Work column write only `modify` or `create`; strict mode rejects other values.
 - Put only the role name (for example backend-agent) in the Owner column; the guard checks per-file write permission with this table.
 - Do not use the `|` character inside table cells (it is read as a column separator and the guard check fails); write `\|` if needed.
 

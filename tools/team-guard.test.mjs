@@ -112,7 +112,7 @@ test('쓰기 에이전트 동시 호출 차단, 종료 후 해제, 오래된 잠
   assert.equal(call(dir, 'pm-agent', 'backend-agent', card(), 't1').allowed, true);
   const second = call(dir, 'pm-agent', 'test-agent', card(), 't2');
   assert.equal(second.allowed, false);
-  assert.match(second.stderr, /실행 중/);
+  assert.match(second.stderr, /is running/);
   assert.equal(post(dir, 'backend-agent', 'other').allowed, true);
   assert.equal(call(dir, 'pm-agent', 'test-agent', card(), 't3').allowed, false, '다른 tool_use_id의 Post는 해제하지 않음');
   assert.equal(post(dir, 'backend-agent', 't1').allowed, true);
@@ -171,7 +171,7 @@ test('기획안 표의 이스케이프하지 않은 파이프는 배정을 어�
   call(bad, 'pm-agent', 'backend-agent');
   const denied = write(bad, 'backend-agent', 'src/<a|b>.js');
   assert.equal(denied.allowed, false);
-  assert.match(denied.stderr, /6장 표/);
+  assert.match(denied.stderr, /section 6/);
   const good = project({ rows: [['src/<x>.js', 'backend-agent']] });
   call(good, 'pm-agent', 'backend-agent');
   assert.equal(write(good, 'backend-agent', 'src/<x>.js').allowed, true);
@@ -194,7 +194,7 @@ test('relay 모드: 리더의 하위 에이전트 호출 거부, nested 모드·
   profile('relay');
   const denied = call(dir, 'dev-lead', 'backend-agent');
   assert.equal(denied.allowed, false);
-  assert.match(denied.stderr, /relay 모드/);
+  assert.match(denied.stderr, /relay mode/);
   assert.equal(call(dir, 'planning-lead', 'planner-agent').allowed, false);
   assert.equal(call(dir, undefined, 'backend-agent', card(), 'toolu_r').allowed, true, 'PM 직접 호출은 유지');
   post(dir, 'backend-agent', 'toolu_r');

@@ -73,14 +73,14 @@ test('출력 변조와 기획안 변경을 verify가 탐지', () => {
   writeFileSync(join(checksDir(dir), '01', 'stdout.txt'), 'tampered\n');
   const tampered = run(dir, 'verify', RUN_ID);
   assert.equal(tampered.status, 1);
-  assert.match(tampered.stdout, /해시 불일치/);
+  assert.match(tampered.stdout, /hash mismatch/);
 
   const dir2 = project([[cmd, '.', 'none']]);
   run(dir2, 'run', RUN_ID, cmd);
   writeFileSync(join(dir2, '.claude-team-docs', 'runs', RUN_ID, 'plan.md'), `${plan([[cmd, '.', 'none']])}\n변경\n`);
   const changed = run(dir2, 'verify', RUN_ID);
   assert.equal(changed.status, 1);
-  assert.match(changed.stdout, /기획안이 변경/);
+  assert.match(changed.stdout, /the plan changed/);
 });
 
 test('검사 기록이 없으면 verify 실패', () => {
@@ -159,44 +159,44 @@ test('trace: 요구·카드·보고·diff가 기획안과 일치하면 통과', 
 test('trace: 기획안의 요구 누락·원문 변형을 탐지', () => {
   const dropped = trace(traceProject({ planOpts: { quote: '로그인 화면에 비밀번호 보기 버튼을 추가한다.' } }));
   assert.equal(dropped.status, 1);
-  assert.ok(dropped.json.problems.includes('기획안 1장에 요청 원문 전체가 없음'));
+  assert.ok(dropped.json.problems.includes('plan section 1 does not contain the full request source'));
 
   const reworded = trace(traceProject({ planOpts: { rows: [['R1', '버튼', '비밀번호 표시 토글을 만든다'], R2] } }));
   assert.equal(reworded.status, 1);
-  assert.ok(reworded.json.problems.includes('R1: 원문 근거가 request.md에 없음'));
+  assert.ok(reworded.json.problems.includes('R1: the source quote is not in request.md'));
 
   const noDone = trace(traceProject({ planOpts: { done: ['R1'] } }));
-  assert.ok(noDone.json.problems.includes('R2: 7장 완료 기준 없음'));
+  assert.ok(noDone.json.problems.includes('R2: no completion criteria in section 7'));
 
   const orphan = trace(traceProject({ planOpts: { rows: [R1], done: ['R1', 'R2'] } }));
-  assert.ok(orphan.json.problems.includes('R2: 2장에 없는 완료 기준'));
+  assert.ok(orphan.json.problems.includes('R2: completion criteria for an ID not in section 2'));
 });
 
 test('trace: 카드의 원문 축약·요구 ID·Allowed files·담당 이탈을 탐지', () => {
   const short = trace(traceProject({ card: { opts: { quote: '비밀번호 보기 버튼 추가' } } }));
-  assert.ok(short.json.problems.some((p) => p.includes('요청 원문이 request.md와 다름')));
+  assert.ok(short.json.problems.some((p) => p.includes('request source differs from request.md')));
 
   const unknownId = trace(traceProject({ card: { opts: { ids: 'R1, R2, R9' } } }));
-  assert.ok(unknownId.json.problems.some((p) => p.includes('기획안에 없는 요구사항 R9')));
+  assert.ok(unknownId.json.problems.some((p) => p.includes('requirement not in the plan R9')));
 
   const extraFile = trace(traceProject({ card: { opts: { files: 'src/login.js, src/auth.js' } } }));
-  assert.ok(extraFile.json.problems.some((p) => p.includes('기획안 6장에 없는 파일 src/auth.js')));
+  assert.ok(extraFile.json.problems.some((p) => p.includes('file not in plan section 6 src/auth.js')));
 
   const wrongOwner = trace(traceProject({ card: { name: '01-backend-agent.md' } }));
-  assert.ok(wrongOwner.json.problems.some((p) => p.includes('담당은 frontend-agent, 카드 수신자는 backend-agent')));
+  assert.ok(wrongOwner.json.problems.some((p) => p.includes('is owned by frontend-agent, but the card receiver is backend-agent')));
 
   const uncovered = trace(traceProject({ card: { opts: { ids: 'R1' } } }));
-  assert.ok(uncovered.json.problems.includes('R2: 어떤 실무 카드에도 배정되지 않음'));
+  assert.ok(uncovered.json.problems.includes('R2: not assigned to any worker card'));
 
   const stale = traceProject({ card: {} });
   const planPath = join(stale, '.claude-team-docs', 'runs', RUN_ID, 'plan.md');
   writeFileSync(planPath, `${readFileSync(planPath, 'utf8')}\n변경\n`);
-  assert.ok(trace(stale).json.problems.some((p) => p.includes('기획안 해시가 현재 기획안과 다름')));
+  assert.ok(trace(stale).json.problems.some((p) => p.includes('plan hash differs from the current plan')));
 });
 
 test('trace: 보고의 요구 누락과 계획 밖 diff 파일을 탐지', () => {
   const result = trace(traceProject({ report: 'R1 완료\n', patch: 'diff --git a/src/login.js b/src/login.js\n+x\ndiff --git a/src/other.js b/src/other.js\n+y\n' }));
   assert.equal(result.status, 1);
-  assert.ok(result.json.problems.includes('reports/dev-lead.md: R2 언급 없음'));
-  assert.ok(result.json.problems.includes('changes.patch: 기획안 6장에 없는 변경 파일 src/other.js'));
+  assert.ok(result.json.problems.includes('reports/dev-lead.md: R2 not mentioned'));
+  assert.ok(result.json.problems.includes('changes.patch: changed file not in plan section 6 src/other.js'));
 });

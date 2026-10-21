@@ -14,21 +14,21 @@ export const hash = (value) => createHash('sha256').update(typeof value === 'str
 
 /** @description 프로젝트 내부의 일반 상대 경로 정규화, glob·경로 이탈·링크 거부 */
 export function safePath(root, value, allowRoot = false) {
-  if (typeof value !== 'string' || !value || /[\x00-\x1f*?\[\]:]/.test(value) || value.includes('\\') || isAbsolute(value) || value.startsWith('//')) fail('일반 상대 경로 필요');
+  if (typeof value !== 'string' || !value || /[\x00-\x1f*?\[\]:]/.test(value) || value.includes('\\') || isAbsolute(value) || value.startsWith('//')) fail('plain relative path required');
   const clean = value.replace(/\/$/, '');
-  if (clean.split('/').some((p) => !p || p === '..') || (!allowRoot && clean === '.')) fail('구체적인 프로젝트 내부 경로 필요');
+  if (clean.split('/').some((p) => !p || p === '..') || (!allowRoot && clean === '.')) fail('specific path inside the project required');
   const abs = resolve(root, clean);
   const rel = relative(root, abs);
-  if (rel.startsWith('..') || isAbsolute(rel)) fail('프로젝트 밖 경로');
+  if (rel.startsWith('..') || isAbsolute(rel)) fail('path outside the project');
   let ancestor = abs;
   while (!existsSync(ancestor)) ancestor = dirname(ancestor);
-  if (normalize(realpathSync.native(ancestor)) !== normalize(ancestor)) fail('symlink·junction 경로 미지원');
+  if (normalize(realpathSync.native(ancestor)) !== normalize(ancestor)) fail('symlink and junction paths are not supported');
   return rel.split(sep).join('/') || '.';
 }
 
 /** @description 실행 단위별 계획·요청과 보호 기록 경로 반환 */
 export function paths(root, runId) {
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId ?? '')) fail('runId 형식 오류');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId ?? '')) fail('invalid runId format');
   const guard = '.claude-team-docs/.guard';
   const run = `.claude-team-docs/runs/${runId}`;
   for (const path of [guard, run]) safePath(root, path);
@@ -42,7 +42,7 @@ export function strictMode(root) {
   const value = read(file).match(/^- Protection mode:\s*([^\r\n]+)/m)?.[1]?.trim();
   if (value === undefined || value === 'advisory') return false;
   if (value === 'strict') return true;
-  return fail('보호 모드 값 오류');
+  return fail('invalid protection mode value');
 }
 
 function section(text, number) {
@@ -55,11 +55,11 @@ function rows(text, number) {
 
 /** @description 사용자 확인용 승인 범위 검증, 보호 경로는 허용 범위에 포함하지 않음 */
 export function validateGrant(root, grant) {
-  if (!Array.isArray(grant.roots) || !grant.roots.length || !Array.isArray(grant.forbidden) || !Array.isArray(grant.checks) || !Array.isArray(grant.operations) || !grant.operations.length || grant.operations.some((op) => !['modify', 'create'].includes(op)) || typeof grant.allowPmConfirm !== 'boolean') fail('grant의 roots·forbidden·checks·operations 배열과 allowPmConfirm boolean 필요');
+  if (!Array.isArray(grant.roots) || !grant.roots.length || !Array.isArray(grant.forbidden) || !Array.isArray(grant.checks) || !Array.isArray(grant.operations) || !grant.operations.length || grant.operations.some((op) => !['modify', 'create'].includes(op)) || typeof grant.allowPmConfirm !== 'boolean') fail('grant needs roots, forbidden, checks, operations arrays and an allowPmConfirm boolean');
   const roots = grant.roots.map((p) => safePath(root, p, true));
   const forbidden = grant.forbidden.map((p) => safePath(root, p, true));
   const checks = grant.checks.map((check) => {
-    if (typeof check.command !== 'string' || !check.command.trim() || /[\r\n]/.test(check.command) || !['none', 'approved'].includes(check.sideEffects)) fail('검사 명령·sideEffects(none/approved) 필요');
+    if (typeof check.command !== 'string' || !check.command.trim() || /[\r\n]/.test(check.command) || !['none', 'approved'].includes(check.sideEffects)) fail('check command and sideEffects (none/approved) required');
     return { command: check.command, cwd: safePath(root, check.cwd, true), sideEffects: check.sideEffects };
   });
   return { roots, forbidden, checks, operations: grant.operations, allowPmConfirm: grant.allowPmConfirm };
@@ -68,8 +68,8 @@ export function validateGrant(root, grant) {
 function checkFile(root, grant, file) {
   const path = safePath(root, file);
   const key = normalize(path);
-  if (['.git', '.claude', '.claude-team-docs'].some((base) => within(key, base))) fail(`정책·기록 경로는 배정 불가: ${file}`);
-  if (!grant.roots.some((base) => within(key, normalize(base))) || grant.forbidden.some((base) => within(key, normalize(base)))) fail(`승인 범위 밖 또는 금지 경로: ${file}`);
+  if (['.git', '.claude', '.claude-team-docs'].some((base) => within(key, base))) fail(`policy and record paths cannot be assigned: ${file}`);
+  if (!grant.roots.some((base) => within(key, normalize(base))) || grant.forbidden.some((base) => within(key, normalize(base)))) fail(`outside the approved scope or a forbidden path: ${file}`);
   return path;
 }
 
@@ -77,26 +77,26 @@ function checkFile(root, grant, file) {
 export function snapshot(root, runId) {
   const p = paths(root, runId);
   const saved = JSON.parse(read(p.grant));
-  if (saved.schemaVersion !== 1 || normalize(saved.projectRoot ?? '') !== normalize(root)) fail('승인 범위의 프로젝트 불일치');
+  if (saved.schemaVersion !== 1 || normalize(saved.projectRoot ?? '') !== normalize(root)) fail('approval scope project mismatch');
   const grant = validateGrant(root, saved.scope);
   const text = read(p.plan);
-  if (!/^- Status:\s*confirmed\s*$/m.test(text)) fail('기획안 confirmed 상태 필요');
-  if (text.match(/^- runId:\s*(\S+)/m)?.[1] !== runId) fail('기획안 runId 불일치');
+  if (!/^- Status:\s*confirmed\s*$/m.test(text)) fail('plan must be in confirmed status');
+  if (text.match(/^- runId:\s*(\S+)/m)?.[1] !== runId) fail('plan runId mismatch');
   const files = rows(text, 6).filter((cells) => cells[0] !== 'Order').map((cells) => {
-    if (cells.length !== 5 || !WRITERS.includes(cells[4]) || !grant.operations.includes(cells[3])) fail('변경 계획은 수정/생성 작업과 담당 역할 필요, 삭제·이동은 미지원');
+    if (cells.length !== 5 || !WRITERS.includes(cells[4]) || !grant.operations.includes(cells[3])) fail('the change plan needs modify/create work and an owner role; delete and move are unsupported');
     return { file: checkFile(root, grant, cells[1]), operation: cells[3], role: cells[4] };
   });
-  if (!files.length || new Set(files.map((f) => normalize(f.file))).size !== files.length) fail('배정 파일 누락·중복');
+  if (!files.length || new Set(files.map((f) => normalize(f.file))).size !== files.length) fail('assigned files missing or duplicated');
   const checks = rows(text, 8).filter((cells) => cells[0] !== 'Command').map((cells) => {
-    if (cells.length !== 3) fail('검사 명령 표 형식 오류');
+    if (cells.length !== 3) fail('invalid check command table format');
     const cwd = safePath(root, cells[1], true);
     const scope = grant.checks.find((c) => c.command === cells[0] && normalize(c.cwd) === normalize(cwd));
     const noSideEffect = cells[2] === 'none';
-    if (!scope || (scope.sideEffects === 'none' && !noSideEffect)) fail('승인 범위 밖 검사 명령·부작용');
+    if (!scope || (scope.sideEffects === 'none' && !noSideEffect)) fail('check command or side effect outside the approved scope');
     return { command: cells[0], cwd, sideEffects: noSideEffect ? 'none' : 'approved' };
   });
   const risk = text.match(/^- Risk:\s*(L[123])\s*$/m)?.[1];
-  if (!risk) fail('기획안 위험도 L1/L2/L3 필요');
+  if (!risk) fail('plan risk L1/L2/L3 required');
   // PM 판정의 의미 정확성은 행동 평가 대상이며 이 표식만으로 사용자 의도를 인증하지 않음
   const pmEligible = grant.allowPmConfirm && risk !== 'L3' && /^- User approval required:\s*none\s*$/m.test(section(text, 10));
   return { schemaVersion: 1, runId, grantSha256: hash(saved), requestSha256: hash(read(p.request)), planSha256: hash(text), files, checks, pmEligible };
@@ -107,11 +107,11 @@ export function verifyRegistration(root, runId) {
   const p = paths(root, runId);
   const active = JSON.parse(read(p.active));
   const current = snapshot(root, runId);
-  if (active.runId !== runId || hash(active.snapshot) !== hash(current)) fail('등록 이후 계획·요청·승인 범위 변경, 재등록 필요');
+  if (active.runId !== runId || hash(active.snapshot) !== hash(current)) fail('plan, request, or approval scope changed after registration; register again');
   if (active.confirmedBy === 'user') {
     const receipt = JSON.parse(read(p.approval));
-    if (hash(receipt) !== active.approvalSha256 || hash(receipt.snapshot) !== hash(current)) fail('사용자 승인 기록 변경·불일치');
-  } else if (active.confirmedBy !== 'pm-agent' || !current.pmEligible) fail('PM 자체 컨펌 허용 범위 아님');
+    if (hash(receipt) !== active.approvalSha256 || hash(receipt.snapshot) !== hash(current)) fail('user approval record changed or mismatched');
+  } else if (active.confirmedBy !== 'pm-agent' || !current.pmEligible) fail('PM self-confirmation is outside the allowed scope');
   return active;
 }
 
@@ -120,6 +120,6 @@ export function verifyWrite(root, file, role, runId) {
   const p = paths(root, runId ?? 'active');
   const active = runId ? verifyRegistration(root, runId) : verifyRegistration(root, JSON.parse(read(p.active)).runId);
   const match = active.snapshot.files.find((entry) => normalize(entry.file) === normalize(file) && entry.role === role);
-  if (!match) fail(`등록에 배정되지 않은 파일: ${file}`);
+  if (!match) fail(`file not assigned in the registration: ${file}`);
   return active;
 }
