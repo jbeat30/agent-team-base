@@ -152,7 +152,7 @@ function detectStacks(dir) {
       evidence: ['package.json'],
     });
     const run = (name) => (pm === 'npm' && name === 'test' ? 'npm test' : `${pm} ${name === 'test' ? 'test' : `run ${name}`}`);
-    for (const [purpose, names] of [['테스트', ['test']], ['린트', ['lint']], ['타입 검사', ['typecheck', 'type-check', 'tsc']]]) {
+    for (const [purpose, names] of [['Test', ['test']], ['Lint', ['lint']], ['Type check', ['typecheck', 'type-check', 'tsc']]]) {
       const found = names.find((n) => pkg.scripts?.[n]);
       if (found) checks.push({ purpose, command: run(found), cwd: '.', sideEffect: sideEffect(pkg.scripts[found]), evidence: `package.json scripts.${found}` });
     }
@@ -160,32 +160,32 @@ function detectStacks(dir) {
   if (has('pyproject.toml') || has('requirements.txt') || has('setup.py') || has('Pipfile')) {
     const text = ['pyproject.toml', 'requirements.txt', 'Pipfile', 'tox.ini', 'pytest.ini'].filter(has).map((f) => readFileSync(join(dir, f), 'utf8')).join('\n');
     stacks.push({ item: 'Python', value: ['pytest', 'django', 'flask', 'fastapi', 'ruff', 'mypy', 'black'].filter((k) => new RegExp(k, 'i').test(text)).join(', '), evidence: ['pyproject.toml', 'requirements.txt'].filter(has) });
-    if (/pytest/i.test(text) || has('pytest.ini')) checks.push({ purpose: '테스트', command: 'pytest', cwd: '.', sideEffect: 'none (assumed)', evidence: 'pytest 설정·의존성' });
-    if (/ruff/i.test(text)) checks.push({ purpose: '린트', command: 'ruff check', cwd: '.', sideEffect: 'none (assumed)', evidence: 'ruff 설정·의존성' });
-    if (/mypy/i.test(text)) checks.push({ purpose: '타입 검사', command: 'mypy .', cwd: '.', sideEffect: 'none (assumed)', evidence: 'mypy 설정·의존성' });
+    if (/pytest/i.test(text) || has('pytest.ini')) checks.push({ purpose: 'Test', command: 'pytest', cwd: '.', sideEffect: 'none (assumed)', evidence: 'pytest config and dependencies' });
+    if (/ruff/i.test(text)) checks.push({ purpose: 'Lint', command: 'ruff check', cwd: '.', sideEffect: 'none (assumed)', evidence: 'ruff config and dependencies' });
+    if (/mypy/i.test(text)) checks.push({ purpose: 'Type check', command: 'mypy .', cwd: '.', sideEffect: 'none (assumed)', evidence: 'mypy config and dependencies' });
   }
   if (has('go.mod')) {
     stacks.push({ item: 'Go', value: readFileSync(join(dir, 'go.mod'), 'utf8').match(/^go\s+(\S+)/m)?.[1] ?? '', evidence: ['go.mod'] });
-    checks.push({ purpose: '테스트', command: 'go test ./...', cwd: '.', sideEffect: 'none (assumed)', evidence: 'go.mod' });
-    checks.push({ purpose: '정적 검사', command: 'go vet ./...', cwd: '.', sideEffect: 'none (assumed)', evidence: 'go.mod' });
+    checks.push({ purpose: 'Test', command: 'go test ./...', cwd: '.', sideEffect: 'none (assumed)', evidence: 'go.mod' });
+    checks.push({ purpose: 'Static check', command: 'go vet ./...', cwd: '.', sideEffect: 'none (assumed)', evidence: 'go.mod' });
   }
   if (has('pom.xml')) {
     stacks.push({ item: 'Java (Maven)', value: '', evidence: ['pom.xml'] });
-    checks.push({ purpose: '테스트', command: 'mvn test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'pom.xml' });
+    checks.push({ purpose: 'Test', command: 'mvn test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'pom.xml' });
   }
   if (has('build.gradle') || has('build.gradle.kts')) {
     stacks.push({ item: 'Java/Kotlin (Gradle)', value: '', evidence: ['build.gradle(.kts)'] });
-    checks.push({ purpose: '테스트', command: has('gradlew') ? './gradlew test' : 'gradle test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'build.gradle' });
+    checks.push({ purpose: 'Test', command: has('gradlew') ? './gradlew test' : 'gradle test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'build.gradle' });
   }
   if (has('Cargo.toml')) {
     stacks.push({ item: 'Rust', value: '', evidence: ['Cargo.toml'] });
-    checks.push({ purpose: '테스트', command: 'cargo test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'Cargo.toml' });
+    checks.push({ purpose: 'Test', command: 'cargo test', cwd: '.', sideEffect: 'none (assumed)', evidence: 'Cargo.toml' });
   }
   if (has('Gemfile')) stacks.push({ item: 'Ruby', value: '', evidence: ['Gemfile'] });
   if (has('composer.json')) stacks.push({ item: 'PHP', value: '', evidence: ['composer.json'] });
   if (readdirSync(dir).some((f) => /\.(sln|csproj)$/.test(f))) {
     stacks.push({ item: '.NET', value: '', evidence: ['*.sln|*.csproj'] });
-    checks.push({ purpose: '테스트', command: 'dotnet test', cwd: '.', sideEffect: 'none (assumed)', evidence: '.sln/.csproj' });
+    checks.push({ purpose: 'Test', command: 'dotnet test', cwd: '.', sideEffect: 'none (assumed)', evidence: '.sln/.csproj' });
   }
   return { stacks, checks };
 }

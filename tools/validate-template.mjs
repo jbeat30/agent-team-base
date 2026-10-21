@@ -141,6 +141,8 @@ function walk(dir) {
 for (const path of walk(root).filter((p) => p.endsWith('.md'))) {
   const text = readFileSync(path, 'utf8');
   const rel = path.slice(root.length + 1);
+  // 프롬프트(역할·양식)는 영어 기본, 한글이 섞이면 토큰 효율과 검사 라벨 일관성이 깨지므로 거부
+  if (/[가-힣]/.test(text)) fail(rel, '프롬프트는 영어로 작성(한글 포함)');
   for (const phrase of bannedPhrases) {
     if (text.includes(phrase)) fail(rel, `지양 문구 "${phrase}" 포함`);
   }

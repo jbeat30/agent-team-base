@@ -67,8 +67,8 @@ test('detect: 스택·검사 명령·부작용 분류를 읽기 전용으로 감
   const { json } = install(['detect', '--target', dir]);
   assert.deepEqual(json.stacks.map((s) => s.item).sort(), ['Go', 'JavaScript/TypeScript (Node.js)', 'Python']);
   const byPurpose = Object.fromEntries(json.suggestedChecks.filter((c) => c.evidence.startsWith('package.json')).map((c) => [c.purpose, c]));
-  assert.equal(byPurpose['테스트'].command, 'pnpm test');
-  assert.match(byPurpose['린트'].sideEffect, /^present/);
+  assert.equal(byPurpose['Test'].command, 'pnpm test');
+  assert.match(byPurpose['Lint'].sideEffect, /^present/);
   assert.ok(json.suggestedChecks.some((c) => c.command === 'go test ./...'));
   assert.deepEqual(json.conventionFiles, ['CONTRIBUTING.md']);
   assert.equal(json.existing.installed, false);
