@@ -69,6 +69,12 @@ const result = results.at(-1) ?? {};
 const usage = result.usage ?? {};
 const finalText = result.result ?? '';
 
+// 사용 한도에 걸리면 모델이 호출되지 않은 실행이므로 결과로 기록하지 않고 종료 코드 3으로 배치를 멈추게 함
+if (/hit your (session |usage |weekly )?limit/i.test(finalText) && !(result.total_cost_usd > 0)) {
+  console.error(`usage limit reached: ${finalText}`);
+  process.exit(3);
+}
+
 mkdirSync(outDir, { recursive: true });
 const stem = `${condition}-${taskId}-r${rep}`;
 const textFile = join(outDir, `${stem}.final.txt`);
