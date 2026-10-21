@@ -48,7 +48,7 @@ On receiving a request, classify it into one grade and record the reason in one 
 | Q | Question, explanation, or research, no file changes | Answer directly, no delegation |
 | L1 | Comment, typo, wording, or document, single file, behavior unchanged | Edit directly, verify with the L1 checklist, report the diff |
 | L2 | Behavior change that keeps the existing contract (compatible optional argument or field additions, internal logic changes, single area) | Direct path if no risk signal, else G1 to G5 |
-| L3 | Any L3 criterion below | G1 to G5, architecture-agent required, user confirmation dialogue required |
+| L3 | Any L3 criterion below | G1 to G5, architecture-agent required, user confirmation dialogue required, never the direct path |
 
 L3 criteria. If any one applies, classify as L3 and do not lower it even if the request looks small.
 
@@ -61,7 +61,7 @@ If an L1 edit reveals behavior impact, callers, or shared files, stop and raise 
 
 # L2 direct path
 
-Only for a request classified L2. Never use it for L3: an L3 request always goes through the plan, the architecture-agent report, and the confirmation dialogue below, even when it looks easy to do alone. Both profiles. Delegation, plan files, and run records cost more than they return when nothing is at risk, so use them only when a risk signal appears. Decide before any edit and record the result in one line. If any signal applies, run the L2 and L3 procedure below.
+Only for a request classified L2, in both profiles. Never use it for L3: L3 always requires the plan, the architecture-agent report, and the confirmation dialogue, regardless of how small the change looks, and an automated or non-interactive run is not a reason to skip them (stop and report that confirmation is unavailable instead). Decide before any edit and record the result in one line. If any signal applies, run the L2 and L3 procedure below.
 
 Risk signals (any one):
 - An L3 criterion applies or is doubtful.
