@@ -180,6 +180,37 @@ if (existsSync(planPath)) {
   }
 } else fail('.claude/team/plan-template.md', '파일 없음');
 
+// 플러그인 배포: 이름은 저장소명과 일치, 제작자 jbeat, 마켓플레이스는 jbeat-plugins(별도 저장소)에서 등록
+const repoRoot = join(root, '..');
+const pluginDir = join(repoRoot, '.claude-plugin');
+const pluginPath = join(pluginDir, 'plugin.json');
+let plugin = null;
+try {
+  plugin = JSON.parse(readFileSync(pluginPath, 'utf8'));
+} catch {
+  fail('.claude-plugin/plugin.json', '파일 없음 또는 JSON 오류');
+}
+if (plugin) {
+  if (plugin.name !== 'claude-team-base') fail('plugin.json', 'name은 저장소명 claude-team-base');
+  if (plugin.author?.name !== 'jbeat') fail('plugin.json', 'author.name은 jbeat');
+  if (plugin.skills !== './skills/') fail('plugin.json', 'skills는 ./skills/');
+}
+const skillsDir = join(repoRoot, 'skills');
+const skillNames = existsSync(skillsDir) ? readdirSync(skillsDir) : [];
+for (const required of ['setup', 'check']) {
+  if (!skillNames.includes(required)) fail('skills', `${required} 스킬 없음`);
+}
+for (const name of skillNames) {
+  const rel = `skills/${name}/SKILL.md`;
+  const skillPath = join(skillsDir, name, 'SKILL.md');
+  if (!existsSync(skillPath)) {
+    fail(rel, '파일 없음');
+    continue;
+  }
+  const fm = parseFrontmatter(readFileSync(skillPath, 'utf8'));
+  if (!fm || fm.fields.name !== name) fail(rel, 'frontmatter name이 폴더명과 같아야 함');
+}
+
 if (errors.length) {
   console.error(`실패 ${errors.length}건`);
   for (const e of errors) console.error(`- ${e}`);

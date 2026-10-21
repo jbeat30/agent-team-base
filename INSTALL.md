@@ -2,6 +2,7 @@
 
 Claude Code 에이전트가 사용자 프로젝트에 claude-team-base를 설치하는 절차
 사용자가 이 저장소를 지명해 "이 프로젝트에 세팅해줘"라고 요청했을 때 이 문서를 따름
+플러그인 스킬(`/claude-team-base:setup`)로 실행할 때는 1장(가져오기)을 건너뛰고 `<설치기>`를 `node "${CLAUDE_PLUGIN_ROOT}/scripts/install.mjs"`로 사용
 
 ## 항상 지킬 규칙
 

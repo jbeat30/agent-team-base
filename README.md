@@ -22,7 +22,17 @@
 
 ## 빠른 시작
 
-내 프로젝트에서 Claude Code를 열고 한 줄만 요청
+플러그인으로 설치하고 스킬을 한 번 실행 (저장소를 따로 가져오지 않음)
+
+```text
+/plugin marketplace add jbeat30/jbeat-conventions
+/plugin install claude-team-base@jbeat-plugins
+/claude-team-base:setup
+```
+
+- `/claude-team-base:setup`: 설치·갱신·제거 진입점, `/claude-team-base:check`: Claude 호출 없는 설치 점검
+
+플러그인 없이 쓰려면 내 프로젝트에서 Claude Code를 열고 한 줄만 요청
 
 ```text
 https://github.com/jbeat30/claude-team-base 의 INSTALL.md를 읽고 이 프로젝트에 세팅해줘
