@@ -30,7 +30,7 @@
 - `~입니다`, `~하고 있습니다`, `~하는 로직입니다` 형태의 문구 지양
 - 주석은 의도·제약·정책 중심, 마침표 생략
 - 커밋·PR 제목은 타입과 한국어 명사형 설명 사용
-- AI 서명·생성 문구·Co-Authored-By 첨부 금지
+- AI 생성 문구 금지, 소유자 예외로 커밋·PR에 `Co-Authored-By: Claude <noreply@anthropic.com>` 트레일러 허용(v0.2.0부터, Contributors 표기 목적), 그 외 서명 문구는 금지
 - develop은 개발·검증용 직접 커밋 허용, main 반영은 release PR 경유
 - main·feature·release 머지와 공개 릴리즈 실행은 사용자 지시 범위 확인
 - 설치·원격 변경·권한 변경의 승인을 다른 작업 권한으로 확대 해석 금지

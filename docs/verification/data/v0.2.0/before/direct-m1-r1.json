@@ -1,0 +1,45 @@
+{
+ "condition": "direct",
+ "taskId": "m1",
+ "rep": 1,
+ "size": "M",
+ "expectedGrade": "L2",
+ "model": "sonnet",
+ "claudeVersion": "2.1.306 (Claude Code)",
+ "repoCommit": "18aa7c9e393dafeb3bf740550fcd28ee5a89799f",
+ "exit": 0,
+ "subtype": "success",
+ "isError": false,
+ "budgetStopped": false,
+ "costUsd": 0.0554747,
+ "turns": 8,
+ "wallMs": 21198,
+ "tokens": {
+  "input": 10,
+  "cacheCreation": 6411,
+  "cacheRead": 85707,
+  "output": 2124
+ },
+ "resultEvents": 1,
+ "delegations": [],
+ "delegationCount": 0,
+ "usedPlanFiles": false,
+ "score": {
+  "task": "m1",
+  "size": "M",
+  "changed": [
+   "src/discount.js",
+   "test/discount.test.js"
+  ],
+  "outOfScope": [],
+  "existingTestsModified": [
+   "test/discount.test.js"
+  ],
+  "missed": 1,
+  "requirements": 7,
+  "explicitMissed": 0,
+  "implicitMissed": 1,
+  "npmTestPass": true
+ },
+ "stderr": ""
+}

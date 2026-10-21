@@ -2,6 +2,7 @@
 // 문구 포함 여부만 확인하며 권한 차단·위임 정확도의 검증이 아님
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { PM_RULES } from './pm-rules.mjs';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'template');
@@ -13,11 +14,11 @@ const context7 = ['mcp__context7__resolve-library-id', 'mcp__context7__query-doc
 const toolCeiling = {
   'planner-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
   'architecture-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
-  'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
+  'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7, 'mcp__playwright__*', 'mcp__chrome-devtools__*', 'mcp__shadcn__*', 'mcp__figma__*'],
   'backend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
   'api-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
   'test-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
-  'qa-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
+  'qa-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7, 'mcp__playwright__*', 'mcp__chrome-devtools__*', 'mcp__figma__*'],
   'planning-lead': ['Read', 'Glob', 'Grep', 'Write'],
   'dev-lead': ['Read', 'Glob', 'Grep', 'Write'],
 };
@@ -97,7 +98,7 @@ for (const file of agentFiles) {
         if (target === 'pm-agent') fail(file, 'pm-agent는 자신을 호출 불가');
       }
     }
-    for (const needle of ['# relay 모드', '# 요구 보존 점검', 'team-check.mjs trace']) {
+    for (const needle of ['# Relay mode', '# Requirement preservation check', 'team-check.mjs trace']) {
       if (!body.includes(needle)) fail(file, `${needle} 없음`);
     }
     continue;
@@ -121,15 +122,23 @@ for (const file of agentFiles) {
   }
   if (allowedTargets && !tools.some((t) => t.startsWith('Agent('))) fail(file, '리더는 Agent(...) 필요');
   if (allowedTargets) {
-    if (!body.includes('# relay 모드')) fail(file, 'relay 모드 절차 없음');
+    if (!body.includes('# Relay mode')) fail(file, 'relay 모드 절차 없음');
     if (!/^status: .*needs-dispatch/m.test(body)) fail(file, '보고 형식에 needs-dispatch 필요');
   }
-  for (const heading of ['## 공통 규칙', '## 보고 형식']) {
+  for (const heading of ['## Common rules', '## Report format']) {
     if (!body.includes(heading)) fail(file, `${heading} 구간 없음`);
   }
   for (const field of reportFields) {
     if (!new RegExp(`^${field}:`, 'm').test(body)) fail(file, `보고 필드 ${field} 없음`);
   }
+}
+
+// PM 지침의 필수 규칙: 분리된 참조 파일까지 합친 본문에서 확인
+const pmText = ['agents/pm-agent.md', 'team/relay-mode.md', 'team/design-tools.md', 'team/strict-mode.md']
+  .map((p) => (existsSync(join(root, '.claude', p)) ? readFileSync(join(root, '.claude', p), 'utf8') : ''))
+  .join('\n');
+for (const [label, re] of PM_RULES) {
+  if (!re.test(pmText)) fail('pm-agent 규칙', `필수 규칙 없음: ${label}`);
 }
 
 // 문체와 참조 검사
@@ -141,6 +150,8 @@ function walk(dir) {
 for (const path of walk(root).filter((p) => p.endsWith('.md'))) {
   const text = readFileSync(path, 'utf8');
   const rel = path.slice(root.length + 1);
+  // 프롬프트(역할·양식)는 영어 기본, 한글이 섞이면 토큰 효율과 검사 라벨 일관성이 깨지므로 거부
+  if (/[가-힣]/.test(text)) fail(rel, '프롬프트는 영어로 작성(한글 포함)');
   for (const phrase of bannedPhrases) {
     if (text.includes(phrase)) fail(rel, `지양 문구 "${phrase}" 포함`);
   }
@@ -179,6 +190,37 @@ if (existsSync(planPath)) {
     if (!new RegExp(`^## ${i}\\. `, 'm').test(plan)) fail('.claude/team/plan-template.md', `구성 ${i}번 없음`);
   }
 } else fail('.claude/team/plan-template.md', '파일 없음');
+
+// 플러그인 배포: 이름은 저장소명과 일치, 제작자 jbeat, 마켓플레이스는 jbeat-plugins(별도 저장소)에서 등록
+const repoRoot = join(root, '..');
+const pluginDir = join(repoRoot, '.claude-plugin');
+const pluginPath = join(pluginDir, 'plugin.json');
+let plugin = null;
+try {
+  plugin = JSON.parse(readFileSync(pluginPath, 'utf8'));
+} catch {
+  fail('.claude-plugin/plugin.json', '파일 없음 또는 JSON 오류');
+}
+if (plugin) {
+  if (plugin.name !== 'claude-team-base') fail('plugin.json', 'name은 저장소명 claude-team-base');
+  if (plugin.author?.name !== 'jbeat') fail('plugin.json', 'author.name은 jbeat');
+  if (plugin.skills !== './skills/') fail('plugin.json', 'skills는 ./skills/');
+}
+const skillsDir = join(repoRoot, 'skills');
+const skillNames = existsSync(skillsDir) ? readdirSync(skillsDir) : [];
+for (const required of ['setup', 'check']) {
+  if (!skillNames.includes(required)) fail('skills', `${required} 스킬 없음`);
+}
+for (const name of skillNames) {
+  const rel = `skills/${name}/SKILL.md`;
+  const skillPath = join(skillsDir, name, 'SKILL.md');
+  if (!existsSync(skillPath)) {
+    fail(rel, '파일 없음');
+    continue;
+  }
+  const fm = parseFrontmatter(readFileSync(skillPath, 'utf8'));
+  if (!fm || fm.fields.name !== name) fail(rel, 'frontmatter name이 폴더명과 같아야 함');
+}
 
 if (errors.length) {
   console.error(`실패 ${errors.length}건`);

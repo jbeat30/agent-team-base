@@ -22,13 +22,13 @@ function run(script, dir, args, input) {
 const cli = (dir, ...args) => run(approval, dir, args);
 const guard = (dir, input) => run(guardScript, dir, [], { cwd: dir, permission_mode: 'default', hook_event_name: 'PreToolUse', ...input });
 const write = (dir, file, role = 'pm-agent', extra = {}) => guard(dir, { tool_name: 'Write', agent_type: role, tool_input: { file_path: file }, ...extra });
-const call = (dir) => guard(dir, { tool_name: 'Agent', agent_type: 'pm-agent', tool_use_id: 'write-1', tool_input: { subagent_type: 'backend-agent', prompt: '- runId: R1' } });
+const call = (dir) => guard(dir, { tool_name: 'Agent', agent_type: 'pm-agent', tool_use_id: 'write-1', tool_input: { subagent_type: 'backend-agent', prompt: '- runId: R1', run_in_background: false } });
 const location = (dir, name) => join(dir, '.claude-team-docs/.guard', name);
 const planPath = (dir) => join(dir, '.claude-team-docs/runs/R1/plan.md');
 const getJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 
-function plan({ risk = 'L2', required = '없음', file = 'src/a.js', owner = 'backend-agent', checks = true } = {}) {
-  return `# 기획안\n- runId: R1\n- 위험도: ${risk}\n- 상태: confirmed\n\n## 6. 변경 계획\n| 순서 | 파일 | 새 파일 여부 | 작업 | 담당 |\n| --- | --- | --- | --- | --- |\n| 1 | ${file} | 아니오 | 수정 | ${owner} |\n\n## 8. 검사 명령\n| 명령 | 작업 경로 | 부작용 |\n| --- | --- | --- |\n${checks ? `| ${command} | . | 없음 |\n` : ''}\n## 10. 사용자 승인 필요 항목\n- 사용자 승인 필요: ${required}\n\n## 11. 근거\n근거\n`;
+function plan({ risk = 'L2', required = 'none', file = 'src/a.js', owner = 'backend-agent', checks = true } = {}) {
+  return `# Plan\n- runId: R1\n- Risk: ${risk}\n- Status: confirmed\n\n## 6. 변경 계획\n| Order | File | New file | Work | Owner |\n| --- | --- | --- | --- | --- |\n| 1 | ${file} | 아니오 | modify | ${owner} |\n\n## 8. 검사 명령\n| Command | Working directory | Side effects |\n| --- | --- | --- |\n${checks ? `| ${command} | . | none |\n` : ''}\n## 10. Items requiring user approval 항목\n- User approval required: ${required}\n\n## 11. 근거\n근거\n`;
 }
 
 function fixture(options = {}, scope = {}) {
@@ -36,10 +36,10 @@ function fixture(options = {}, scope = {}) {
   mkdirSync(join(dir, '.claude/team'), { recursive: true });
   mkdirSync(join(dir, '.claude-team-docs/runs/R1'), { recursive: true });
   mkdirSync(join(dir, 'src'), { recursive: true });
-  writeFileSync(join(dir, '.claude/team/profile.md'), '- 보호 모드: 엄격\n');
+  writeFileSync(join(dir, '.claude/team/profile.md'), '- Protection mode: strict\n');
   writeFileSync(join(dir, '.claude-team-docs/runs/R1/request.md'), '원문 요청\n');
   writeFileSync(planPath(dir), plan(options));
-  writeFileSync(join(dir, 'grant-draft.json'), JSON.stringify({ roots: ['src', 'test'], operations: ['수정', '생성'], forbidden: ['src/private'], checks: [{ command, cwd: '.', sideEffects: 'none' }], allowPmConfirm: true, ...scope }));
+  writeFileSync(join(dir, 'grant-draft.json'), JSON.stringify({ roots: ['src', 'test'], operations: ['modify', 'create'], forbidden: ['src/private'], checks: [{ command, cwd: '.', sideEffects: 'none' }], allowPmConfirm: true, ...scope }));
   const review = cli(dir, 'review-grant', 'grant-draft.json');
   assert.equal(review.status, 0, review.stderr);
   const grant = cli(dir, 'grant', 'grant-draft.json', '--hash', review.json.sha256);
@@ -98,7 +98,7 @@ test('승인 범위 밖·금지·정책·glob·중복 배정·미승인 검사 �
     assert.equal(cli(dir, 'review-plan', 'R1').status, 2, file);
   }
   const duplicate = fixture();
-  writeFileSync(planPath(duplicate), plan().replace('## 8.', '| 2 | src/a.js | 아니오 | 수정 | frontend-agent |\n\n## 8.'));
+  writeFileSync(planPath(duplicate), plan().replace('## 8.', '| 2 | src/a.js | 아니오 | modify | frontend-agent |\n\n## 8.'));
   assert.equal(cli(duplicate, 'review-plan', 'R1').status, 2);
   const badCheck = fixture();
   writeFileSync(planPath(badCheck), plan().replace(command, 'npm run unapproved'));
@@ -163,7 +163,7 @@ test('엄격 모드 검사 실행과 검증은 현재 등록과 기록 해시를
   writeFileSync(recordPath, JSON.stringify(record));
   const verified = run(checkScript, dir, ['verify', 'R1']);
   assert.equal(verified.status, 1);
-  assert.match(JSON.stringify(verified.json), /검사 기록 해시 불일치/);
+  assert.match(JSON.stringify(verified.json), /check record hash mismatch/);
 });
 
 test('등록 해제와 새 승인 범위 기록 이후 쓰기 차단', () => {
@@ -182,6 +182,6 @@ test('엄격 모드의 미등록 역할 쓰기·호출과 미승인 작업 종�
   register(dir);
   assert.equal(write(dir, 'src/a.js', 'custom-agent').status, 2);
   assert.equal(guard(dir, { tool_name: 'Agent', tool_input: { subagent_type: 'custom-agent' } }).status, 2);
-  const createOnly = fixture({}, { operations: ['생성'] });
+  const createOnly = fixture({}, { operations: ['create'] });
   assert.equal(cli(createOnly, 'register', 'R1').status, 2);
 });

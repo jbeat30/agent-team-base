@@ -14,7 +14,7 @@ const fakeClaude = join(realpathSync(mkdtempSync(join(tmpdir(), 'fake-claude-'))
 writeFileSync(fakeClaude, "console.log(process.env.FAKE_CLAUDE_VERSION ?? '2.1.302 (Claude Code)');\n");
 
 const temp = (prefix = 'team-install-') => realpathSync(mkdtempSync(join(tmpdir(), prefix)));
-const answersFor = (over = {}) => ({ profile: 'full', context7: true, gitignore: true, pdca: 'off', stack: [{ item: 'Node.js', value: 'npm', evidence: 'package.json' }], checks: [{ purpose: '테스트', command: 'npm test', cwd: '.', sideEffect: '없음(추정)' }], conventions: [], forbidden: [{ path: 'dist/', reason: '생성 파일' }], ...over });
+const answersFor = (over = {}) => ({ profile: 'full', context7: true, gitignore: true, pdca: 'off', stack: [{ item: 'Node.js', value: 'npm', evidence: 'package.json' }], checks: [{ purpose: '테스트', command: 'npm test', cwd: '.', sideEffect: 'none (assumed)' }], conventions: [], forbidden: [{ path: 'dist/', reason: '생성 파일' }], ...over });
 
 function project(files = {}) {
   const dir = temp();
@@ -67,8 +67,8 @@ test('detect: 스택·검사 명령·부작용 분류를 읽기 전용으로 감
   const { json } = install(['detect', '--target', dir]);
   assert.deepEqual(json.stacks.map((s) => s.item).sort(), ['Go', 'JavaScript/TypeScript (Node.js)', 'Python']);
   const byPurpose = Object.fromEntries(json.suggestedChecks.filter((c) => c.evidence.startsWith('package.json')).map((c) => [c.purpose, c]));
-  assert.equal(byPurpose['테스트'].command, 'pnpm test');
-  assert.match(byPurpose['린트'].sideEffect, /^있음/);
+  assert.equal(byPurpose['Test'].command, 'pnpm test');
+  assert.match(byPurpose['Lint'].sideEffect, /^present/);
   assert.ok(json.suggestedChecks.some((c) => c.command === 'go test ./...'));
   assert.deepEqual(json.conventionFiles, ['CONTRIBUTING.md']);
   assert.equal(json.existing.installed, false);
@@ -105,8 +105,8 @@ test('신규 설치: 파일·settings·MCP·gitignore·프로필·매니페스�
   assert.equal(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers.context7.command, 'npx');
   assert.match(readFileSync(join(dir, '.gitignore'), 'utf8'), /\.claude-team-docs\//);
   const profile = readFileSync(join(dir, '.claude', 'team', 'profile.md'), 'utf8');
-  assert.match(profile, /실행 프로파일: full/);
-  assert.match(profile, /실행 모드: relay/);
+  assert.match(profile, /Execution profile: full/);
+  assert.match(profile, /Execution mode: relay/);
   assert.match(profile, /`npm test`/);
   assert.match(profile, /dist\//);
   const verified = install(['verify', '--target', dir]);
@@ -185,7 +185,7 @@ test('해석할 수 없는 settings.json은 진행 불가', () => {
   const dir = project({ '.claude/settings.json': '{ broken' });
   const plan = install(planArgs(dir, answersFile()));
   assert.equal(plan.json.ok, false);
-  assert.match(plan.json.blockers[0], /해석 불가/);
+  assert.match(plan.json.blockers[0], /cannot be parsed/);
   assert.equal(install(applyArgs(dir, answersFile(), plan.json.hash)).status, 1);
 });
 
@@ -194,7 +194,7 @@ test('Claude Code 최소 버전 미만이면 진행 불가, 확인 불가는 미
   const file = answersFile();
   const below = install(planArgs(dir, file), { FAKE_CLAUDE_VERSION: '2.1.100 (Claude Code)' });
   assert.equal(below.json.ok, false);
-  assert.match(below.json.blockers[0], /최소/);
+  assert.match(below.json.blockers[0], /minimum/);
   assert.equal(install(applyArgs(dir, file, below.json.hash), { FAKE_CLAUDE_VERSION: '2.1.100' }).status, 1);
   const unknown = install(planArgs(dir, file), { FAKE_CLAUDE_VERSION: '버전 없음' });
   assert.equal(unknown.json.ok, true);
@@ -223,7 +223,7 @@ test('verify는 수정·삭제를 탐지', () => {
   writeFileSync(join(dir, '.claude', 'agents', 'qa-agent.md'), '변조\n');
   const modified = install(['verify', '--target', dir]);
   assert.equal(modified.json.ok, false);
-  assert.match(modified.json.checks.find((c) => c.name === 'files').detail, /qa-agent\.md\(수정됨\)/);
+  assert.match(modified.json.checks.find((c) => c.name === 'files').detail, /qa-agent\.md\(modified\)/);
 });
 
 test('잘못된 answers는 거부하고 매니페스트 없는 verify·remove는 실패', () => {
@@ -244,19 +244,19 @@ test('v0.1.0은 미지원 PDCA 입력을 적용 전에 거부', () => {
     const file = answersFile({ pdca });
     const result = install(planArgs(dir, file));
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /off만 지원/);
+    assert.match(result.stderr, /only answers.pdca=off/);
     assert.deepEqual(readdirSync(dir), ['keep.txt']);
   }
 });
 
 test('PDCA 생략 시 off로 계획·설치', () => {
   const { dir } = installFresh({}, { pdca: undefined });
-  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /PDCA 모드: off/);
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /PDCA mode: off/);
 });
 
 test('엄격 모드 설치는 승인 기록을 만들지 않고 실제 점검은 미확인으로 유지', () => {
   const { dir } = installFresh({}, { guardMode: 'strict' });
-  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /보호 모드: 엄격/);
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Protection mode: strict/);
   assert.equal(existsSync(join(dir, '.claude/team/bin/team-approval.mjs')), true);
   assert.equal(existsSync(join(dir, '.claude-team-docs/.guard/grant.json')), false);
   const result = install(['verify', '--target', dir, '--live']);
@@ -324,7 +324,7 @@ test('갱신: 사용자가 수정한 설치 파일은 충돌로 보고하고 기
   writeFileSync(join(dir, rel), mine);
   const plan = install(planArgs(dir, file));
   assert.equal(plan.json.ok, false, '결정 전에는 진행 불가');
-  assert.ok(plan.json.conflicts.some((c) => c.item === rel && /사용자가 수정/.test(c.reason)));
+  assert.ok(plan.json.conflicts.some((c) => c.item === rel && /modified by the user/.test(c.reason)));
 
   const skip = install(planArgs(dir, file, ['--on-conflict', 'skip']));
   assert.equal(install(applyArgs(dir, file, skip.json.hash, ['--on-conflict', 'skip'])).json.ok, true);
@@ -371,4 +371,77 @@ test('제거 후 재설치 가능하고 사용자 프로젝트 파일은 그대�
   const plan = install(planArgs(dir, file));
   assert.equal(install(applyArgs(dir, file, plan.json.hash)).json.ok, true);
   assert.equal(install(['verify', '--target', dir]).json.ok, true);
+});
+
+test('plugin 채널: git 없는 배포본에서 source가 플러그인 버전 태그로 기록', async () => {
+  const { cpSync } = await import('node:fs');
+  const root = temp('plugin-copy-');
+  cpSync(join(here, '..', 'scripts'), join(root, 'scripts'), { recursive: true });
+  cpSync(join(here, '..', 'template'), join(root, 'template'), { recursive: true });
+  const dir = project();
+  const file = answersFile({ profile: 'lite' });
+  const run = (args) => spawnSync(process.execPath, [join(root, 'scripts', 'install.mjs'), ...args], {
+    encoding: 'utf8',
+    env: { ...process.env, TEAM_CLAUDE_BIN: `"${process.execPath}" "${fakeClaude}"` },
+  });
+  const plan = JSON.parse(run(planArgs(dir, file)).stdout);
+  assert.equal(run(applyArgs(dir, file, plan.hash)).status, 0);
+  const manifest = JSON.parse(readFileSync(join(dir, '.claude', 'team', 'manifest.json'), 'utf8'));
+  assert.equal(manifest.source.channel, 'plugin');
+  assert.equal(manifest.source.commit, null);
+  assert.match(manifest.source.tag, /^v[0-9]+[.][0-9]+[.][0-9]+$/);
+});
+
+test('디자인 도구 MCP: 선택한 서버만 .mcp.json에 병합하고 프로필에 기록, 제거 시 사용자 서버 보존', () => {
+  const { dir, applied } = installFresh(
+    { '.mcp.json': { mcpServers: { mine: { command: 'node', args: ['mine.js'] } } } },
+    { context7: true, designTools: ['playwright', 'chrome-devtools', 'shadcn', 'figma'] },
+  );
+  assert.equal(applied.status, 0, JSON.stringify(applied.json));
+  const servers = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers;
+  assert.deepEqual(Object.keys(servers).sort(), ['chrome-devtools', 'context7', 'figma', 'mine', 'playwright', 'shadcn']);
+  assert.deepEqual(servers['chrome-devtools'], { command: 'npx', args: ['-y', 'chrome-devtools-mcp@latest'] });
+  assert.deepEqual(servers.playwright, { command: 'npx', args: ['@playwright/mcp@latest'] });
+  assert.deepEqual(servers.shadcn, { command: 'npx', args: ['shadcn@latest', 'mcp'] });
+  assert.deepEqual(servers.figma, { type: 'http', url: 'https://mcp.figma.com/mcp' });
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Design tool MCP: playwright, chrome-devtools, shadcn, figma/);
+  const verified = install(['verify', '--target', dir]);
+  const names = verified.json.checks.map((c) => c.name);
+  assert.ok(['playwright', 'chrome-devtools', 'shadcn', 'figma'].every((n) => names.includes(n)));
+  assert.match(verified.json.checks.find((c) => c.name === 'figma').detail, /sign-in/);
+  const preview = install(['remove', '--target', dir]);
+  assert.ok(preview.json.actions.includes('removed .mcp.json figma'));
+  assert.equal(install(['remove', '--target', dir, '--yes']).status, 0);
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers, { mine: { command: 'node', args: ['mine.js'] } });
+});
+
+test('디자인 도구 MCP: 선택하지 않으면 등록하지 않고 알 수 없는 값은 거부', () => {
+  const { dir } = installFresh({}, { context7: false, designTools: [] });
+  assert.equal(existsSync(join(dir, '.mcp.json')), false);
+  const bad = install(planArgs(project(), answersFile({ designTools: ['photoshop'] })));
+  assert.equal(bad.status, 2);
+  assert.match(bad.stderr, /designTools/);
+});
+
+test('디자인 도구 MCP: 다른 설정이 이미 있으면 덮어쓰지 않고 충돌로 보고', () => {
+  const dir = project({ '.mcp.json': { mcpServers: { playwright: { command: 'node', args: ['custom.js'] } } } });
+  const file = answersFile({ context7: false, designTools: ['playwright', 'shadcn'] });
+  const plan = install(planArgs(dir, file));
+  assert.ok(plan.json.conflicts.some((c) => c.item === '.mcp.json playwright'));
+  const decided = install(planArgs(dir, file, ['--on-conflict', 'skip']));
+  const applied = install(applyArgs(dir, file, decided.json.hash, ['--on-conflict', 'skip']));
+  assert.equal(applied.status, 0, JSON.stringify(applied.json));
+  const servers = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers;
+  assert.deepEqual(servers.playwright, { command: 'node', args: ['custom.js'] });
+  assert.deepEqual(servers.shadcn, { command: 'npx', args: ['shadcn@latest', 'mcp'] });
+});
+
+test('디자인 시스템: answers에 있으면 프로필에 권위 있는 기준으로 기록, 없으면 섹션 생략', () => {
+  const withDs = installFresh({}, { designSystem: [{ item: 'Component library', content: '@acme/ui, tokens in tokens.json', location: 'packages/ui' }] });
+  const profile = readFileSync(join(withDs.dir, '.claude/team/profile.md'), 'utf8');
+  assert.match(profile, /## Design system/);
+  assert.match(profile, /Authoritative for all UI work/);
+  assert.match(profile, /@acme\/ui, tokens in tokens\.json/);
+  const without = installFresh();
+  assert.doesNotMatch(readFileSync(join(without.dir, '.claude/team/profile.md'), 'utf8'), /## Design system/);
 });

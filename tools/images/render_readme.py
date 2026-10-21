@@ -1,4 +1,10 @@
-"""README 그림: 공통 레이아웃·한영 문구, PNG 2배 해상도와 SVG 원본"""
+"""README 그림: 공통 레이아웃·한영 문구, PNG 2배 해상도와 SVG 원본
+
+출력: docs/assets/<접두사>.{ko,en}.{png,svg}, 접두사 hero · agent-team · task-workflow · install-flow, PNG는 설계 크기의 2배
+필요: Pillow, Windows Noto Sans KR·Consolas, 영어 Inter는 로컬 글꼴 파일을 인자로 전달(글꼴은 저장소에 복사하지 않음)
+실행: python tools/images/render_readme.py --font-en /path/to/Inter.ttf --out docs/assets
+변경 시 프롬프트 문구와 역할 정의를 함께 대조하고 한영 글자·연결선을 시각 확인
+"""
 from pathlib import Path
 from html import escape
 from math import atan2, cos, sin, pi
