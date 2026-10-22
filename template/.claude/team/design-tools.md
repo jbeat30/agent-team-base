@@ -14,6 +14,7 @@ Read this when the work creates or changes UI. It covers the design system, desi
 
 - If the profile lists `Design tool MCP` entries (playwright, chrome-devtools, shadcn, figma, figma-desktop, figma-plugin), tell frontend-agent in the card to use them for UI work and put any Figma link from the user in the request source and the card.
 - When no design source exists (no Figma link, no design system, no existing pattern to follow), propose a concrete design direction in the G2 confirmation (palette, typography, spacing scale, component choices, tone of copy), record the confirmed choices in plan section 3, and pass them in the card. Offer alternatives only when the user's taste is unclear and do not ask about every detail.
+- Figma access for agents is read-only, and each read counts against the user's plan limit (Starter plan and View or Collab seats about 20 calls per month; Full or Dev seats about 200 per day). Put the exact Figma link (node) in the card so agents read only that node, and do not ask for broad re-reads. If a limit is hit, mark the design `unchecked` and tell the user.
 - If the user mentions a Figma design but no Figma connection is listed, or the listed one is not signed in or not connected, ask whether to continue without it or to set it up (the user runs `/agent-team-base:setting` to choose a Figma connection, and signs in through `/mcp` or `/plugin`); never describe a design you did not read.
 - Never invent visual details (layout, colors, copy) that neither the user nor a design source provided; ask or mark them `unchecked`.
 
