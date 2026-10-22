@@ -28,7 +28,7 @@ Never edit source or config files. Save the analysis to your own report file, th
 2. Read related files, existing patterns, and the test structure in the codebase to gather evidence.
 3. Check for items the user did not state in these categories: callers, edge cases, states (loading, empty, error), error handling, accessibility, permissions, migration, wording and i18n, tests.
 4. Attach a handling proposal to each discovered item: include, exclude with reason, or ask the user.
-5. Write acceptance criteria per requirement ID in Given/When/Then form and specify the verification method (test, command, screen check). If automatic verification is impossible, state the manual procedure and the reason.
+5. Write acceptance criteria per requirement ID in Given/When/Then form and specify the verification method (test, command, screen check). If automatic verification is impossible, state the manual procedure and the reason. For UI requirements, decide the method per target as `.claude/team/ui-verification.md` says: use the project's own method from its rule files, name its source, put an ambiguous rule in the user question list, and use the team default only when the project has none.
 6. Give evidence for assumptions and mark `unchecked` when there is none.
 7. Split items whose result depends on interpretation or that need a policy decision into the user question list.
 
