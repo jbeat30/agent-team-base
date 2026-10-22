@@ -510,10 +510,13 @@ test('config: 현재 모드·보호 모드와 MCP 선택 현황을 보여 줌', 
   assert.equal(result.json.mode, 'lite');
   assert.equal(result.json.protection, 'advisory');
   const mcp = Object.fromEntries(result.json.mcp.map((m) => [m.name, m]));
-  assert.deepEqual(Object.keys(mcp).sort(), ['chrome-devtools', 'context7', 'figma', 'playwright', 'shadcn']);
+  assert.deepEqual(Object.keys(mcp).sort(), ['chrome-devtools', 'context7', 'figma', 'figma-desktop', 'figma-plugin', 'playwright', 'shadcn']);
   assert.equal(mcp.context7.registered, true);
   assert.equal(mcp.playwright.registered, true);
   assert.equal(mcp.figma.registered, false);
+  assert.equal(mcp.figma.selected, false);
+  assert.equal(mcp.playwright.selected, true);
+  assert.equal(mcp['figma-plugin'].install_command, 'claude plugin install figma@claude-plugins-official');
   assert.ok(mcp.figma.summary && mcp.figma.note && mcp.figma.used_by);
 });
 
@@ -572,6 +575,109 @@ test('config: 이미 다른 설정이 있는 MCP는 덮어쓰지 않고 충돌�
   assert.equal(install(['config', '--target', dir, '--set-mode', 'medium']).status, 2);
   assert.equal(install(['config', '--target', dir, '--add-mcp', 'nope']).status, 2);
   assert.equal(install(['config', '--target', dir, '--add-mcp']).status, 2);
+});
+
+test('Figma MCP: 데스크톱 서버는 figma-desktop 이름으로 등록되고 안내가 verify에 남음', () => {
+  const { dir, applied } = installFresh({}, { designTools: ['figma-desktop'] });
+  assert.equal(applied.status, 0, JSON.stringify(applied.json));
+  const servers = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers;
+  assert.deepEqual(servers['figma-desktop'], { type: 'http', url: 'http://127.0.0.1:3845/mcp' });
+  assert.equal(servers.figma, undefined);
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Design tool MCP: figma-desktop/);
+  const check = install(['verify', '--target', dir]).json.checks.find((c) => c.name === 'figma-desktop');
+  assert.equal(check.status, 'unverified');
+  assert.match(check.detail, /Dev or Full seat/);
+});
+
+test('Figma MCP: 플러그인 방식은 .mcp.json에 쓰지 않고 실행 명령만 안내, 설치 여부는 미확인으로 보고', () => {
+  const { dir, applied } = installFresh({}, { designTools: ['figma-plugin'] });
+  assert.equal(applied.status, 0, JSON.stringify(applied.json));
+  const servers = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers;
+  assert.deepEqual(Object.keys(servers), ['context7']);
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Design tool MCP: figma-plugin/);
+  assert.equal(JSON.parse(readFileSync(join(dir, '.claude/team/manifest.json'), 'utf8')).mcp['figma-plugin'], 'guided');
+  const check = install(['verify', '--target', dir]).json.checks.find((c) => c.name === 'figma-plugin');
+  assert.equal(check.status, 'unverified');
+  assert.match(check.detail, /claude plugin install figma@claude-plugins-official/);
+  assert.equal(install(['remove', '--target', dir, '--yes']).json.ok, true);
+});
+
+test('Figma MCP: answers에 Figma 연결을 둘 이상 넣으면 거부', () => {
+  const bad = install(planArgs(project(), answersFile({ designTools: ['figma', 'figma-desktop'] })));
+  assert.equal(bad.status, 2);
+  assert.match(bad.stderr, /only one Figma connection/);
+});
+
+test('config: Figma 연결은 해제 후 다른 방식으로 한 번에 바꾸고, 하나가 선택돼 있으면 추가를 충돌로 보고', () => {
+  const { dir } = installFresh({}, { designTools: ['figma'] });
+  const mcpPath = join(dir, '.mcp.json');
+  const profilePath = join(dir, '.claude/team/profile.md');
+
+  const blocked = install(['config', '--target', dir, '--add-mcp', 'figma-desktop', '--yes']);
+  assert.equal(blocked.status, 1);
+  assert.match(blocked.json.conflicts[0].reason, /figma is already selected/);
+  assert.equal(JSON.parse(readFileSync(mcpPath, 'utf8')).mcpServers['figma-desktop'], undefined);
+
+  const preview = install(['config', '--target', dir, '--remove-mcp', 'figma', '--add-mcp', 'figma-desktop']);
+  assert.equal(preview.json.dryRun, true);
+  assert.ok(JSON.parse(readFileSync(mcpPath, 'utf8')).mcpServers.figma, '미리보기는 파일을 바꾸지 않음');
+
+  const switched = install(['config', '--target', dir, '--remove-mcp', 'figma', '--add-mcp', 'figma-desktop', '--yes']);
+  assert.equal(switched.json.ok, true, switched.stderr);
+  const servers = JSON.parse(readFileSync(mcpPath, 'utf8')).mcpServers;
+  assert.equal(servers.figma, undefined);
+  assert.ok(servers['figma-desktop']);
+  assert.match(readFileSync(profilePath, 'utf8'), /Design tool MCP: figma-desktop$/m);
+  assert.ok(switched.json.next.some((n) => /Enable desktop MCP server/.test(n)));
+  assert.equal(install(['verify', '--target', dir]).json.ok, true);
+
+  const plugin = install(['config', '--target', dir, '--remove-mcp', 'figma-desktop', '--add-mcp', 'figma-plugin', '--yes']);
+  assert.equal(plugin.json.ok, true, plugin.stderr);
+  assert.equal(JSON.parse(readFileSync(mcpPath, 'utf8')).mcpServers['figma-desktop'], undefined);
+  assert.ok(plugin.json.next.some((n) => /claude plugin install figma@claude-plugins-official/.test(n)));
+  assert.match(readFileSync(profilePath, 'utf8'), /Design tool MCP: figma-plugin$/m);
+
+  assert.equal(install(['config', '--target', dir, '--remove-mcp', 'figma-plugin', '--yes']).json.ok, true);
+  assert.match(readFileSync(profilePath, 'utf8'), /Design tool MCP: none$/m);
+  assert.equal(install(['verify', '--target', dir]).json.ok, true);
+});
+
+test('config: 해제는 팀이 등록하지 않았거나 설치 뒤 바꾼 서버를 지우지 않고, context7과 잘못된 값은 거부', () => {
+  const own = { mcpServers: { shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] } } };
+  const { dir } = installFresh({ '.mcp.json': own }, { designTools: ['playwright', 'shadcn'] });
+  const mcpPath = join(dir, '.mcp.json');
+
+  const mine = install(['config', '--target', dir, '--remove-mcp', 'shadcn', '--yes']);
+  assert.equal(mine.json.ok, true, mine.stderr);
+  assert.ok(JSON.parse(readFileSync(mcpPath, 'utf8')).mcpServers.shadcn, '팀이 등록하지 않은 서버는 .mcp.json에 남김');
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /Design tool MCP: playwright$/m);
+
+  const edited = JSON.parse(readFileSync(mcpPath, 'utf8'));
+  edited.mcpServers.playwright = { command: 'my-own', args: [] };
+  writeFileSync(mcpPath, JSON.stringify(edited));
+  const changed = install(['config', '--target', dir, '--remove-mcp', 'playwright', '--yes']);
+  assert.equal(changed.status, 1);
+  assert.equal(changed.json.conflicts[0].item, '.mcp.json playwright');
+  assert.deepEqual(JSON.parse(readFileSync(mcpPath, 'utf8')).mcpServers.playwright, { command: 'my-own', args: [] });
+
+  assert.equal(install(['config', '--target', dir, '--remove-mcp', 'context7']).status, 2);
+  assert.equal(install(['config', '--target', dir, '--remove-mcp', 'nope']).status, 2);
+  assert.equal(install(['config', '--target', dir, '--remove-mcp']).status, 2);
+  assert.equal(install(['config', '--target', dir, '--add-mcp', 'figma', '--remove-mcp', 'figma']).status, 2);
+});
+
+test('config: 연결 전환 중 추가가 충돌하면 해제도 적용하지 않음', () => {
+  const { dir } = installFresh({}, { designTools: ['figma'] });
+  const mcpPath = join(dir, '.mcp.json');
+  const edited = JSON.parse(readFileSync(mcpPath, 'utf8'));
+  edited.mcpServers['figma-desktop'] = { type: 'http', url: 'http://localhost:9999/mcp' };
+  writeFileSync(mcpPath, JSON.stringify(edited, null, 2));
+  const profilePath = join(dir, '.claude/team/profile.md');
+  const before = [readFileSync(mcpPath, 'utf8'), readFileSync(profilePath, 'utf8')];
+  const result = install(['config', '--target', dir, '--remove-mcp', 'figma', '--add-mcp', 'figma-desktop', '--yes']);
+  assert.equal(result.status, 1);
+  assert.equal(result.json.applied, false);
+  assert.deepEqual([readFileSync(mcpPath, 'utf8'), readFileSync(profilePath, 'utf8')], before, '충돌이 있으면 파일을 바꾸지 않음');
 });
 
 test('config: 설치되지 않은 프로젝트는 안내와 함께 실패', () => {
