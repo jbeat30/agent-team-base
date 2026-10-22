@@ -1,0 +1,47 @@
+---
+name: setting
+description: |
+  Show and change the Claude Team Base settings of the current project: the default mode (Lite or Full), the protection mode, and which MCP servers the team uses. Offers to add an MCP server that was not selected at install.
+  Triggers: team settings, change team mode, switch to full, switch to lite, which mcp, add mcp, claude team base setting, 팀 설정, 모드 변경, mcp 추가, mcp 선택
+argument-hint: "[mode | mcp]"
+user-invocable: true
+allowed-tools:
+  - Read
+  - Bash
+  - AskUserQuestion
+---
+
+# Claude Team Base Setting
+
+`<installer>` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/install.mjs"`
+If `${CLAUDE_PLUGIN_ROOT}` is empty, find it with `find ~/.claude -path "*claude-team-base*/scripts/install.mjs" | head -1`.
+This skill changes only the team's own files of the current project (`.claude/team/profile.md`, `.mcp.json`, the manifest). It never changes global settings or other plugins. The setup skill installs, updates, and removes; this skill adjusts what is installed.
+
+## Steps
+
+1. Run `<installer> config --target .` and show the result in the user's language:
+   - **Default mode**: Lite or Full. Say that the mode is the default path only: a single request can still ask for the other mode ("handle this in Full mode").
+   - **Protection mode**: advisory or strict, with one plain sentence from the table below. Changing it is not offered here; point to the setup skill's update.
+   - **MCP servers**: a table with each server's name, what it is for, who uses it, whether it is selected (`registered`), and its note. Mark a server with `differs: true` as "a different setting of yours exists, left unchanged".
+2. If the argument or the request names what to change, go straight to it. Otherwise ask with AskUserQuestion what to change: the default mode, adding an MCP server, or nothing.
+3. Before applying, run the same command with `--set-mode lite|full` and/or `--add-mcp <name[,name]>` **without** `--yes`. It prints a preview. Show the preview (and any `conflicts`) and ask for one confirmation.
+4. After confirmation run it again with `--yes`. Report what changed and the backup folder.
+5. After adding an MCP server, say that a new Claude Code session is needed to load it, that Claude asks once to approve project MCP servers, and repeat the server's note (for example the Figma browser login or the browser-content warning).
+6. Run `<installer> verify --target .` (no `--live`) and report only failures. If nothing is installed, point to `/claude-team-base:setup`.
+
+## Plain explanations to give when asked
+
+| Term | One-line explanation |
+| --- | --- |
+| Lite | The PM calls only the roles it needs, directly. The default. |
+| Full | Planning and development leaders coordinate the sub-roles; the PM calls them from call cards (relay). For large work across several areas. |
+| Advisory protection | The guard hook blocks a rule violation (a write outside the plan, a wrong call). It is a safety net against mistakes, not a security boundary. |
+| Strict protection | Adds approval records: the user approves the allowed paths and commands directly. Experimental, and it applies to every edit of the main session. |
+| Guard hook | A small script Claude Code runs before every file write and agent call in this project. It checks the confirmed plan, assigned files, and who may call whom, and blocks the call when a rule is broken. |
+
+## Rules
+
+- Never apply a change without the user's confirmation in this conversation. A preview is not approval.
+- Add only the servers named in `config`'s list. Never invent other servers or commands.
+- Never edit `.mcp.json` or the profile by hand; use the installer so the manifest hashes stay consistent.
+- Report what could not be done (conflicts, unparseable `.mcp.json`) as it is. Do not work around it.
