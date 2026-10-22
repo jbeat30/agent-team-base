@@ -12,7 +12,7 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync, rmdirSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -245,6 +245,12 @@ function detect(dir) {
 
 // ---------- answers · profile ----------
 
+// 규칙 원본은 프로젝트 안의 상대 경로만 허용: 프로필이 프로젝트 밖 파일이나 URL을 규칙으로 가리키지 않도록 함
+function validRulePath(p) {
+  if (typeof p !== 'string' || !p.trim() || isAbsolute(p) || /^[a-z][a-z0-9+.-]*:/i.test(p)) return false;
+  return !p.split(/[\\/]/).includes('..');
+}
+
 function loadAnswers(options) {
   if (typeof options.answers !== 'string') fail('--answers <file> required');
   const parsed = readJson(resolve(options.answers));
@@ -256,6 +262,7 @@ function loadAnswers(options) {
   if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode must be advisory or strict');
   if (a.designTools !== undefined && (!Array.isArray(a.designTools) || a.designTools.some((t) => !DESIGN_TOOLS.includes(t)))) fail(`answers.designTools must be an array of ${DESIGN_TOOLS.join(', ')}`);
   if (a.designTools !== undefined && a.designTools.filter((t) => FIGMA_TOOLS.includes(t)).length > 1) fail(`answers.designTools may contain only one Figma connection (${FIGMA_TOOLS.join(', ')})`);
+  if (a.ruleSources !== undefined && (!Array.isArray(a.ruleSources) || a.ruleSources.some((r) => !validRulePath(r?.path)))) fail('answers.ruleSources must be an array of { path, covers? } with project-relative paths (no absolute path, URL, or ..)');
   if (a.pdca !== undefined && a.pdca !== 'off') fail('only answers.pdca=off is supported; bkit PDCA integration is planned for a later version');
   return {
     profile: a.profile ?? 'lite',
@@ -270,6 +277,7 @@ function loadAnswers(options) {
     designSystem: a.designSystem ?? [],
     stack: a.stack ?? [],
     checks: a.checks ?? [],
+    ruleSources: a.ruleSources ?? [],
     conventions: a.conventions ?? [],
     forbidden: a.forbidden ?? [],
   };
@@ -290,7 +298,15 @@ ${table(['Item', 'Value', 'Evidence path'], answers.stack.map((s) => [s.item, s.
 
 ${table(['Purpose', 'Command', 'Working directory', 'Side effects (auto-fix, external access, state change)'], answers.checks.map((c) => [c.purpose, `\`${c.command}\``, c.cwd ?? '.', c.sideEffect ?? 'unchecked']))}
 
+## Project rule sources
+
+The project's own rule files below take priority over this profile and over the team defaults. Re-read them from the original path before work; never rely on a copied summary. If a rule here differs from this profile, follow the source file. Apply a team behavior that the project's rules do not have only after the user confirms it.
+
+${answers.ruleSources.length ? table(['Path', 'Covers'], answers.ruleSources.map((r) => [r.path, r.covers ?? 'unchecked'])) : 'None recorded. Ask the user whether the project has rule files (CLAUDE.md, AGENTS.md, lint or format config, verification method, branch rules) before assuming none.'}
+
 ## Conventions
+
+Pointers to the evidence path, not a copy of the rule files.
 
 ${table(['Item', 'Content', 'Evidence path'], answers.conventions.map((c) => [c.item, c.content ?? '', c.evidence ?? 'unchecked']))}
 
