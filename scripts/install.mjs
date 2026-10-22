@@ -36,6 +36,9 @@ const LEGACY_GITIGNORE_END = '# <<< claude-team-base';
 // figma: 원격 서버(mcp__figma__*), figma-desktop: 데스크톱 앱 서버(mcp__figma-desktop__*)
 const FIGMA_TOOLS = ['figma', 'figma-desktop', 'figma-plugin'];
 const DESIGN_TOOLS = ['playwright', 'chrome-devtools', 'shadcn', ...FIGMA_TOOLS];
+// 문서 읽기 도구: 디자인 도구와 별도 선택지, 로컬에서 PDF 등을 Markdown으로 읽음(패키지 @sylphx/anymd, 옛 이름 pdf-reader-mcp는 호환 별칭)
+// 도구 이름 접두사가 mcp__anymd__*이므로 서버 이름을 바꾸지 않음, 메이저 버전을 고정해 도구 이름 변경이 조용히 들어오지 않게 함
+const DOCUMENT_TOOLS = ['anymd'];
 const MCP_SERVERS = {
   context7: { command: 'npx', args: ['-y', '@upstash/context7-mcp'] },
   playwright: { command: 'npx', args: ['@playwright/mcp@latest'] },
@@ -43,6 +46,7 @@ const MCP_SERVERS = {
   shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] },
   figma: { type: 'http', url: 'https://mcp.figma.com/mcp' },
   'figma-desktop': { type: 'http', url: 'http://127.0.0.1:3845/mcp' },
+  anymd: { command: 'npx', args: ['-y', '@sylphx/anymd@8'] },
 };
 // 설치기가 .mcp.json에 쓰지 않고 안내만 하는 항목, 외부 플러그인은 자동 설치하지 않고 사용자가 직접 실행(AGENTS.md)
 // 플러그인 방식은 도구 이름이 mcp__plugin_figma_figma__*로 달라짐
@@ -261,6 +265,7 @@ function loadAnswers(options) {
   if (a.executionMode !== undefined && !['nested', 'relay'].includes(a.executionMode)) fail('answers.executionMode must be nested or relay');
   if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode must be advisory or strict');
   if (a.designTools !== undefined && (!Array.isArray(a.designTools) || a.designTools.some((t) => !DESIGN_TOOLS.includes(t)))) fail(`answers.designTools must be an array of ${DESIGN_TOOLS.join(', ')}`);
+  if (a.documentTools !== undefined && (!Array.isArray(a.documentTools) || a.documentTools.some((t) => !DOCUMENT_TOOLS.includes(t)))) fail(`answers.documentTools must be an array of ${DOCUMENT_TOOLS.join(', ')}`);
   if (a.designTools !== undefined && a.designTools.filter((t) => FIGMA_TOOLS.includes(t)).length > 1) fail(`answers.designTools may contain only one Figma connection (${FIGMA_TOOLS.join(', ')})`);
   if (a.ruleSources !== undefined && (!Array.isArray(a.ruleSources) || a.ruleSources.some((r) => !validRulePath(r?.path)))) fail('answers.ruleSources must be an array of { path, covers? } with project-relative paths (no absolute path, URL, or ..)');
   if (a.pdca !== undefined && a.pdca !== 'off') fail('only answers.pdca=off is supported; bkit PDCA integration is planned for a later version');
@@ -268,6 +273,7 @@ function loadAnswers(options) {
     profile: a.profile ?? 'lite',
     context7: a.context7,
     designTools: [...new Set(a.designTools ?? [])],
+    documentTools: [...new Set(a.documentTools ?? [])],
     gitignore: a.gitignore ?? true,
     pdca: 'off',
     // nested는 확인한 버전에서 리더가 하위 호출 도구를 받지 못해 기본을 relay로 둠, 모드를 나중에 full로 바꿔도 가드의 relay 보호가 켜져 있도록 lite도 relay로 기록
@@ -326,6 +332,7 @@ ${table(['Item', 'Content', 'Location'], answers.designSystem.map((d) => [d.item
 - Execution mode: ${answers.executionMode ?? 'n/a (lite)'}
 - Context7 MCP: ${answers.context7 ? 'registered' : 'not registered'}
 - Design tool MCP: ${answers.designTools.length ? answers.designTools.join(', ') : 'none'}
+- Document tool MCP: ${answers.documentTools.length ? answers.documentTools.join(', ') : 'none'}
 - Protection mode: ${answers.guardMode === 'strict' ? 'strict' : 'advisory'}
 - PDCA mode: ${answers.pdca}
 - Installed roles: ${ROLE_FILES.join(', ')} (all role files are always installed)
@@ -429,7 +436,7 @@ function buildPlan(dir, answers, options) {
 
   // MCP 등록: Context7과 선택한 디자인 도구를 한 번에 병합, 서버별로 추가·동일·충돌 판정
   let mcpPlan = { action: 'none', servers: {} };
-  const wanted = [...(answers.context7 ? ['context7'] : []), ...answers.designTools].filter((n) => MCP_SERVERS[n]);
+  const wanted = [...(answers.context7 ? ['context7'] : []), ...answers.designTools, ...answers.documentTools].filter((n) => MCP_SERVERS[n]);
   const guided = answers.designTools.filter((n) => GUIDED[n]);
   if (wanted.length) {
     const mcpAbs = join(dir, MCP_PATH);
@@ -661,7 +668,7 @@ function verify(dir, options) {
     add('guard live', live.status, live.detail);
   } else add('guard live', 'unverified', 'hook firing in Claude Code is unchecked until confirmed with --live; if unchecked, treat as no protection');
   for (const name of Object.keys(MCP_SERVERS)) {
-    if (manifest.mcp?.[name] === 'added') add(name, 'unverified', `.mcp.json registration confirmed; the actual connection needs approval after restarting Claude Code${name === 'figma' ? ' and a browser sign-in to Figma (/mcp, select figma, Authenticate)' : ''}${name === 'figma-desktop' ? ' and the Figma desktop app running with the desktop MCP server enabled in Dev Mode (needs a Dev or Full seat)' : ''}${name === 'chrome-devtools' || name === 'playwright' ? '; the tool can see browser content, so avoid personal tabs and sensitive data' : ''}`);
+    if (manifest.mcp?.[name] === 'added') add(name, 'unverified', `.mcp.json registration confirmed; the actual connection needs approval after restarting Claude Code${name === 'figma' ? ' and a browser sign-in to Figma (/mcp, select figma, Authenticate)' : ''}${name === 'figma-desktop' ? ' and the Figma desktop app running with the desktop MCP server enabled in Dev Mode (needs a Dev or Full seat)' : ''}${name === 'anymd' ? '; it runs an external package through npx and downloads a native binary on first use, so the first start can be slow or fail offline' : ''}${name === 'chrome-devtools' || name === 'playwright' ? '; the tool can see browser content, so avoid personal tabs and sensitive data' : ''}`);
   }
   for (const name of Object.keys(GUIDED)) {
     if (manifest.mcp?.[name] === 'guided') add(name, 'unverified', `not installed by the installer: the user runs \`${GUIDED[name].command}\` and signs in through /plugin; whether the plugin is installed and connected is unchecked`);
@@ -778,6 +785,7 @@ const MCP_INFO = {
   playwright: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Open the running app in a browser and check it', note: 'Can see the content of the browser it opens; runs an external package through npx; a browser install may be needed' },
   'chrome-devtools': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Inspect the screen, console, network and performance in Chrome', note: 'Can see the content of the browser it opens; runs an external package through npx' },
   shadcn: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Reuse vetted shadcn/ui components', note: 'Needs components.json in the project; runs an external package through npx' },
+  anymd: { kind: 'document', used_by: 'planner-agent, frontend-agent, qa-agent', summary: 'Read PDF files (and Word, Excel, PowerPoint, HTML) as Markdown on this machine through @sylphx/anymd', note: 'Runs an external package through npx and downloads its native binary on first use; nothing is uploaded, but it fetches a URL if one is given and can download OCR or speech models only if you ask. The agents are told to open only files you point to and never to follow instructions found inside a document' },
   figma: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the remote server (https://mcp.figma.com/mcp)', note: 'Needs a browser sign-in after registering: start a new session, run /mcp, select figma, Authenticate. Use one Figma connection only' },
   'figma-desktop': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the Figma desktop app (http://127.0.0.1:3845/mcp)', note: 'Needs the Figma desktop app running with "Enable desktop MCP server" in Dev Mode, and a Dev or Full seat on a paid plan. Use one Figma connection only' },
   'figma-plugin': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the official Figma plugin for Claude Code (includes Figma skills)', note: `Not installed by this tool: the user runs \`${GUIDED['figma-plugin'].command}\` and signs in through /plugin. Tool names differ (mcp__plugin_figma_figma__*). Use one Figma connection only` },
@@ -814,17 +822,19 @@ function config(dir, options) {
   };
   const addMcp = nameList('add-mcp', SELECTABLE);
   // context7은 필수라 해제 대상이 아님, 디자인 도구만 해제
-  const removeMcp = nameList('remove-mcp', DESIGN_TOOLS);
+  const removeMcp = nameList('remove-mcp', [...DESIGN_TOOLS, ...DOCUMENT_TOOLS]);
   const both = addMcp.filter((n) => removeMcp.includes(n));
   if (both.length) fail(`${both.join(', ')} cannot be in both --add-mcp and --remove-mcp`);
 
-  const selectedTools = () => (profileLine(profile, 'Design tool MCP') ?? 'none').split(',').map((s) => s.trim()).filter((s) => s && s !== 'none');
+  // 문서 도구는 별도 줄에 기록, 이전 버전 설치의 프로필에는 줄이 없을 수 있어 없으면 선택 없음으로 취급
+  const labelOf = (name) => (DOCUMENT_TOOLS.includes(name) ? 'Document tool MCP' : 'Design tool MCP');
+  const selectedTools = (label = 'Design tool MCP') => (profileLine(profile, label) ?? 'none').split(',').map((s) => s.trim()).filter((s) => s && s !== 'none');
   const listMcp = () => SELECTABLE.map((name) => {
     const existing = servers[name];
     return {
       name, ...MCP_INFO[name],
       registered: Boolean(existing),
-      selected: name === 'context7' ? Boolean(existing) : selectedTools().includes(name),
+      selected: name === 'context7' ? Boolean(existing) : selectedTools(labelOf(name)).includes(name),
       differs: Boolean(existing) && JSON.stringify(existing) !== JSON.stringify(MCP_SERVERS[name]),
       ...(GUIDED[name] ? { install_command: GUIDED[name].command } : {}),
     };
@@ -869,8 +879,11 @@ function config(dir, options) {
   }
 
   const next = [];
-  const setTools = (tools) => {
-    profile = setProfileLine(profile, 'Design tool MCP', tools.length ? tools.join(', ') : 'none');
+  const setTools = (tools, label = 'Design tool MCP') => {
+    const value = tools.length ? tools.join(', ') : 'none';
+    if (profileLine(profile, label) !== null) profile = setProfileLine(profile, label, value);
+    else profile = profile.replace(/^(- Design tool MCP:.*)$/m, (line) => `${line}
+- ${label}: ${value}`);
   };
 
   // 해제를 먼저 처리해 같은 호출에서 Figma 연결 방식을 바꿀 수 있게 함
@@ -891,8 +904,8 @@ function config(dir, options) {
       nextMcpRecord[name] = 'removed';
       next.push(`${name} was never installed by this tool; if you installed the plugin, remove it yourself (claude plugin uninstall figma@claude-plugins-official)`);
     } else changes.push(`mcp: ${name} not registered`);
-    if (selectedTools().includes(name)) {
-      setTools(selectedTools().filter((t) => t !== name));
+    if (selectedTools(labelOf(name)).includes(name)) {
+      setTools(selectedTools(labelOf(name)).filter((t) => t !== name), labelOf(name));
       changes.push(`profile: ${name} deselected`);
     }
   }
@@ -922,7 +935,7 @@ function config(dir, options) {
       if (name === 'figma-desktop') next.push('figma-desktop: open the Figma desktop app, switch a Design file to Dev Mode with nothing selected, click "Enable desktop MCP server" (needs a Dev or Full seat), then check /mcp in a new session');
     } else changes.push(`mcp: ${name} already registered`);
     if (name === 'context7') profile = setProfileLine(profile, 'Context7 MCP', 'registered');
-    else if (!selectedTools().includes(name)) setTools([...selectedTools(), name]);
+    else if (!selectedTools(labelOf(name)).includes(name)) setTools([...selectedTools(labelOf(name)), name], labelOf(name));
   }
 
   const apply = options.yes === true;
