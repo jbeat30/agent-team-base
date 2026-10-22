@@ -478,3 +478,94 @@ test('디자인 시스템: answers에 있으면 프로필에 권위 있는 기�
   const without = installFresh();
   assert.doesNotMatch(readFileSync(join(without.dir, '.claude/team/profile.md'), 'utf8'), /## Design system/);
 });
+
+test('answers.profile 생략 시 lite가 기본이고 실행 모드는 relay로 기록', () => {
+  const dir = project();
+  const file = join(dir, '..', `answers-${Date.now()}.json`);
+  const answers = { ...JSON.parse(readFileSync(answersFile(), 'utf8')) };
+  delete answers.profile;
+  writeFileSync(file, JSON.stringify(answers));
+  const plan = install(planArgs(dir, file));
+  assert.equal(install(applyArgs(dir, file, plan.json.hash)).json.ok, true);
+  const profile = readFileSync(join(dir, '.claude', 'team', 'profile.md'), 'utf8');
+  assert.match(profile, /Execution profile: lite/);
+  assert.match(profile, /Execution mode: relay/, 'lite도 relay로 기록해 모드를 바꿔도 가드 보호가 유지됨');
+});
+
+test('config: 현재 모드·보호 모드와 MCP 선택 현황을 보여 줌', () => {
+  const { dir } = installFresh({}, { profile: 'lite', designTools: ['playwright'] });
+  const result = install(['config', '--target', dir]);
+  assert.equal(result.json.ok, true, result.stderr);
+  assert.equal(result.json.mode, 'lite');
+  assert.equal(result.json.protection, 'advisory');
+  const mcp = Object.fromEntries(result.json.mcp.map((m) => [m.name, m]));
+  assert.deepEqual(Object.keys(mcp).sort(), ['chrome-devtools', 'context7', 'figma', 'playwright', 'shadcn']);
+  assert.equal(mcp.context7.registered, true);
+  assert.equal(mcp.playwright.registered, true);
+  assert.equal(mcp.figma.registered, false);
+  assert.ok(mcp.figma.summary && mcp.figma.note && mcp.figma.used_by);
+});
+
+test('config: 모드 전환은 미리보기 후 --yes로 적용하고 verify가 계속 통과', () => {
+  const { dir } = installFresh({}, { profile: 'lite' });
+  const profilePath = join(dir, '.claude', 'team', 'profile.md');
+  const before = readFileSync(profilePath, 'utf8');
+  const preview = install(['config', '--target', dir, '--set-mode', 'full']);
+  assert.equal(preview.json.dryRun, true);
+  assert.equal(readFileSync(profilePath, 'utf8'), before, '미리보기는 파일을 바꾸지 않음');
+
+  const applied = install(['config', '--target', dir, '--set-mode', 'full', '--yes']);
+  assert.equal(applied.json.ok, true, applied.stderr);
+  assert.match(readFileSync(profilePath, 'utf8'), /Execution profile: full/);
+  assert.equal(JSON.parse(readFileSync(join(dir, '.claude', 'team', 'manifest.json'), 'utf8')).profile, 'full');
+  assert.ok(applied.json.backups, '바꾸기 전 프로필을 백업');
+  assert.equal(install(['config', '--target', dir]).json.mode, 'full');
+  const verified = install(['verify', '--target', dir]);
+  assert.equal(verified.json.ok, true, JSON.stringify(verified.json.checks));
+  assert.equal(install(['config', '--target', dir, '--set-mode', 'lite', '--yes']).json.ok, true);
+  assert.match(readFileSync(profilePath, 'utf8'), /Execution profile: lite/);
+});
+
+test('config: 선택하지 않았던 MCP를 추가하면 .mcp.json·프로필·매니페스트가 함께 갱신되고 제거 때 되돌림', () => {
+  const { dir } = installFresh({}, { profile: 'lite', context7: false });
+  const mcpPath = join(dir, '.mcp.json');
+  assert.equal(existsSync(mcpPath), false);
+  const applied = install(['config', '--target', dir, '--add-mcp', 'context7,figma', '--yes']);
+  assert.equal(applied.json.ok, true, applied.stderr);
+  assert.match(applied.json.note, /new Claude Code session/);
+  const servers = JSON.parse(readFileSync(mcpPath, 'utf8')).mcpServers;
+  assert.equal(servers.context7.command, 'npx');
+  assert.equal(servers.figma.type, 'http');
+  const profile = readFileSync(join(dir, '.claude', 'team', 'profile.md'), 'utf8');
+  assert.match(profile, /Context7 MCP: registered/);
+  assert.match(profile, /Design tool MCP: figma/);
+  const manifest = JSON.parse(readFileSync(join(dir, '.claude', 'team', 'manifest.json'), 'utf8'));
+  assert.equal(manifest.mcp.figma, 'added');
+  assert.equal(install(['verify', '--target', dir]).json.ok, true);
+  const mcp = Object.fromEntries(install(['config', '--target', dir]).json.mcp.map((m) => [m.name, m.registered]));
+  assert.equal(mcp.figma, true);
+  assert.equal(mcp.playwright, false);
+
+  assert.equal(install(['remove', '--target', dir, '--yes']).json.ok, true);
+  assert.equal(existsSync(mcpPath), false, '설정 스킬로 추가한 서버도 제거 때 되돌림');
+});
+
+test('config: 이미 다른 설정이 있는 MCP는 덮어쓰지 않고 충돌로 보고, 잘못된 값은 거부', () => {
+  const different = { mcpServers: { shadcn: { command: 'my-own', args: [] } } };
+  const { dir } = installFresh({ '.mcp.json': different }, { profile: 'lite' });
+  const conflict = install(['config', '--target', dir, '--add-mcp', 'shadcn']);
+  assert.equal(conflict.status, 1);
+  assert.equal(conflict.json.conflicts[0].item, '.mcp.json shadcn');
+  install(['config', '--target', dir, '--add-mcp', 'shadcn', '--yes']);
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers.shadcn, different.mcpServers.shadcn);
+  assert.equal(install(['config', '--target', dir, '--set-mode', 'medium']).status, 2);
+  assert.equal(install(['config', '--target', dir, '--add-mcp', 'nope']).status, 2);
+  assert.equal(install(['config', '--target', dir, '--add-mcp']).status, 2);
+});
+
+test('config: 설치되지 않은 프로젝트는 안내와 함께 실패', () => {
+  const dir = project();
+  const result = install(['config', '--target', dir]);
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /not installed/);
+});
