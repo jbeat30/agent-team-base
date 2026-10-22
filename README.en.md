@@ -155,6 +155,19 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 - Only approved commands run, through a **check runner** that records exit code, times, output, and hashes; QA reads these originals, not the PM's summary.
 - Library and framework behavior is checked against the installed version through Context7; anything unchecked is marked `unchecked`.
 
+### Project rules come first
+
+This team is a base layer, so it always ranks below the rules a project already has. The order is: your request > the project's rule files (`CLAUDE.md`, `AGENTS.md`, lint config, verification method, branch rules) > existing conventions > the profile > team defaults. Details: [rule-priority.md](template/.claude/team/rule-priority.md).
+
+- The profile does not copy rules; it points to the **original paths**. Agents re-read the originals before work, so edits to them apply immediately.
+- Team behaviors fall into three classes.
+  1. **Defaults**: plan and card forms, requirement IDs, report structure, risk grades. Where the project already defines the same thing, the project's way wins.
+  2. **Confirm first**: behaviors the project lacks that change how you work (UI/UX walkthrough, a browser check in place of the project's own verification, strict mode, reports in the team's structure). Asked once before applying.
+  3. **Fixed safety**: the guard hook, no edits before confirmation, assigned files only, never reporting unchecked items as passed. If a project rule conflicts, you are told and the team stops.
+- If the project defines its own verification method (for example measuring computed styles), it is used first; the browser check covers only what that method does not.
+- The guard protects only the team's policy files (hooks, team, the team skill, team role definitions, settings), not all of `.claude/`, so your own rules under `.claude/` stay editable.
+- Strict mode still applies to every edit of the main session (it is not limited to team runs). When no approval is registered, the block message states the reason and the fix.
+
 ### Against hallucination and unrequested edits
 
 - The request source is quoted verbatim in the plan, and every agent reads the source and plan files directly.
