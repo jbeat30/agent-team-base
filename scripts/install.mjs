@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = join(repoRoot, 'template');
-const TEMPLATE_VERSION = '0.3.2';
+const TEMPLATE_VERSION = '0.3.3';
 const SOURCE_REPO = 'https://github.com/jbeat30/claude-team-base';
 const MIN_CLAUDE = '2.1.302';
 const MIN_NODE = 18;
@@ -762,6 +762,8 @@ function config(dir, options) {
 
   const setMode = options['set-mode'];
   if (setMode !== undefined && !['lite', 'full'].includes(setMode)) fail('--set-mode must be lite or full');
+  const setProtection = options['set-protection'];
+  if (setProtection !== undefined && !['advisory', 'strict'].includes(setProtection)) fail('--set-protection must be advisory or strict');
   const addMcp = options['add-mcp'] === undefined ? [] : [...new Set(String(options['add-mcp']).split(',').map((s) => s.trim()).filter(Boolean))];
   const unknown = addMcp.filter((n) => !MCP_SERVERS[n]);
   if (options['add-mcp'] === true || unknown.length) fail(`--add-mcp needs names from: ${Object.keys(MCP_SERVERS).join(', ')}${unknown.length ? ` (unknown: ${unknown.join(', ')})` : ''}`);
@@ -772,11 +774,12 @@ function config(dir, options) {
   });
   const current = () => ({ mode: profileLine(profile, 'Execution profile'), executionMode: profileLine(profile, 'Execution mode'), protection: profileLine(profile, 'Protection mode') });
 
-  if (setMode === undefined && !addMcp.length) {
-    return output({ ok: true, ...current(), templateVersion: manifest.templateVersion, mcp: listMcp(), how: 'config --target <dir> --set-mode lite|full and/or --add-mcp <name[,name]>; add --yes to apply (default is a preview)' });
+  if (setMode === undefined && setProtection === undefined && !addMcp.length) {
+    return output({ ok: true, ...current(), templateVersion: manifest.templateVersion, mcp: listMcp(), how: 'config --target <dir> --set-mode lite|full, --set-protection advisory|strict, and/or --add-mcp <name[,name]>; add --yes to apply (default is a preview)' });
   }
 
   const changes = [];
+  const warnings = [];
   const conflicts = [];
   let nextServers = structuredClone(servers);
   let mcpChanged = false;
@@ -791,6 +794,21 @@ function config(dir, options) {
     }
     // 가드의 relay 보호가 모드와 무관하게 켜지도록 실행 모드를 항상 relay로 유지
     if (!/^relay\b/.test(profileLine(profile, 'Execution mode'))) profile = setProfileLine(profile, 'Execution mode', 'relay');
+  }
+
+  if (setProtection !== undefined) {
+    const before = profileLine(profile, 'Protection mode');
+    if (before === setProtection) changes.push(`protection: already ${setProtection}`);
+    else {
+      profile = setProfileLine(profile, 'Protection mode', setProtection);
+      changes.push(`protection: ${before} -> ${setProtection}`);
+      // 가드는 프로필의 보호 모드를 실행할 때마다 읽으므로 바로 적용됨, 엄격 모드의 부담을 적용 전에 알림
+      if (setProtection === 'strict') {
+        warnings.push('strict mode takes effect immediately: every edit by the main session needs an active approval registration, so ordinary edits are blocked until the user sets one up');
+        warnings.push('the user must run the grant and approve commands directly; agents never run them. Follow .claude/team/strict-mode.md');
+        warnings.push('strict mode is experimental and its interactive approval flow has not been verified; it is not a security boundary');
+      }
+    }
   }
 
   for (const name of addMcp) {
@@ -813,7 +831,7 @@ function config(dir, options) {
   }
 
   const apply = options.yes === true;
-  if (!apply) return output({ ok: conflicts.length === 0, dryRun: true, changes, conflicts, note: 'preview only; add --yes to apply after the user confirms' }, conflicts.length ? 1 : 0);
+  if (!apply) return output({ ok: conflicts.length === 0, dryRun: true, changes, warnings, conflicts, note: 'preview only; add --yes to apply after the user confirms' }, conflicts.length ? 1 : 0);
 
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const backupRel = `${DOCS_DIR}/backups/${stamp}`;
@@ -834,7 +852,7 @@ function config(dir, options) {
   if (setMode !== undefined) manifest.profile = setMode;
   manifest.mcp = nextMcpRecord;
   writeFile(dir, MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
-  return output({ ok: true, dryRun: false, changes, conflicts, backups: backedUp.length ? backupRel : null, note: mcpChanged ? 'start a new Claude Code session so the new MCP server is loaded; Claude asks to approve project MCP servers on first use' : undefined });
+  return output({ ok: true, dryRun: false, changes, warnings, conflicts, backups: backedUp.length ? backupRel : null, note: mcpChanged ? 'start a new Claude Code session so the new MCP server is loaded; Claude asks to approve project MCP servers on first use' : undefined });
 }
 
 // ---------- 진입 ----------
