@@ -21,10 +21,12 @@ This skill changes only the team's own files of the current project (`.claude/te
 
 1. Run `<installer> config --target .` and show the result in the user's language:
    - **Default mode**: Lite or Full. Say that the mode is the default path only: a single request can still ask for the other mode ("handle this in Full mode").
-   - **Protection mode**: advisory or strict, with one plain sentence from the table below. Changing it is not offered here; point to the setup skill's update.
+   - **Protection mode**: advisory or strict, with one plain sentence from the table below. It can be changed here (step 2).
    - **MCP servers**: a table with each server's name, what it is for, who uses it, whether it is selected (`registered`), and its note. Mark a server with `differs: true` as "a different setting of yours exists, left unchanged".
-2. If the argument or the request names what to change, go straight to it. Otherwise ask with AskUserQuestion what to change: the default mode, adding an MCP server, or nothing.
-3. Before applying, run the same command with `--set-mode lite|full` and/or `--add-mcp <name[,name]>` **without** `--yes`. It prints a preview. Show the preview (and any `conflicts`) and ask for one confirmation.
+2. If the argument or the request names what to change, go straight to it. Otherwise ask with AskUserQuestion what to change: the default mode, the protection mode, adding an MCP server, or nothing.
+3. Before applying, run the same command with `--set-mode lite|full`, `--set-protection advisory|strict`, and/or `--add-mcp <name[,name]>` **without** `--yes`. It prints a preview. Show the preview, any `warnings`, and any `conflicts`, and ask for one confirmation.
+   - For `--set-protection strict`, always show every item of `warnings` in plain words before asking: it applies immediately; every edit of the main session, including ordinary conversations without the team, is blocked until the user registers an approval; the user runs the `grant` and `approve` commands directly (prefix `!` in the prompt), and the agent never runs them; the agent only drafts the approval scope and the user checks the `review-grant` hash before running `grant` (steps in `.claude/team/strict-mode.md`); it is experimental, its interactive approval flow is unverified, and it is not a security boundary. Ask whether to proceed with that one confirmation.
+   - Switching to `advisory` needs no warning; it removes the approval requirement at once.
 4. After confirmation run it again with `--yes`. Report what changed and the backup folder.
 5. After adding an MCP server, say that a new Claude Code session is needed to load it, that Claude asks once to approve project MCP servers, and repeat the server's note (for example the Figma browser login or the browser-content warning).
 6. Run `<installer> verify --target .` (no `--live`) and report only failures. If nothing is installed, point to `/claude-team-base:setup`.
@@ -36,7 +38,7 @@ This skill changes only the team's own files of the current project (`.claude/te
 | Lite | The PM calls only the roles it needs, directly. The default. |
 | Full | Planning and development leaders coordinate the sub-roles; the PM calls them from call cards (relay). For large work across several areas. |
 | Advisory protection | The guard hook blocks a rule violation (a write outside the plan, a wrong call). It is a safety net against mistakes, not a security boundary. |
-| Strict protection | Adds approval records: the user approves the allowed paths and commands directly. Experimental, and it applies to every edit of the main session. |
+| Strict protection | Adds approval records: the user approves the allowed paths and commands directly. Experimental, and it applies to every edit of the main session, even without the team. Switch back to advisory here at any time. |
 | Guard hook | A small script Claude Code runs before every file write and agent call in this project. It checks the confirmed plan, assigned files, and who may call whom, and blocks the call when a rule is broken. |
 
 ## Rules
