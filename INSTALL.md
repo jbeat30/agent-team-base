@@ -18,8 +18,8 @@ When run through the plugin skill, skip section 1 (fetching) and use `<installer
 
 ## 1. Pin a version and fetch (without the plugin only)
 
-1. If the URL the user gave has a tag, use it. Otherwise use the highest `v*` tag from `git ls-remote --tags https://github.com/jbeat30/claude-team-base`. If there is no tag, stop and report that no installable release exists yet.
-2. Fetch into a temporary directory outside the project: `git clone --depth 1 --branch <tag> https://github.com/jbeat30/claude-team-base <temp-path>`
+1. If the URL the user gave has a tag, use it. Otherwise use the highest `v*` tag from `git ls-remote --tags https://github.com/jbeat30/agent-team-base`. If there is no tag, stop and report that no installable release exists yet.
+2. Fetch into a temporary directory outside the project: `git clone --depth 1 --branch <tag> https://github.com/jbeat30/agent-team-base <temp-path>`
 3. Record the commit hash with `git -C <temp-path> rev-parse HEAD` and include it in the final report.
 4. From here, `<installer>` is `node <temp-path>/scripts/install.mjs`.
 
