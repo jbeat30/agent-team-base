@@ -334,6 +334,8 @@ function cmdTrace(args) {
       else covered.add(id);
     }
     for (const file of card.files) {
+      // 계획서·보고서 같은 실행 기록은 소스 파일이 아니므로 변경 계획(6장) 비교에서 제외(planning-lead 카드의 허용 파일이 plan.md)
+      if (file.replace(/\\/g, '/').startsWith('.claude-team-docs/runs/')) continue;
       if (!planned.has(file)) problems.push(`cards/${name}: file not in plan section 6 ${file}`);
       else if (planned.get(file) !== role) problems.push(`cards/${name}: ${file} is owned by ${planned.get(file)}, but the card receiver is ${role}`);
     }
