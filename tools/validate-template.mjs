@@ -12,13 +12,13 @@ const teamDir = join(root, '.claude', 'team');
 // 역할별 허용 도구 상한, pm-agent는 Agent 호출 대상 검사를 별도로 수행
 const context7 = ['mcp__context7__resolve-library-id', 'mcp__context7__query-docs'];
 const toolCeiling = {
-  'planner-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
+  'planner-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7, 'mcp__anymd__*'],
   'architecture-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7],
-  'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7, 'mcp__playwright__*', 'mcp__chrome-devtools__*', 'mcp__shadcn__*', 'mcp__figma__*', 'mcp__figma-desktop__*', 'mcp__plugin_figma_figma__*'],
+  'frontend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7, 'mcp__playwright__*', 'mcp__chrome-devtools__*', 'mcp__shadcn__*', 'mcp__figma__*', 'mcp__figma-desktop__*', 'mcp__plugin_figma_figma__*', 'mcp__anymd__*'],
   'backend-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
   'api-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
   'test-agent': ['Read', 'Glob', 'Grep', 'Edit', 'Write', ...context7],
-  'qa-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7, 'mcp__playwright__*', 'mcp__chrome-devtools__*', 'mcp__figma__*', 'mcp__figma-desktop__*', 'mcp__plugin_figma_figma__*'],
+  'qa-agent': ['Read', 'Glob', 'Grep', 'Write', ...context7, 'mcp__playwright__*', 'mcp__chrome-devtools__*', 'mcp__figma__*', 'mcp__figma-desktop__*', 'mcp__plugin_figma_figma__*', 'mcp__anymd__*'],
   'planning-lead': ['Read', 'Glob', 'Grep', 'Write'],
   'dev-lead': ['Read', 'Glob', 'Grep', 'Write'],
 };
