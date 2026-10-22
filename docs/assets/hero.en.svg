@@ -4,5 +4,5 @@
 <rect x="112" y="100" width="72" height="6" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
 <rect x="196" y="100" width="24" height="6" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
 <polyline points="2180,394 2288,394" fill="none" stroke="#D5DBE6" stroke-width="2"/>
-<text x="639.0" y="190" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="124" font-weight="700" fill="#1A2744">claude-team-base</text>
+<text x="639.0" y="190" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="124" font-weight="700" fill="#1A2744">agent-team-base</text>
 </svg>

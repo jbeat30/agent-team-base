@@ -37,7 +37,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: claude-team-base 버전
+      label: agent-team-base 버전
       placeholder: "릴리즈 태그 또는 커밋"
   - type: textarea
     id: logs

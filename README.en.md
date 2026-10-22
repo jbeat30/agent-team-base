@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/hero.en.png" alt="claude-team-base" width="100%">
+  <img src="docs/assets/hero.en.png" alt="agent-team-base" width="100%">
 </p>
 
 <p align="center">
@@ -12,7 +12,7 @@
 
 <p align="center"><a href="README.md">한국어</a></p>
 
-# claude-team-base
+# agent-team-base
 
 **A plugin that sets up a Claude Code agent team in your project with one skill.**
 
@@ -30,13 +30,13 @@ Requirements: Claude Code 2.1.302 or later, Node 18 or later.
 
 ```text
 /plugin marketplace add jbeat30/jbeat-conventions
-/plugin install claude-team-base@jbeat-plugins
-/claude-team-base:setup
+/plugin install agent-team-base@jbeat-plugins
+/agent-team-base:setup
 ```
 
 ![Install flow](docs/assets/install-flow.en.png)
 
-1. Install the plugin and run `/claude-team-base:setup` in your project.
+1. Install the plugin and run `/agent-team-base:setup` in your project.
 2. The skill surveys the project and asks only what it needs.
 3. It shows the change plan in 10 lines or fewer and asks for confirmation **once**.
 4. The installer copies and merges files, then checks the guard.
@@ -52,9 +52,9 @@ Read INSTALL.md at https://github.com/jbeat30/claude-team-base and set this proj
 
 | Skill | Purpose | Cost |
 | --- | --- | --- |
-| `/claude-team-base:setup` | **Install, update, or remove** the team; pass `install`, `update`, or `remove` as an argument | One Claude call for the guard check after install |
-| `/claude-team-base:check` | Check the installation (file hashes, hook registration, role files, version) | None; it does not call Claude without `--live` |
-| `/claude-team-base:setting` | **View and change settings**: the default mode (Lite/Full), the protection mode, which MCP servers the team can use and which are selected, and adding an MCP server you did not select | A few conversation turns; the installer commands do not call Claude |
+| `/agent-team-base:setup` | **Install, update, or remove** the team; pass `install`, `update`, or `remove` as an argument | One Claude call for the guard check after install |
+| `/agent-team-base:check` | Check the installation (file hashes, hook registration, role files, version) | None; it does not call Claude without `--live` |
+| `/agent-team-base:setting` | **View and change settings**: the default mode (Lite/Full), the protection mode, which MCP servers the team can use and which are selected, and adding an MCP server you did not select | A few conversation turns; the installer commands do not call Claude |
 
 Plain requests work too: "set up the agent team", "check the team installation", "show the team settings", "switch the mode to Full", "remove the team".
 
@@ -72,7 +72,7 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
 | Conflict handling | If files collide, per item: skip or replace with backup | Asked on conflict |
 
-The mode is not asked at install. All 9 role files are always installed and the default mode is Lite. Later you can switch to Full in `/claude-team-base:setting`, or ask for it in a single request ("handle this in Full mode"). Asking this way in a project installed as Lite ran the Full path planning-lead → dev-lead → worker agents → qa-agent (checked once).
+The mode is not asked at install. All 9 role files are always installed and the default mode is Lite. Later you can switch to Full in `/agent-team-base:setting`, or ask for it in a single request ("handle this in Full mode"). Asking this way in a project installed as Lite ran the Full path planning-lead → dev-lead → worker agents → qa-agent (checked once).
 
 Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwright, Chrome DevTools) can see the content of the browser they open, so avoid personal tabs and sensitive data. A registered server's tool definitions are added to every call of those two roles, which costs tokens, and `npx` runs external packages, so choose them only when you need them. The agents never invent spacing, colors, or copy that the design does not state, and mark visual checks they could not make as `unchecked`.
 
@@ -187,7 +187,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 ## Changing settings
 
 ```text
-/claude-team-base:setting
+/agent-team-base:setting
 ```
 
 A skill to view and change the team settings after install.
@@ -202,8 +202,8 @@ A skill to view and change the team settings after install.
 ## Update and removal
 
 ```text
-/claude-team-base:setup update
-/claude-team-base:setup remove
+/agent-team-base:setup update
+/agent-team-base:setup remove
 ```
 
 - Update: **fully replaces** the installed team files with the new version. It shows the changes as a plan and applies them after confirmation. Files you edited after install are never overwritten automatically; you choose skip or replace with backup.
