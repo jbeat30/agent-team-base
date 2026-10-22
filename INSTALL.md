@@ -39,8 +39,7 @@ Ask only the needed items in chat and do not re-ask what detection already shows
 
 | Item | What to ask | Note |
 | --- | --- | --- |
-| Execution profile | Lite (the PM calls analysis, worker, and QA roles directly) or Full (planning and development leaders coordinate sub-roles; better for large multi-area work). All role files are installed in both cases. | Always ask. If the work size is unknown, recommend the lighter, cheaper Lite as the default. |
-| Execution mode | Full only: relay (default; the leader returns call cards and the PM calls the sub-roles) or nested (the leader calls sub-roles directly; in the Claude Code 2.1.303 check the leader did not receive the sub-call tool and it did not work, so do not recommend it, do not offer it in the question, and allow it only when the user states it explicitly). | State the default when Full is chosen. |
+| Default mode | Not asked. The team installs with every role file and starts in Lite (the PM calls only the roles it needs). The user can switch the default to Full later with `/claude-team-base:setting`, or ask for Full in a single request. Put `profile` in the answers only if the user explicitly asks for Full at install. | Do not ask. Mention in one line that the mode can be changed later. |
 | Context7 MCP | Whether to register it in `.mcp.json` to check documentation against the installed version. Tool permission is still up to the user even if registered; if not allowed, the PM marks `unchecked`. It runs `npx @upstash/context7-mcp` and queries carry only library names, versions, and general questions. | Always ask. |
 | Design system (UI projects) | Ask whether the project has a design system (tokens, component library, Storybook, Figma library, brand guide) and where it lives (a path or link). If yes, put it in `designSystem` and tell the user the agents will treat it as authoritative and never deviate from it. | Ask only for projects with a UI; if none, skip. |
 | Design tools (optional) | Only when the project has a UI (a frontend stack was detected); skip for backend-only projects. Whether to register design MCP servers in `.mcp.json` for UI work: **Playwright** (recommended; lets frontend-agent and qa-agent open and look at the running page, so the app must be running), **Chrome DevTools** (optional; opens Chrome to inspect the page, console, network, and performance; useful for UI/UX walkthroughs on web projects), **shadcn/ui** (recommended when `detect` reports `componentsJson: true`; the server needs a `components.json`), **Figma** (only if the user has Figma designs; the first use needs a browser sign-in to Figma). Tell the user each one runs through `npx` (Figma is a remote server) and adds its tool definitions to every frontend-agent and qa-agent call, which costs tokens. Browser tools (Playwright, Chrome DevTools) can see the content of the browser they open, so advise against personal tabs and sensitive data. A UI/UX walkthrough is offered later by the PM per task, only when a browser tool is registered, and runs only if the user agrees. | Optional; recommend Playwright and shadcn/ui, offer Figma only on request or when the user mentions Figma designs. |
@@ -57,7 +56,7 @@ Save it as JSON at a temporary path outside the project. No secrets.
 
 ```json
 {
-  "profile": "lite | full",
+  "profile": "lite | full (optional, default lite)",
   "context7": true,
   "gitignore": true,
   "pdca": "off",
@@ -72,7 +71,7 @@ Save it as JSON at a temporary path outside the project. No secrets.
 }
 ```
 
-`profile` and `context7` are required; `designTools` is optional (any of `playwright`, `chrome-devtools`, `shadcn`, `figma`; omit or leave empty to register none). If you do not know a check command's side-effect class, write `unchecked`.
+`context7` is required and `profile` is optional (default lite); `designTools` is optional (any of `playwright`, `chrome-devtools`, `shadcn`, `figma`; omit or leave empty to register none). If you do not know a check command's side-effect class, write `unchecked`.
 
 ## 6. Plan and user confirmation
 
@@ -93,6 +92,7 @@ Save it as JSON at a temporary path outside the project. No secrets.
 Write it in the user's language.
 
 - Installed version (tag and commit), profile, summary of changed files, and skipped or backed-up items.
+- Settings can be changed later with `/claude-team-base:setting` (default mode, MCP servers).
 - Protection state: the chosen advisory or strict mode; if the `guard live` result is not `pass`, say `no protection`.
 - Unchecked items (`unverified` from verify). Context7 needs MCP approval after restarting Claude Code.
 - The team does not start by itself. The user calls it with `/team <request>` or in words such as "solve this with the agent team" or "work on this as pm-agent"; ordinary requests stay ordinary Claude. Give one or two usage examples and say simple questions or small edits are better asked directly without the team.
