@@ -238,20 +238,20 @@ function loadAnswers(options) {
   const parsed = readJson(resolve(options.answers));
   if (parsed.error) fail(`failed to parse the answers file: ${parsed.error}`);
   const a = parsed.value;
-  if (!['lite', 'full'].includes(a.profile)) fail('answers.profile must be lite or full');
+  if (a.profile !== undefined && !['lite', 'full'].includes(a.profile)) fail('answers.profile must be lite or full when given (default lite)');
   if (typeof a.context7 !== 'boolean') fail('answers.context7 must be true or false');
   if (a.executionMode !== undefined && !['nested', 'relay'].includes(a.executionMode)) fail('answers.executionMode must be nested or relay');
   if (a.guardMode !== undefined && !['advisory', 'strict'].includes(a.guardMode)) fail('answers.guardMode must be advisory or strict');
   if (a.designTools !== undefined && (!Array.isArray(a.designTools) || a.designTools.some((t) => !DESIGN_TOOLS.includes(t)))) fail(`answers.designTools must be an array of ${DESIGN_TOOLS.join(', ')}`);
   if (a.pdca !== undefined && a.pdca !== 'off') fail('only answers.pdca=off is supported; bkit PDCA integration is planned for a later version');
   return {
-    profile: a.profile,
+    profile: a.profile ?? 'lite',
     context7: a.context7,
     designTools: [...new Set(a.designTools ?? [])],
     gitignore: a.gitignore ?? true,
     pdca: 'off',
-    // nested는 확인한 버전에서 리더가 하위 호출 도구를 받지 못해 full의 기본을 relay로 둠, lite는 리더를 쓰지 않아 해당 없음
-    executionMode: a.profile === 'lite' ? null : a.executionMode ?? 'relay',
+    // nested는 확인한 버전에서 리더가 하위 호출 도구를 받지 못해 기본을 relay로 둠, 모드를 나중에 full로 바꿔도 가드의 relay 보호가 켜져 있도록 lite도 relay로 기록
+    executionMode: a.executionMode ?? 'relay',
     guardMode: a.guardMode ?? 'advisory',
     agentSetting: ['keep', 'replace'].includes(a.agentSetting) ? a.agentSetting : null,
     designSystem: a.designSystem ?? [],
@@ -730,10 +730,117 @@ function remove(dir, options) {
   return output({ ok: true, dryRun: !apply, removed, kept, actions, backups: manifest.backups, note: apply ? 'task records (.claude-team-docs) and backups are not deleted' : 'pass --yes to actually remove' });
 }
 
+// ---------- config ----------
+
+const PROFILE_PATH = '.claude/team/profile.md';
+// 설정 스킬이 보여 주는 MCP 목록: 선택 여부와 용도·주의 사항
+const MCP_INFO = {
+  context7: { kind: 'docs', used_by: 'PM and analysts', summary: 'Look up library documentation for the installed versions', note: 'Runs an external package through npx' },
+  playwright: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Open the running app in a browser and check it', note: 'Can see the content of the browser it opens; runs an external package through npx; a browser install may be needed' },
+  'chrome-devtools': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Inspect the screen, console, network and performance in Chrome', note: 'Can see the content of the browser it opens; runs an external package through npx' },
+  shadcn: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Reuse vetted shadcn/ui components', note: 'Needs components.json in the project; runs an external package through npx' },
+  figma: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs', note: 'Browser login is needed on first use' },
+};
+
+const profileLine = (text, label) => text.match(new RegExp(`^- ${label}:[ \\t]*(.*)$`, 'm'))?.[1]?.trim() ?? null;
+const setProfileLine = (text, label, value) => text.replace(new RegExp(`^- ${label}:.*$`, 'm'), () => `- ${label}: ${value}`);
+
+function config(dir, options) {
+  const manifestFile = join(dir, MANIFEST_PATH);
+  if (!existsSync(manifestFile)) fail('the team is not installed in this project; run the setup skill first');
+  const manifest = readJson(manifestFile).value;
+  const profileAbs = join(dir, PROFILE_PATH);
+  if (!existsSync(profileAbs)) fail(`${PROFILE_PATH} is missing; run the update to restore it`);
+  let profile = readFileSync(profileAbs, 'utf8');
+  for (const label of ['Execution profile', 'Execution mode', 'Context7 MCP', 'Design tool MCP', 'Protection mode']) {
+    if (profileLine(profile, label) === null) fail(`${PROFILE_PATH} has no "${label}" line; run the update to restore it`);
+  }
+  const mcpAbs = join(dir, MCP_PATH);
+  const mcpFile = existsSync(mcpAbs) ? readJson(mcpAbs) : { value: {} };
+  if (mcpFile.error) fail(`${MCP_PATH} cannot be parsed; fix it first: ${mcpFile.error}`);
+  const servers = mcpFile.value.mcpServers ?? {};
+
+  const setMode = options['set-mode'];
+  if (setMode !== undefined && !['lite', 'full'].includes(setMode)) fail('--set-mode must be lite or full');
+  const addMcp = options['add-mcp'] === undefined ? [] : [...new Set(String(options['add-mcp']).split(',').map((s) => s.trim()).filter(Boolean))];
+  const unknown = addMcp.filter((n) => !MCP_SERVERS[n]);
+  if (options['add-mcp'] === true || unknown.length) fail(`--add-mcp needs names from: ${Object.keys(MCP_SERVERS).join(', ')}${unknown.length ? ` (unknown: ${unknown.join(', ')})` : ''}`);
+
+  const listMcp = () => Object.keys(MCP_SERVERS).map((name) => {
+    const existing = servers[name];
+    return { name, ...MCP_INFO[name], registered: Boolean(existing), differs: Boolean(existing) && JSON.stringify(existing) !== JSON.stringify(MCP_SERVERS[name]) };
+  });
+  const current = () => ({ mode: profileLine(profile, 'Execution profile'), executionMode: profileLine(profile, 'Execution mode'), protection: profileLine(profile, 'Protection mode') });
+
+  if (setMode === undefined && !addMcp.length) {
+    return output({ ok: true, ...current(), templateVersion: manifest.templateVersion, mcp: listMcp(), how: 'config --target <dir> --set-mode lite|full and/or --add-mcp <name[,name]>; add --yes to apply (default is a preview)' });
+  }
+
+  const changes = [];
+  const conflicts = [];
+  let nextServers = structuredClone(servers);
+  let mcpChanged = false;
+  const nextMcpRecord = { ...(manifest.mcp ?? { context7: 'none' }) };
+
+  if (setMode !== undefined) {
+    const before = profileLine(profile, 'Execution profile');
+    if (before === setMode) changes.push(`mode: already ${setMode}`);
+    else {
+      profile = setProfileLine(profile, 'Execution profile', setMode);
+      changes.push(`mode: ${before} -> ${setMode}`);
+    }
+    // 가드의 relay 보호가 모드와 무관하게 켜지도록 실행 모드를 항상 relay로 유지
+    if (!/^relay\b/.test(profileLine(profile, 'Execution mode'))) profile = setProfileLine(profile, 'Execution mode', 'relay');
+  }
+
+  for (const name of addMcp) {
+    const existing = servers[name];
+    if (existing && JSON.stringify(existing) !== JSON.stringify(MCP_SERVERS[name])) {
+      conflicts.push({ item: `${MCP_PATH} ${name}`, reason: `a different ${name} setting already exists; left unchanged` });
+      continue;
+    }
+    if (!existing) {
+      nextServers[name] = MCP_SERVERS[name];
+      mcpChanged = true;
+      nextMcpRecord[name] = 'added';
+      changes.push(`mcp: add ${name} to ${MCP_PATH}`);
+    } else changes.push(`mcp: ${name} already registered`);
+    if (name === 'context7') profile = setProfileLine(profile, 'Context7 MCP', 'registered');
+    else {
+      const tools = (profileLine(profile, 'Design tool MCP') ?? 'none').split(',').map((s) => s.trim()).filter((s) => s && s !== 'none');
+      if (!tools.includes(name)) profile = setProfileLine(profile, 'Design tool MCP', [...tools, name].join(', '));
+    }
+  }
+
+  const apply = options.yes === true;
+  if (!apply) return output({ ok: conflicts.length === 0, dryRun: true, changes, conflicts, note: 'preview only; add --yes to apply after the user confirms' }, conflicts.length ? 1 : 0);
+
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupRel = `${DOCS_DIR}/backups/${stamp}`;
+  const backupRoot = join(dir, backupRel);
+  const backedUp = [];
+  const doBackup = (rel) => {
+    if (backup(dir, backupRoot, rel)) backedUp.push(rel);
+  };
+  doBackup(PROFILE_PATH);
+  writeFile(dir, PROFILE_PATH, profile);
+  if (mcpChanged) {
+    doBackup(MCP_PATH);
+    writeFile(dir, MCP_PATH, `${JSON.stringify({ ...mcpFile.value, mcpServers: nextServers }, null, 2)}\n`);
+  }
+  // 프로필이 매니페스트 해시와 어긋나 verify가 수정으로 보고하지 않도록 함께 갱신
+  const entry = manifest.files.find((f) => f.path === PROFILE_PATH);
+  if (entry) entry.sha256 = sha256(Buffer.from(profile, 'utf8'));
+  if (setMode !== undefined) manifest.profile = setMode;
+  manifest.mcp = nextMcpRecord;
+  writeFile(dir, MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
+  return output({ ok: true, dryRun: false, changes, conflicts, backups: backedUp.length ? backupRel : null, note: mcpChanged ? 'start a new Claude Code session so the new MCP server is loaded; Claude asks to approve project MCP servers on first use' : undefined });
+}
+
 // ---------- 진입 ----------
 
 const { command, options } = parseArgs(process.argv.slice(2));
-if (!command) fail('usage: detect | plan | apply | verify | remove --target <dir> ...');
+if (!command) fail('usage: detect | plan | apply | verify | remove | config --target <dir> ...');
 const dir = targetDir(options);
 if (command === 'detect') output(detect(dir));
 else if (command === 'plan') {
@@ -742,4 +849,5 @@ else if (command === 'plan') {
 } else if (command === 'apply') apply(dir, options);
 else if (command === 'verify') verify(dir, options);
 else if (command === 'remove') remove(dir, options);
+else if (command === 'config') config(dir, options);
 else fail(`unknown command: ${command}`);
