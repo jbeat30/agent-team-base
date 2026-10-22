@@ -1,6 +1,6 @@
 {
   "name": "agent-team-base",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "description": "Claude Code agent team base that respects existing project policies",
   "license": "MIT",
