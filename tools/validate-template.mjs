@@ -152,7 +152,7 @@ else {
 }
 
 // PM 지침의 필수 규칙: 분리된 참조 파일까지 합친 본문에서 확인
-const pmText = ['skills/team/SKILL.md', 'team/relay-mode.md', 'team/design-tools.md', 'team/strict-mode.md']
+const pmText = ['skills/team/SKILL.md', 'team/relay-mode.md', 'team/design-tools.md', 'team/strict-mode.md', 'team/rule-priority.md']
   .map((p) => (existsSync(join(root, '.claude', p)) ? readFileSync(join(root, '.claude', p), 'utf8') : ''))
   .join('\n');
 for (const [label, re] of PM_RULES) {
