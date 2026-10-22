@@ -2,6 +2,7 @@
 
 변경: `/claude-team-base:setting`과 설치기 `config --set-protection`으로 보호 모드(권고·엄격) 전환, 엄격으로 바꿀 때 경고 표시
 1회씩의 동작 점검이며 효용 평가가 아님, 비대화형 실행(`claude -p`), 한 모델(sonnet), 작은 합성 fixture, 총 비용 약 0.15달러
+비용은 Claude Code CLI가 결과에 보고한 환산 값(`total_cost_usd`)이며 직접 계산한 금액이 아님, 구독 로그인이면 청구액이 아닌 사용 한도 소모
 앞선 점검: [EVAL_RESULTS_v0.3.2.md](EVAL_RESULTS_v0.3.2.md)
 
 ## 점검 결과

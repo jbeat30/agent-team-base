@@ -8,6 +8,7 @@ const normalize = (value) => process.platform === 'linux' ? value : value.toLowe
 const fail = (message) => { throw new Error(message); };
 const within = (path, base) => base === '.' || path === base || path.startsWith(`${base}/`);
 const read = (file) => readFileSync(file, 'utf8');
+const NO_REGISTRATION = 'strict mode is on and no approved plan is registered, so this edit is blocked; register an approval (.claude/team/strict-mode.md) or switch the protection mode back to advisory with the setting skill';
 
 /** @description 승인·등록 스냅샷의 변경 감지용 SHA-256 반환 */
 export const hash = (value) => createHash('sha256').update(typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value)).digest('hex');
@@ -105,6 +106,7 @@ export function snapshot(root, runId) {
 /** @description 등록 이후 계획·요청·승인 범위·직접 승인 기록 변경 검사 */
 export function verifyRegistration(root, runId) {
   const p = paths(root, runId);
+  if (!existsSync(p.active)) fail(NO_REGISTRATION);
   const active = JSON.parse(read(p.active));
   const current = snapshot(root, runId);
   if (active.runId !== runId || hash(active.snapshot) !== hash(current)) fail('plan, request, or approval scope changed after registration; register again');
@@ -118,6 +120,7 @@ export function verifyRegistration(root, runId) {
 /** @description 활성 등록과 역할별 정확한 Allowed files을 대조 */
 export function verifyWrite(root, file, role, runId) {
   const p = paths(root, runId ?? 'active');
+  if (!existsSync(p.active)) fail(NO_REGISTRATION);
   const active = runId ? verifyRegistration(root, runId) : verifyRegistration(root, JSON.parse(read(p.active)).runId);
   const match = active.snapshot.files.find((entry) => normalize(entry.file) === normalize(file) && entry.role === role);
   if (!match) fail(`file not assigned in the registration: ${file}`);

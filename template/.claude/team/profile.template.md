@@ -18,7 +18,16 @@ No secrets. Mark items without evidence as `unchecked`. The user may edit it.
 | Lint, format | | | |
 | Type check | | | |
 
+## Project rule sources
+
+The project's own rule files take priority over this profile and over the team defaults. Re-read them from the original path before work; never rely on a copied summary.
+
+| Path | Covers |
+| --- | --- |
+
 ## Conventions
+
+Pointers to the evidence path, not a copy of the rule files.
 
 | Item | Content | Evidence path |
 | --- | --- | --- |
@@ -43,6 +52,8 @@ Authoritative for all UI work. Agents follow it without deviation.
 - Execution profile: lite | full (chosen by the user at install, all role files are always installed)
 - Execution mode: nested | relay | n/a (lite) (full only, choose nested only after a depth-2 call check, default relay)
 - Context7 MCP: registered | not registered
+- Design tool MCP: none | playwright, chrome-devtools, shadcn, one Figma connection
+- Document tool MCP: none | anymd (reads PDF and other documents as Markdown)
 - Protection mode: advisory | strict (default advisory, strict mode requires direct approval records)
 - PDCA mode: off (bkit integration planned for a later version)
 - Installed roles:

@@ -2,6 +2,7 @@
 
 변경: 설치 때 모드를 묻지 않고(항상 전체 역할 설치, 기본 Lite, 가드 relay 보호 상시), 설치 후 `/claude-team-base:setting`과 설치기 `config` 명령으로 기본 모드 전환과 MCP 추가
 조건별 1회씩의 동작 점검이며 효용 평가가 아님, 비대화형 실행(`claude -p`), 한 모델(sonnet), 작은 합성 fixture
+비용은 Claude Code CLI가 결과에 보고한 환산 값(`total_cost_usd`)이며 직접 계산한 금액이 아님, 구독 로그인이면 청구액이 아닌 사용 한도 소모
 앞선 점검: [EVAL_RESULTS_v0.3.0.md](EVAL_RESULTS_v0.3.0.md)
 
 ## 점검 결과

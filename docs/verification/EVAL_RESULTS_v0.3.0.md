@@ -3,6 +3,7 @@
 변경: 팀이 설치만으로 항상 켜지던 구조를 사용자가 부를 때만 켜지는 `/team` 스킬로 전환, L2 직접 경로 제거
 원본 JSON: `data/v0.3.0/`, 실행 도구와 기준: [EVAL_DESIGN.md](EVAL_DESIGN.md)
 조건별 1회씩의 동작 점검이며 효용 평가가 아님, v0.2.0 평가 결과([EVAL_RESULTS_v0.2.0.md](EVAL_RESULTS_v0.2.0.md))와 합산하지 않음
+비용은 Claude Code CLI가 결과에 보고한 환산 값(`total_cost_usd`)이며 직접 계산한 금액이 아님, 구독 로그인이면 청구액이 아닌 사용 한도 소모
 
 ## 호출 방식 점검
 

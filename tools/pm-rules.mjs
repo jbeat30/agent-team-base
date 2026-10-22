@@ -38,5 +38,8 @@ export const PM_RULES = [
   ['실제 계정·결제·데이터 변경 금지', /Never enter real credentials/],
   ['relay 호출 카드 저장 경로', /cards\/NN-/],
   ['relay needs-dispatch 처리', /needs-dispatch/],
+  ['프로젝트 규칙 원본이 팀 기본값보다 우선', /The project's own rules always come first/],
+  ['팀에만 있는 동작은 적용 전 사용자 확인', /Ask the user once before applying it/],
+  ['프로젝트가 정한 검증 방법을 먼저 사용', /Use the project's own verification method first/],
   ['팀은 사용자가 요청한 경우에만 동작', /only for requests the user routed to it/],
 ];
