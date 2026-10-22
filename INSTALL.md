@@ -1,7 +1,7 @@
 # INSTALL.md
 
-Procedure for a Claude Code agent to install, update, or remove claude-team-base in a user's project.
-Follow this document when the user runs the `/claude-team-base:setup` skill, or names this repository and asks to set up the project.
+Procedure for a Claude Code agent to install, update, or remove agent-team-base in a user's project.
+Follow this document when the user runs the `/agent-team-base:setup` skill, or names this repository and asks to set up the project.
 When run through the plugin skill, skip section 1 (fetching) and use `<installer>` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/install.mjs"`.
 
 ## Rules to always follow
@@ -39,7 +39,7 @@ Ask only the needed items in chat and do not re-ask what detection already shows
 
 | Item | What to ask | Note |
 | --- | --- | --- |
-| Default mode | Not asked. The team installs with every role file and starts in Lite (the PM calls only the roles it needs). The user can switch the default to Full later with `/claude-team-base:setting`, or ask for Full in a single request. Put `profile` in the answers only if the user explicitly asks for Full at install. | Do not ask. Mention in one line that the mode can be changed later. |
+| Default mode | Not asked. The team installs with every role file and starts in Lite (the PM calls only the roles it needs). The user can switch the default to Full later with `/agent-team-base:setting`, or ask for Full in a single request. Put `profile` in the answers only if the user explicitly asks for Full at install. | Do not ask. Mention in one line that the mode can be changed later. |
 | Context7 MCP | Whether to register it in `.mcp.json` to check documentation against the installed version. Tool permission is still up to the user even if registered; if not allowed, the PM marks `unchecked`. It runs `npx @upstash/context7-mcp` and queries carry only library names, versions, and general questions. | Always ask. |
 | Design system (UI projects) | Ask whether the project has a design system (tokens, component library, Storybook, Figma library, brand guide) and where it lives (a path or link). If yes, put it in `designSystem` and tell the user the agents will treat it as authoritative and never deviate from it. | Ask only for projects with a UI; if none, skip. |
 | Design tools (optional) | Only when the project has a UI (a frontend stack was detected); skip for backend-only projects. Whether to register design MCP servers in `.mcp.json` for UI work: **Playwright** (recommended; lets frontend-agent and qa-agent open and look at the running page, so the app must be running), **Chrome DevTools** (optional; opens Chrome to inspect the page, console, network, and performance; useful for UI/UX walkthroughs on web projects), **shadcn/ui** (recommended when `detect` reports `componentsJson: true`; the server needs a `components.json`), **Figma** (only if the user has Figma designs; the first use needs a browser sign-in to Figma). Tell the user each one runs through `npx` (Figma is a remote server) and adds its tool definitions to every frontend-agent and qa-agent call, which costs tokens. Browser tools (Playwright, Chrome DevTools) can see the content of the browser they open, so advise against personal tabs and sensitive data. A UI/UX walkthrough is offered later by the PM per task, only when a browser tool is registered, and runs only if the user agrees. | Optional; recommend Playwright and shadcn/ui, offer Figma only on request or when the user mentions Figma designs. |
@@ -92,7 +92,7 @@ Save it as JSON at a temporary path outside the project. No secrets.
 Write it in the user's language.
 
 - Installed version (tag and commit), profile, summary of changed files, and skipped or backed-up items.
-- Settings can be changed later with `/claude-team-base:setting` (default mode, MCP servers).
+- Settings can be changed later with `/agent-team-base:setting` (default mode, MCP servers).
 - Protection state: the chosen advisory or strict mode; if the `guard live` result is not `pass`, say `no protection`.
 - Unchecked items (`unverified` from verify). Context7 needs MCP approval after restarting Claude Code.
 - The team does not start by itself. The user calls it with `/team <request>` or in words such as "solve this with the agent team" or "work on this as pm-agent"; ordinary requests stay ordinary Claude. Give one or two usage examples and say simple questions or small edits are better asked directly without the team.

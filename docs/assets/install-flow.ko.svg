@@ -2,7 +2,7 @@
 <rect width="2000" height="700" fill="#F5F7FB"/>
 <rect x="40" y="55" width="1400" height="140" rx="14" fill="white" stroke="#1A2744" stroke-width="1.5"/>
 <path d="M 150 194 L 175 220 L 200 194" fill="white" stroke="#1A2744" stroke-width="1.5"/>
-<text x="75" y="108" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="27" font-weight="400" fill="#1A2744">/claude-team-base:setup 으로 이 프로젝트에 팀 세팅</text>
+<text x="75" y="108" dominant-baseline="text-before-edge" font-family="Noto Sans KR, Noto Sans KR, sans-serif" font-size="27" font-weight="400" fill="#1A2744">/agent-team-base:setup 으로 이 프로젝트에 팀 세팅</text>
 <polyline points="175,220 175,285" fill="none" stroke="#D5DBE6" stroke-width="2"/>
 <polygon points="175,285 169.0,274.60769515458674 181.0,274.60769515458674" fill="#D5DBE6"/>
 <rect x="40" y="285" width="290" height="210" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>

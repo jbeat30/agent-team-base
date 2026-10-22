@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/hero.ko.png" alt="claude-team-base" width="100%">
+  <img src="docs/assets/hero.ko.png" alt="agent-team-base" width="100%">
 </p>
 
 <p align="center">
@@ -12,7 +12,7 @@
 
 <p align="center"><a href="README.en.md">English</a></p>
 
-# claude-team-base
+# agent-team-base
 
 **스킬 한 번으로 내 프로젝트에 Claude Code 에이전트 팀을 세팅하는 플러그인**
 
@@ -30,13 +30,13 @@ PM, 담당 에이전트, 독립 QA가 단계마다 확인하며 일하는 팀을
 
 ```text
 /plugin marketplace add jbeat30/jbeat-conventions
-/plugin install claude-team-base@jbeat-plugins
-/claude-team-base:setup
+/plugin install agent-team-base@jbeat-plugins
+/agent-team-base:setup
 ```
 
 ![설치 흐름](docs/assets/install-flow.ko.png)
 
-1. 플러그인을 설치하고 프로젝트에서 `/claude-team-base:setup`을 실행해요.
+1. 플러그인을 설치하고 프로젝트에서 `/agent-team-base:setup`을 실행해요.
 2. 스킬이 프로젝트를 조사하고, 꼭 필요한 것만 물어봐요.
 3. 변경 계획을 10줄 이내로 보여 드려요. 확인은 **한 번**만 받아요.
 4. 설치기가 파일을 복사·병합하고 보호 장치를 점검해요.
@@ -52,9 +52,9 @@ https://github.com/jbeat30/claude-team-base 의 INSTALL.md를 읽고 이 프로�
 
 | 스킬 | 용도 | 비용 |
 | --- | --- | --- |
-| `/claude-team-base:setup` | 팀 **설치·갱신·제거**, 인자로 `install` `update` `remove`를 지정할 수 있어요 | 설치 후 보호 장치 점검에서 Claude를 1회 호출해요 |
-| `/claude-team-base:check` | 설치 상태 점검(파일 해시, hook 등록, 역할 파일, 버전) | 없어요. `--live` 없이는 Claude를 호출하지 않아요 |
-| `/claude-team-base:setting` | 설정 **보기·바꾸기**: 기본 모드(Lite/Full), 보호 모드, 팀이 쓸 수 있는 MCP와 선택 여부, 선택하지 않았던 MCP 추가 | 대화 몇 턴이 들어요. 설치기 명령은 Claude를 호출하지 않아요 |
+| `/agent-team-base:setup` | 팀 **설치·갱신·제거**, 인자로 `install` `update` `remove`를 지정할 수 있어요 | 설치 후 보호 장치 점검에서 Claude를 1회 호출해요 |
+| `/agent-team-base:check` | 설치 상태 점검(파일 해시, hook 등록, 역할 파일, 버전) | 없어요. `--live` 없이는 Claude를 호출하지 않아요 |
+| `/agent-team-base:setting` | 설정 **보기·바꾸기**: 기본 모드(Lite/Full), 보호 모드, 팀이 쓸 수 있는 MCP와 선택 여부, 선택하지 않았던 MCP 추가 | 대화 몇 턴이 들어요. 설치기 명령은 Claude를 호출하지 않아요 |
 
 말로 요청해도 동작해요: "에이전트 팀 세팅해줘", "팀 설치 상태 확인해줘", "팀 설정 보여줘", "모드를 Full로 바꿔줘", "팀 제거해줘"
 
@@ -72,7 +72,7 @@ https://github.com/jbeat30/claude-team-base 의 INSTALL.md를 읽고 이 프로�
 | 작업 기록 | `.claude-team-docs/`를 `.gitignore`에 추가해요 | 추가 |
 | 충돌 처리 | 기존 파일과 겹치면 항목별로 건너뛰거나 백업 후 교체해요 | 충돌 시 물어봐요 |
 
-모드는 설치할 때 묻지 않아요. 역할 파일 9종이 항상 전부 설치되고 기본 모드는 Lite예요. 나중에 `/claude-team-base:setting`에서 Full로 바꾸거나, 요청 한 번에만 "Full 모드로 처리해줘"라고 말할 수 있어요. Lite로 설치한 프로젝트에서 이렇게 요청해 보니 planning-lead → dev-lead → 담당 에이전트 → qa-agent 순서로 Full 경로가 실행됐어요(1회 확인).
+모드는 설치할 때 묻지 않아요. 역할 파일 9종이 항상 전부 설치되고 기본 모드는 Lite예요. 나중에 `/agent-team-base:setting`에서 Full로 바꾸거나, 요청 한 번에만 "Full 모드로 처리해줘"라고 말할 수 있어요. Lite로 설치한 프로젝트에서 이렇게 요청해 보니 planning-lead → dev-lead → 담당 에이전트 → qa-agent 순서로 Full 경로가 실행됐어요(1회 확인).
 
 디자인 도구는 `frontend-agent`와 `qa-agent`만 사용해요. 몇 가지 알아 두세요.
 
@@ -192,7 +192,7 @@ Full의 relay 방식에서는 리더가 하위 역할을 직접 부르지 않고
 ## 설정 바꾸기
 
 ```text
-/claude-team-base:setting
+/agent-team-base:setting
 ```
 
 설치한 뒤에 팀 설정을 보고 바꾸는 스킬이에요.
@@ -207,8 +207,8 @@ Full의 relay 방식에서는 리더가 하위 역할을 직접 부르지 않고
 ## 갱신과 제거
 
 ```text
-/claude-team-base:setup update
-/claude-team-base:setup remove
+/agent-team-base:setup update
+/agent-team-base:setup remove
 ```
 
 - **갱신**: 설치된 팀 파일을 새 버전으로 **전체 교체**해요. 바뀌는 내용을 계획으로 보여 드리고, 확인한 뒤에 적용해요. 설치 후 직접 수정한 파일은 자동으로 덮어쓰지 않고, 건너뛰거나 백업 후 교체하는 것 중에서 고르게 해요.

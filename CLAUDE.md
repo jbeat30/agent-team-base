@@ -2,7 +2,7 @@
 
 # 개발 진입 안내
 
-이 파일은 claude-team-base 저장소 자체의 개발 진입점
+이 파일은 agent-team-base 저장소 자체의 개발 진입점
 
 1. `README.md`로 목적과 사용 흐름 확인
 2. `.github/BRANCH_STRATEGY.md`로 브랜치·커밋 규칙 확인
