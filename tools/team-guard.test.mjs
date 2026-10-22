@@ -55,6 +55,26 @@ test('PM: 일반 파일과 요청·기획안은 허용, 보고·검사 기록·�
   }
 });
 
+test('.claude/ 아래 사용자 규칙은 PM도 수정 가능하고 팀 정책 파일과 팀 스킬만 거부', () => {
+  const dir = project();
+  for (const p of ['.claude/rules/style.md', '.claude/commands/mine.md', '.claude/agents/mine.md', '.claude/skills/mine/SKILL.md']) {
+    assert.equal(write(dir, 'pm-agent', p).allowed, true, p);
+    assert.equal(write(dir, undefined, p).allowed, true, p);
+  }
+  for (const p of ['.claude/hooks/team-guard.mjs', '.claude/team/bin/team-check.mjs', '.claude/skills/team/SKILL.md', '.claude/settings.json', '.claude/settings.local.json', '.claude/agents/qa-agent.md']) {
+    assert.equal(write(dir, 'pm-agent', p).allowed, false, p);
+    assert.equal(write(dir, undefined, p).allowed, false, p);
+  }
+});
+
+test('.claude/ 아래 사용자 규칙은 계획에 배정되지 않은 팀 역할이 수정할 수 없음', () => {
+  const dir = project();
+  assert.equal(write(dir, 'analyst-not-a-role', '.claude/rules/style.md').allowed, true);
+  for (const role of ['planner-agent', 'qa-agent', 'backend-agent']) {
+    assert.equal(write(dir, role, '.claude/rules/style.md').allowed, false, role);
+  }
+});
+
 test('경로 이탈·절대 경로·UNC·symlink는 거부', () => {
   const dir = project();
   const outside = realpathSync.native(mkdtempSync(join(tmpdir(), 'outside-')));
