@@ -15,7 +15,7 @@ import { join, relative, resolve, isAbsolute } from 'node:path';
 
 import { strictMode, verifyRegistration, paths as approvalPaths, hash as approvalHash } from './team-policy.mjs';
 
-const VERSION = '0.3.1';
+const VERSION = '0.3.2';
 const MAX_BUFFER = 256 * 1024 * 1024;
 const root = realpathSync.native(process.cwd());
 
