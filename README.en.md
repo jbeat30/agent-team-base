@@ -34,6 +34,8 @@ Requirements: Claude Code 2.1.302 or later, Node 18 or later.
 /claude-team-base:setup
 ```
 
+![Install flow](docs/assets/install-flow.en.png)
+
 1. Install the plugin and run `/claude-team-base:setup` in your project.
 2. The skill surveys the project and asks only what it needs.
 3. It shows the change plan in 10 lines or fewer and asks for confirmation **once**.
@@ -71,7 +73,7 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
 | Conflict handling | If files collide, per item: skip or replace with backup | Asked on conflict |
 
-All 9 role files are always installed regardless of mode; the mode only changes how the team is used.
+All 9 role files are always installed regardless of mode; the mode sets the default path. The PM instructions say to follow another mode if you ask for it in a request, but using Full in a project installed as Lite has not been tried yet.
 
 Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwright, Chrome DevTools) can see the content of the browser they open, so avoid personal tabs and sensitive data. A registered server's tool definitions are added to every call of those two roles, which costs tokens, and `npx` runs external packages, so choose them only when you need them. The agents never invent spacing, colors, or copy that the design does not state, and mark visual checks they could not make as `unchecked`.
 
@@ -142,10 +144,10 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 
 | Grade | Example | Path |
 | --- | --- | --- |
-| Q | Questions, explanations | The PM answers directly |
-| L1 | Comments, typos, wording, behavior unchanged | The PM edits directly and checks completion |
-| L2 | Ordinary behavior changes | With no risk signal the PM handles it directly and self-checks (no independent QA, no runner records); otherwise plan, confirm, build, final verification |
-| L3 | Contracts, permissions, data, security, many areas | L2 path with required impact analysis and user confirmation |
+| Q | Questions, explanations | The PM answers directly, even after the team is called |
+| L1 | Comments, typos, wording, behavior unchanged | The PM edits directly and self-checks with the checklist |
+| L2 | Ordinary behavior changes | Plan, confirm, build, final verification. The PM self-confirms when no item needs approval and there is a single interpretation |
+| L3 | Contracts, permissions, data, security, many areas | The L2 path with required impact analysis; the user is always asked to confirm |
 
 - **Requirements become Given/When/Then acceptance criteria**, and failing tests are written first when testing is possible.
 - **Every agent reads the request source and the plan file directly**, so summaries cannot distort requirements.
