@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/release-v0.3.2-blue" alt="release: v0.3.2">
+  <img src="https://img.shields.io/badge/release-v0.3.3-blue" alt="release: v0.3.3">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 이상">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 이상">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -199,6 +199,7 @@ Full의 relay 방식에서는 리더가 하위 역할을 직접 부르지 않고
 
 - **지금 설정 보기**: 기본 모드(Lite/Full), 보호 모드, 팀이 쓸 수 있는 MCP 목록과 선택 여부(용도와 주의 사항 포함)를 보여 줘요. 이 목록은 Claude Code의 `/mcp`와 달라요. `/mcp`는 연결된 모든 서버를 보여 주고, 여기서는 팀이 쓰는 서버만 골라서 보여 줘요.
 - **기본 모드 바꾸기**: Lite와 Full 사이에서 바꿔요. 요청 한 번에만 바꾸고 싶으면 "Full 모드로 처리해줘"라고 말하면 돼요.
+- **보호 모드 바꾸기**: 권고와 엄격 사이에서 바꿔요. 엄격으로 바꾸면 바로 적용돼서, 승인을 등록하기 전까지 메인 세션의 일반 수정이 막혀요. 그래서 바꾸기 전에 이 내용을 먼저 알려 드리고 한 번 더 확인해요. 권고로는 언제든 되돌릴 수 있어요.
 - **MCP 추가**: 설치할 때 고르지 않았던 MCP(Context7, Playwright, Chrome DevTools, shadcn/ui, Figma)도 여기서 고르면 `.mcp.json`에 등록해요. 새 Claude Code 세션을 시작해야 적용돼요.
 - 바꾸기 전에 미리보기를 보여 드리고, 확인한 뒤에만 적용해요. 바꾸기 전 파일은 백업해요.
 - 이미 다른 설정이 있는 MCP는 덮어쓰지 않고 충돌로 알려 드려요.
@@ -244,6 +245,7 @@ Full의 relay 방식에서는 리더가 하위 역할을 직접 부르지 않고
 ![모드별 비용·시간·토큰 비교](docs/verification/assets/mode-compare.svg)
 
 - [소규모 fixture 실행 기록](docs/verification/2026-10-19-small-fixture.md): 14회 확인(1회씩, 비대화형, 영어로 바꾸기 전의 한국어 프롬프트). Lite는 직접 처리보다 L2·L3에서 비용이 약 12배, 시간이 30배 이상 들었어요. 작은 과제는 직접 처리가 더 빠르고 저렴해서, Lite를 기본으로 하고 Full은 큰 작업에서 선택하도록 했어요.
+- [v0.3.3 점검 결과](docs/verification/EVAL_RESULTS_v0.3.3.md): 보호 모드 전환(권고↔엄격)과 엄격 상태의 수정 차단·해제를 1회 점검했어요. 효용 평가는 아니에요.
 - [v0.3.2 점검 결과](docs/verification/EVAL_RESULTS_v0.3.2.md): 설치 후 모드 전환과 `setting` 스킬을 1회씩 점검했어요. 효용 평가는 아니에요.
 - [v0.3.0 점검 결과](docs/verification/EVAL_RESULTS_v0.3.0.md): `/team` 호출 방식과 어려운 과제(l1) 1회 점검이에요. 효용 평가는 아니에요.
 - [v0.2.0 평가 결과](docs/verification/EVAL_RESULTS_v0.2.0.md)(과제 8종, 반복 1회, 한 모델, 원본 JSON 포함): 팀의 가치는 어려운 과제(숨은 호출처 l1, 암묵 요구 m1)에서만 판단할 수 있는데, 이 과제들은 측정이 적고 반복도 1회라 설계 기준으로 판정할 수 없어요. 쉬운 과제는 팀에 맡길 요청이 아니라서 그 비용 수치는 팀의 효용 근거로 쓰지 않아요.
