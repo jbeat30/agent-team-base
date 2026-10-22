@@ -203,7 +203,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 ![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.svg)
 
 - [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive, with Korean prompts before the English switch: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
-- [v0.2.0 evaluation results](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean; 8 tasks, one run each, one model, raw JSON included): the team beat direct handling only on hidden-caller and implicit-requirement tasks and only added cost on easy ones. After the L2 direct path, cost fell about 5-17x on m1 (Lite, Full), m2 (Full), and m3 (Full) with the same quality, while Lite m2 rose from 0.046 to 0.089 USD. One run each is not enough to judge against the design criteria.
+- [v0.2.0 evaluation results](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean; 8 tasks, one run each, one model, raw JSON included): the team's value can only be judged on the hard tasks (hidden callers l1, implicit requirements m1), which have few measurements and one run each, so they cannot be judged against the design criteria. Easy tasks are not requests anyone would hand to a team, so their cost figures are not used as evidence of the team's usefulness.
 - There is no guarantee that the team structure improves quality over handling tasks directly.
 
 ## Roadmap
