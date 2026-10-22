@@ -146,11 +146,12 @@ function isProtectedFor(role, rl) {
   if (rl === '.git' || rl.startsWith('.git/')) return true;
   if (rl === `${DOCS}/.guard` || rl.startsWith(`${DOCS}/.guard/`)) return true;
   if (new RegExp(`^${DOCS}/runs/[^/]+/checks(/|$)`).test(rl)) return true;
-  if (ROLES.includes(role) || role === 'main') return rl === '.claude' || rl.startsWith('.claude/');
-  // 이 팀 외의 사용자 에이전트는 팀 정책 파일만 보호
+  // .claude/ 전체가 아닌 팀 정책 파일만 보호: 사용자가 .claude/ 아래에 둔 자기 규칙·명령·에이전트는 수정 가능
+  // 팀 역할의 쓰기는 이어지는 계획 배정 검사로 다시 제한됨
   return (
     rl.startsWith('.claude/hooks/') ||
     rl.startsWith('.claude/team/') ||
+    rl.startsWith('.claude/skills/team/') ||
     /^\.claude\/settings(\.local)?\.json$/.test(rl) ||
     ROLES.some((r) => rl === `.claude/agents/${r}.md`)
   );
