@@ -44,6 +44,6 @@ This skill changes only the team's own files of the current project (`.claude/te
 ## Rules
 
 - Never apply a change without the user's confirmation in this conversation. A preview is not approval.
-- Add only the servers named in `config`'s list. Never invent other servers or commands. Never run a plugin install command yourself; show it to the user.
+- Add only the servers named in `config`'s list. Never invent other servers or commands. `anymd` (a document reader) is listed with `kind: document`; present it as optional and mention that it runs an external package through npx. Never run a plugin install command yourself; show it to the user.
 - Never edit `.mcp.json` or the profile by hand; use the installer so the manifest hashes stay consistent.
 - Report what could not be done (conflicts, unparseable `.mcp.json`) as it is. Do not work around it.
