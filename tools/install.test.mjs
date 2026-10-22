@@ -94,13 +94,15 @@ test('plan은 결정적이고 apply는 plan 해시가 맞을 때만 적용', () 
 test('신규 설치: 파일·settings·MCP·gitignore·프로필·매니페스트 생성 후 verify 통과', () => {
   const { dir, applied } = installFresh();
   assert.equal(applied.json.ok, true, applied.stderr);
-  for (const role of ['pm-agent', 'planning-lead', 'dev-lead', 'qa-agent']) assert.ok(existsSync(join(dir, '.claude', 'agents', `${role}.md`)));
+  for (const role of ['planning-lead', 'dev-lead', 'qa-agent']) assert.ok(existsSync(join(dir, '.claude', 'agents', `${role}.md`)));
+  assert.ok(existsSync(join(dir, '.claude', 'skills', 'team', 'SKILL.md')), 'PM은 /team 스킬');
+  assert.equal(existsSync(join(dir, '.claude', 'agents', 'pm-agent.md')), false, 'PM은 서브에이전트로 설치하지 않음');
   assert.ok(existsSync(join(dir, '.claude', 'hooks', 'team-guard.mjs')));
   assert.ok(existsSync(join(dir, '.claude', 'team', 'bin', 'team-check.mjs')));
   assert.equal(existsSync(join(dir, '.claude', 'team', 'profile.template.md')), false);
   assert.equal(existsSync(join(dir, '.claude', 'settings.fragment.json')), false);
   const settings = JSON.parse(readFileSync(join(dir, '.claude', 'settings.json'), 'utf8'));
-  assert.equal(settings.agent, 'pm-agent');
+  assert.equal(settings.agent, undefined, '메인 세션을 PM으로 고정하지 않음');
   assert.ok(settings.hooks.PreToolUse[0].hooks[0].command.includes('team-guard.mjs'));
   assert.equal(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers.context7.command, 'npx');
   assert.match(readFileSync(join(dir, '.gitignore'), 'utf8'), /\.claude-team-docs\//);
@@ -127,58 +129,88 @@ test('재적용은 변경 없음(멱등)', () => {
 });
 
 test('기존 다른 파일과 충돌하면 결정을 요구하고 skip·백업 교체를 지원', () => {
-  const dir = project({ '.claude/agents/pm-agent.md': '내 PM 에이전트\n' });
+  const dir = project({ '.claude/agents/planner-agent.md': '내 기획 에이전트\n' });
   const file = answersFile();
   const plan = install(planArgs(dir, file));
   assert.equal(plan.json.ok, false);
-  assert.equal(plan.json.conflicts[0].item, '.claude/agents/pm-agent.md');
+  assert.equal(plan.json.conflicts[0].item, '.claude/agents/planner-agent.md');
   assert.equal(install(applyArgs(dir, file, plan.json.hash)).status, 1, '충돌 방식 없이는 거부');
 
   const skipPlan = install(planArgs(dir, file, ['--on-conflict', 'skip']));
   const skipped = install(applyArgs(dir, file, skipPlan.json.hash, ['--on-conflict', 'skip']));
   assert.equal(skipped.json.ok, true);
-  assert.equal(readFileSync(join(dir, '.claude', 'agents', 'pm-agent.md'), 'utf8'), '내 PM 에이전트\n');
-  assert.equal(skipped.json.skipped[0].path, '.claude/agents/pm-agent.md');
+  assert.equal(readFileSync(join(dir, '.claude', 'agents', 'planner-agent.md'), 'utf8'), '내 기획 에이전트\n');
+  assert.equal(skipped.json.skipped[0].path, '.claude/agents/planner-agent.md');
 
-  const dir2 = project({ '.claude/agents/pm-agent.md': '내 PM 에이전트\n' });
+  const dir2 = project({ '.claude/agents/planner-agent.md': '내 기획 에이전트\n' });
   const replacePlan = install(planArgs(dir2, file, ['--on-conflict', 'replace-with-backup']));
   const replaced = install(applyArgs(dir2, file, replacePlan.json.hash, ['--on-conflict', 'replace-with-backup']));
-  assert.match(readFileSync(join(dir2, '.claude', 'agents', 'pm-agent.md'), 'utf8'), /name: pm-agent/);
-  assert.equal(readFileSync(join(dir2, replaced.json.backups, '.claude', 'agents', 'pm-agent.md'), 'utf8'), '내 PM 에이전트\n');
+  assert.match(readFileSync(join(dir2, '.claude', 'agents', 'planner-agent.md'), 'utf8'), /name: planner-agent/);
+  assert.equal(readFileSync(join(dir2, replaced.json.backups, '.claude', 'agents', 'planner-agent.md'), 'utf8'), '내 기획 에이전트\n');
 });
 
-test('기존 settings: 사용자 hook·agent 설정 보존, agent 충돌은 명시 결정 필요, 제거 시 사용자 항목 유지', () => {
+test('기존 settings: 사용자 hook·agent 설정은 건드리지 않고, 제거 시 사용자 항목 유지', () => {
   const userSettings = { agent: 'my-agent', permissions: { allow: ['Bash(ls)'] }, hooks: { PreToolUse: [{ matcher: 'Bash', hooks: [{ type: 'command', command: 'echo user' }] }] } };
   const dir = project({ '.claude/settings.json': userSettings });
   const file = answersFile();
-  const plan = install(planArgs(dir, file, ['--on-conflict', 'skip']));
-  assert.equal(plan.json.conflicts.some((c) => c.item === 'settings.agent'), true);
-  assert.equal(install(applyArgs(dir, file, plan.json.hash, ['--on-conflict', 'skip'])).status, 1, 'on-conflict로는 agent 충돌을 넘길 수 없음');
-
-  const keepFile = answersFile({ agentSetting: 'keep' });
-  const keepPlan = install(planArgs(dir, keepFile));
-  assert.equal(keepPlan.json.ok, true, JSON.stringify(keepPlan.json.conflicts));
-  assert.equal(install(applyArgs(dir, keepFile, keepPlan.json.hash)).json.ok, true);
+  const plan = install(planArgs(dir, file));
+  assert.equal(plan.json.conflicts.some((c) => c.item === 'settings.agent'), false, 'agent 설정은 충돌 대상이 아님');
+  assert.equal(install(applyArgs(dir, file, plan.json.hash)).json.ok, true);
   const merged = JSON.parse(readFileSync(join(dir, '.claude', 'settings.json'), 'utf8'));
   assert.equal(merged.agent, 'my-agent');
   assert.deepEqual(merged.permissions, userSettings.permissions);
   assert.equal(merged.hooks.PreToolUse.length, 2);
   const verified = install(['verify', '--target', dir]);
-  assert.equal(Object.fromEntries(verified.json.checks.map((c) => [c.name, c.status]))['settings agent'], 'unverified');
-
+  assert.equal(verified.json.checks.some((c) => c.name === 'settings agent'), false);
   assert.equal(install(['remove', '--target', dir, '--yes']).json.ok, true);
   const after = JSON.parse(readFileSync(join(dir, '.claude', 'settings.json'), 'utf8'));
   assert.deepEqual(after, userSettings);
 });
 
-test('agent 설정 replace는 제거 시 원래 값으로 복원', () => {
-  const dir = project({ '.claude/settings.json': { agent: 'my-agent' } });
-  const file = answersFile({ agentSetting: 'replace' });
+// v0.2.x 설치 상태를 재현: PM 에이전트 파일과 settings.agent 기록을 매니페스트에 남김
+function legacyInstall(agentRecord, settingsAgent) {
+  const { dir, file } = installFresh();
+  const manifestPath = join(dir, '.claude', 'team', 'manifest.json');
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const body = '구 PM 에이전트\n';
+  writeFileSync(join(dir, '.claude', 'agents', 'pm-agent.md'), body);
+  manifest.files.push({ path: '.claude/agents/pm-agent.md', sha256: createHash('sha256').update(body).digest('hex') });
+  manifest.settings.agent = agentRecord;
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  const settingsPath = join(dir, '.claude', 'settings.json');
+  const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+  settings.agent = settingsAgent;
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  return { dir, file, manifestPath, settingsPath };
+}
+
+test('갱신: v0.2.x가 설정한 agent=pm-agent를 해제하고 PM 에이전트 파일을 삭제', () => {
+  const { dir, file, manifestPath, settingsPath } = legacyInstall({ action: 'set', previous: null }, 'pm-agent');
+  const plan = install(planArgs(dir, file));
+  assert.equal(plan.json.ok, true, JSON.stringify(plan.json.conflicts));
+  assert.equal(install(applyArgs(dir, file, plan.json.hash)).json.ok, true);
+  assert.equal(JSON.parse(readFileSync(settingsPath, 'utf8')).agent, undefined);
+  assert.equal(existsSync(join(dir, '.claude', 'agents', 'pm-agent.md')), false);
+  assert.equal(JSON.parse(readFileSync(manifestPath, 'utf8')).files.some((f) => f.path.endsWith('pm-agent.md')), false);
+  assert.equal(JSON.parse(readFileSync(manifestPath, 'utf8')).settings.agent.action, 'none');
+});
+
+test('갱신: agent를 replace했던 설치는 원래 사용자 agent로 복원', () => {
+  const { dir, file, settingsPath } = legacyInstall({ action: 'replaced', previous: 'my-agent' }, 'pm-agent');
   const plan = install(planArgs(dir, file));
   install(applyArgs(dir, file, plan.json.hash));
-  assert.equal(JSON.parse(readFileSync(join(dir, '.claude', 'settings.json'), 'utf8')).agent, 'pm-agent');
-  install(['remove', '--target', dir, '--yes']);
-  assert.equal(JSON.parse(readFileSync(join(dir, '.claude', 'settings.json'), 'utf8')).agent, 'my-agent');
+  assert.equal(JSON.parse(readFileSync(settingsPath, 'utf8')).agent, 'my-agent');
+});
+
+test('갱신: 사용자가 직접 바꾼 agent 설정과 수정한 PM 에이전트 파일은 보존', () => {
+  const { dir, file, settingsPath } = legacyInstall({ action: 'set', previous: null }, 'my-own');
+  writeFileSync(join(dir, '.claude', 'agents', 'pm-agent.md'), '사용자가 고친 PM\n');
+  const plan = install(planArgs(dir, file));
+  const applied = install(applyArgs(dir, file, plan.json.hash));
+  assert.equal(applied.json.ok, true);
+  assert.equal(JSON.parse(readFileSync(settingsPath, 'utf8')).agent, 'my-own');
+  assert.equal(readFileSync(join(dir, '.claude', 'agents', 'pm-agent.md'), 'utf8'), '사용자가 고친 PM\n');
+  assert.ok(applied.json.skipped.some((s) => s.path === '.claude/agents/pm-agent.md'));
 });
 
 test('해석할 수 없는 settings.json은 진행 불가', () => {
@@ -205,11 +237,12 @@ test('제거: 기본은 dry-run, 설치한 항목만 제거하고 사용자 수�
   writeFileSync(join(dir, '.claude', 'team', 'profile.md'), '사용자가 고친 프로필\n');
   const dry = install(['remove', '--target', dir]);
   assert.equal(dry.json.dryRun, true);
-  assert.ok(existsSync(join(dir, '.claude', 'agents', 'pm-agent.md')));
+  assert.ok(existsSync(join(dir, '.claude', 'skills', 'team', 'SKILL.md')));
   const real = install(['remove', '--target', dir, '--yes']);
   assert.equal(real.json.ok, true);
   assert.deepEqual(real.json.kept.map((k) => k.path), ['.claude/team/profile.md']);
   assert.equal(existsSync(join(dir, '.claude', 'agents')), false);
+  assert.equal(existsSync(join(dir, '.claude', 'skills')), false);
   assert.equal(existsSync(join(dir, '.claude', 'hooks')), false);
   assert.equal(readFileSync(join(dir, '.claude', 'team', 'profile.md'), 'utf8'), '사용자가 고친 프로필\n');
   assert.equal(existsSync(join(dir, '.claude', 'settings.json')), false, '우리가 만든 settings는 삭제');

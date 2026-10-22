@@ -65,7 +65,7 @@ function splitTools(value) {
 
 const agentFiles = existsSync(agentsDir) ? readdirSync(agentsDir).filter((f) => f.endsWith('.md')) : [];
 const agentNames = new Set(agentFiles.map((f) => f.replace(/\.md$/, '')));
-const expectedRoles = ['pm-agent', ...Object.keys(toolCeiling)];
+const expectedRoles = Object.keys(toolCeiling);
 
 for (const role of expectedRoles) {
   if (!agentNames.has(role)) fail(`agents/${role}.md`, '역할 정의 파일 없음');
@@ -90,17 +90,7 @@ for (const file of agentFiles) {
   const tools = fields.tools ? splitTools(fields.tools) : [];
 
   if (name === 'pm-agent') {
-    const agentTool = tools.find((t) => t.startsWith('Agent('));
-    if (!agentTool) fail(file, 'Agent 호출 대상 제한(Agent(...)) 필요');
-    else {
-      for (const target of agentTool.slice(6, -1).split(',').map((s) => s.trim())) {
-        if (!agentNames.has(target)) fail(file, `Agent 대상 ${target}의 정의 파일 없음`);
-        if (target === 'pm-agent') fail(file, 'pm-agent는 자신을 호출 불가');
-      }
-    }
-    for (const needle of ['# Relay mode', '# Requirement preservation check', 'team-check.mjs trace']) {
-      if (!body.includes(needle)) fail(file, `${needle} 없음`);
-    }
+    fail(file, 'PM은 agents가 아니라 skills/team/SKILL.md, 에이전트로 두면 서브에이전트로 오인되어 호출될 수 있음');
     continue;
   }
 
@@ -133,8 +123,36 @@ for (const file of agentFiles) {
   }
 }
 
+// PM 스킬: 사용자가 부를 때만 켜지는 /team, 호출 대상 제한과 필수 절 확인
+const skillPath = join(root, '.claude', 'skills', 'team', 'SKILL.md');
+if (!existsSync(skillPath)) fail('skills/team/SKILL.md', 'PM 스킬 파일 없음');
+else {
+  const skill = parseFrontmatter(readFileSync(skillPath, 'utf8'));
+  if (!skill) fail('skills/team/SKILL.md', 'frontmatter 없음');
+  else {
+    const { fields, body } = skill;
+    if (fields.name !== 'team') fail('skills/team/SKILL.md', 'name은 team');
+    if (!fields.description) fail('skills/team/SKILL.md', 'description 없음');
+    else {
+      if (/[가-힣]/.test(fields.description)) fail('skills/team/SKILL.md', 'description은 영어로 작성');
+      if (!/explicitly/.test(fields.description)) fail('skills/team/SKILL.md', 'description에 사용자가 명시적으로 요청할 때만 쓴다는 조건 필요');
+    }
+    if (fields['disable-model-invocation'] === 'true') fail('skills/team/SKILL.md', '말로 부르는 호출을 막으면 안 됨');
+    const agentTool = splitTools(fields['allowed-tools'] ?? '').find((x) => x.startsWith('Agent('));
+    if (!agentTool) fail('skills/team/SKILL.md', 'Agent 호출 대상 제한(Agent(...)) 필요');
+    else {
+      for (const target of agentTool.slice(6, -1).split(',').map((s) => s.trim())) {
+        if (!agentNames.has(target)) fail('skills/team/SKILL.md', `Agent 대상 ${target}의 정의 파일 없음`);
+      }
+    }
+    for (const needle of ['# Relay mode', '# Requirement preservation check', 'team-check.mjs trace']) {
+      if (!body.includes(needle)) fail('skills/team/SKILL.md', `${needle} 없음`);
+    }
+  }
+}
+
 // PM 지침의 필수 규칙: 분리된 참조 파일까지 합친 본문에서 확인
-const pmText = ['agents/pm-agent.md', 'team/relay-mode.md', 'team/design-tools.md', 'team/strict-mode.md']
+const pmText = ['skills/team/SKILL.md', 'team/relay-mode.md', 'team/design-tools.md', 'team/strict-mode.md']
   .map((p) => (existsSync(join(root, '.claude', p)) ? readFileSync(join(root, '.claude', p), 'utf8') : ''))
   .join('\n');
 for (const [label, re] of PM_RULES) {
@@ -167,7 +185,7 @@ const fragmentPath = join(root, '.claude', 'settings.fragment.json');
 if (!existsSync(fragmentPath)) fail('.claude/settings.fragment.json', '파일 없음');
 else {
   const fragment = JSON.parse(readFileSync(fragmentPath, 'utf8'));
-  if (fragment.agent !== 'pm-agent') fail('settings.fragment.json', 'agent는 pm-agent');
+  if (fragment.agent !== undefined) fail('settings.fragment.json', 'agent 설정 금지, 팀은 요청 시에만 켜짐(/team)');
   const pre = (fragment.hooks?.PreToolUse ?? []).flatMap((g) => g.hooks.map((h) => ({ ...h, matcher: g.matcher })));
   const guard = pre.find((h) => /team-guard\.mjs/.test(h.command));
   if (!guard) fail('settings.fragment.json', 'PreToolUse에 team-guard 없음');
