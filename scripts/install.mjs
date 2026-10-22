@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = join(repoRoot, 'template');
-const TEMPLATE_VERSION = '0.3.6';
+const TEMPLATE_VERSION = '0.3.7';
 const SOURCE_REPO = 'https://github.com/jbeat30/agent-team-base';
 const MIN_CLAUDE = '2.1.302';
 const MIN_NODE = 18;
