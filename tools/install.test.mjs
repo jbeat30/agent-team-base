@@ -569,3 +569,37 @@ test('config: 설치되지 않은 프로젝트는 안내와 함께 실패', () =
   assert.equal(result.status, 2);
   assert.match(result.stderr, /not installed/);
 });
+
+test('config: 보호 모드는 엄격 전환 경고와 함께 미리보기 후 적용되고 가드 동작이 바로 바뀜', () => {
+  const { dir } = installFresh({}, { profile: 'lite' });
+  const profilePath = join(dir, '.claude', 'team', 'profile.md');
+  const guard = join(dir, '.claude', 'hooks', 'team-guard.mjs');
+  const mainWrite = () => spawnSync(process.execPath, [guard], {
+    cwd: dir,
+    env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
+    input: JSON.stringify({ cwd: dir, permission_mode: 'default', hook_event_name: 'PreToolUse', tool_name: 'Write', tool_input: { file_path: 'src/new.js' } }),
+    encoding: 'utf8',
+  }).status;
+  assert.equal(install(['config', '--target', dir]).json.protection, 'advisory');
+  assert.equal(mainWrite(), 0, '권고 모드에서는 메인 세션 수정을 막지 않음');
+
+  const preview = install(['config', '--target', dir, '--set-protection', 'strict']);
+  assert.equal(preview.json.dryRun, true);
+  assert.ok(preview.json.warnings.length >= 2, '엄격 전환의 부담을 적용 전에 알림');
+  assert.match(readFileSync(profilePath, 'utf8'), /Protection mode: advisory/, '미리보기는 파일을 바꾸지 않음');
+
+  const applied = install(['config', '--target', dir, '--set-protection', 'strict', '--yes']);
+  assert.equal(applied.json.ok, true, applied.stderr);
+  assert.match(readFileSync(profilePath, 'utf8'), /Protection mode: strict/);
+  assert.equal(mainWrite(), 2, '엄격 모드에서는 승인 기록 없이 메인 세션 수정을 막음');
+  const verified = install(['verify', '--target', dir]);
+  assert.equal(verified.json.ok, true, JSON.stringify(verified.json.checks));
+  assert.equal(Object.fromEntries(verified.json.checks.map((c) => [c.name, c.status]))['strict approval'], 'unverified');
+
+  const back = install(['config', '--target', dir, '--set-protection', 'advisory', '--yes']);
+  assert.equal(back.json.ok, true);
+  assert.deepEqual(back.json.warnings, []);
+  assert.equal(mainWrite(), 0);
+  assert.equal(install(['verify', '--target', dir]).json.ok, true);
+  assert.equal(install(['config', '--target', dir, '--set-protection', 'off']).status, 2);
+});
