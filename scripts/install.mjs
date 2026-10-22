@@ -26,8 +26,11 @@ const SETTINGS_PATH = '.claude/settings.json';
 const MCP_PATH = '.mcp.json';
 const GITIGNORE_PATH = '.gitignore';
 const DOCS_DIR = '.claude-team-docs';
-const GITIGNORE_BEGIN = '# >>> claude-team-base';
-const GITIGNORE_END = '# <<< claude-team-base';
+const GITIGNORE_BEGIN = '# >>> agent-team-base';
+const GITIGNORE_END = '# <<< agent-team-base';
+// 플러그인 이름 변경(claude-team-base) 이전 설치의 표식, 중복 추가 방지와 제거에서 함께 인식
+const LEGACY_GITIGNORE_BEGIN = '# >>> claude-team-base';
+const LEGACY_GITIGNORE_END = '# <<< claude-team-base';
 // 등록하는 MCP 서버, 형식은 각 공식 문서의 Claude Code 설정을 따름(Figma는 http 전송, 첫 사용 때 브라우저 로그인 필요)
 const DESIGN_TOOLS = ['playwright', 'chrome-devtools', 'shadcn', 'figma'];
 const MCP_SERVERS = {
@@ -338,7 +341,7 @@ function mergeSettings(existing, fragment, answers, legacyAgent) {
 function mergeGitignoreBlock(text) {
   const block = `${GITIGNORE_BEGIN}\n${DOCS_DIR}/\n${GITIGNORE_END}`;
   if (text === null) return { text: `${block}\n`, changed: true };
-  if (text.includes(GITIGNORE_BEGIN)) return { text, changed: false };
+  if (text.includes(GITIGNORE_BEGIN) || text.includes(LEGACY_GITIGNORE_BEGIN)) return { text, changed: false };
   return { text: `${text}${text.endsWith('\n') || text === '' ? '' : '\n'}${block}\n`, changed: true };
 }
 
@@ -545,7 +548,7 @@ function apply(dir, options) {
 
   const manifest = {
     schema: 1,
-    name: 'claude-team-base',
+    name: 'agent-team-base',
     templateVersion: TEMPLATE_VERSION,
     source: plan.source,
     installedAt: new Date().toISOString(),
@@ -713,7 +716,7 @@ function remove(dir, options) {
   const gAbs = join(dir, GITIGNORE_PATH);
   if (manifest.gitignore === 'added' && existsSync(gAbs)) {
     const text = readFileSync(gAbs, 'utf8');
-    const pattern = new RegExp(`\\n?${GITIGNORE_BEGIN}[\\s\\S]*?${GITIGNORE_END}\\n?`);
+    const pattern = new RegExp(`\\n?(?:${GITIGNORE_BEGIN}[\\s\\S]*?${GITIGNORE_END}|${LEGACY_GITIGNORE_BEGIN}[\\s\\S]*?${LEGACY_GITIGNORE_END})\\n?`);
     if (pattern.test(text)) {
       const next = text.replace(pattern, '\n').replace(/^\n+/, '');
       actions.push('removed .gitignore block');

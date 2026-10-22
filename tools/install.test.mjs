@@ -387,6 +387,17 @@ test('기존 .mcp.json·.gitignore의 사용자 항목은 설치·갱신·제거
   assert.equal(existsSync(join(dir, '.claude', 'team', 'manifest.json')), false);
 });
 
+test('이름 변경 이전 설치의 .gitignore 표식(claude-team-base)도 중복 없이 인식하고 제거', () => {
+  const { dir, file } = installFresh({ '.gitignore': 'node_modules/\n' });
+  const gitignore = join(dir, '.gitignore');
+  writeFileSync(gitignore, readFileSync(gitignore, 'utf8').replaceAll('agent-team-base', 'claude-team-base'));
+
+  assert.equal(install(planArgs(dir, file)).json.gitignore.action, 'already');
+
+  assert.equal(install(['remove', '--target', dir, '--yes']).json.ok, true);
+  assert.equal(readFileSync(gitignore, 'utf8').trim(), 'node_modules/');
+});
+
 test('기존 context7 설정이 다르면 덮어쓰지 않고 충돌로 보고', () => {
   const custom = { mcpServers: { context7: { command: 'custom-context7' } } };
   const dir = project({ '.mcp.json': custom });
