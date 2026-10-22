@@ -910,6 +910,8 @@ function config(dir, options) {
   }
 
   const apply = options.yes === true;
+  // 충돌이 하나라도 있으면 아무것도 쓰지 않음: 해제만 적용되고 추가가 막혀 연결이 사라진 반쪽 상태 방지
+  if (apply && conflicts.length) return output({ ok: false, dryRun: false, applied: false, changes, warnings, conflicts, next, note: 'nothing was changed because of the conflicts above; resolve them and run again' }, 1);
   if (!apply) return output({ ok: conflicts.length === 0, dryRun: true, changes, warnings, conflicts, next, note: 'preview only; add --yes to apply after the user confirms' }, conflicts.length ? 1 : 0);
 
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
