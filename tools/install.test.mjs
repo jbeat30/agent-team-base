@@ -510,7 +510,7 @@ test('config: 현재 모드·보호 모드와 MCP 선택 현황을 보여 줌', 
   assert.equal(result.json.mode, 'lite');
   assert.equal(result.json.protection, 'advisory');
   const mcp = Object.fromEntries(result.json.mcp.map((m) => [m.name, m]));
-  assert.deepEqual(Object.keys(mcp).sort(), ['chrome-devtools', 'context7', 'figma', 'figma-desktop', 'figma-plugin', 'playwright', 'shadcn']);
+  assert.deepEqual(Object.keys(mcp).sort(), ['anymd', 'chrome-devtools', 'context7', 'figma', 'figma-desktop', 'figma-plugin', 'playwright', 'shadcn']);
   assert.equal(mcp.context7.registered, true);
   assert.equal(mcp.playwright.registered, true);
   assert.equal(mcp.figma.registered, false);
@@ -600,6 +600,52 @@ test('규칙 원본: 없으면 확인 요청 문구를 남기고, 프로젝트 �
     assert.match(bad.stderr, /ruleSources/);
   }
   assert.equal(install(planArgs(project(), answersFile({ ruleSources: 'CLAUDE.md' }))).status, 2);
+});
+
+test('문서 도구 MCP: anymd는 메이저 버전을 고정해 등록하고 프로필 별도 줄에 기록, 제거 때 되돌림', () => {
+  const { dir, applied } = installFresh({}, { designTools: ['playwright'], documentTools: ['anymd'] });
+  assert.equal(applied.status, 0, JSON.stringify(applied.json));
+  const servers = JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers;
+  assert.deepEqual(servers.anymd, { command: 'npx', args: ['-y', '@sylphx/anymd@8'] });
+  const profile = readFileSync(join(dir, '.claude/team/profile.md'), 'utf8');
+  assert.match(profile, /Design tool MCP: playwright$/m);
+  assert.match(profile, /Document tool MCP: anymd$/m);
+  const check = install(['verify', '--target', dir]).json.checks.find((c) => c.name === 'anymd');
+  assert.equal(check.status, 'unverified');
+  assert.match(check.detail, /native binary/);
+  assert.equal(install(['remove', '--target', dir, '--yes']).json.ok, true);
+  assert.equal(existsSync(join(dir, '.mcp.json')), false);
+});
+
+test('문서 도구 MCP: 허용 목록 밖의 값은 거부, designTools에 넣어도 거부', () => {
+  assert.equal(install(planArgs(project(), answersFile({ documentTools: ['pdf-reader'] }))).status, 2);
+  assert.equal(install(planArgs(project(), answersFile({ documentTools: 'anymd' }))).status, 2);
+  assert.equal(install(planArgs(project(), answersFile({ designTools: ['anymd'] }))).status, 2);
+});
+
+test('문서 도구 MCP: config로 추가·해제하고, 줄이 없는 이전 프로필에도 줄을 만들어 기록', () => {
+  const { dir } = installFresh({}, { designTools: ['playwright'] });
+  const profilePath = join(dir, '.claude/team/profile.md');
+  // 이전 버전 설치의 프로필: Document tool MCP 줄이 없음
+  writeFileSync(profilePath, readFileSync(profilePath, 'utf8').replace(/^- Document tool MCP:.*\n/m, ''));
+  const manifestPath = join(dir, '.claude/team/manifest.json');
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  manifest.files.find((f) => f.path === '.claude/team/profile.md').sha256 = createHash('sha256').update(readFileSync(profilePath)).digest('hex');
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  assert.equal(install(['config', '--target', dir]).json.mcp.find((m) => m.name === 'anymd').selected, false);
+
+  const added = install(['config', '--target', dir, '--add-mcp', 'anymd', '--yes']);
+  assert.equal(added.json.ok, true, added.stderr);
+  assert.match(readFileSync(profilePath, 'utf8'), /Design tool MCP: playwright\n- Document tool MCP: anymd\n/);
+  assert.ok(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers.anymd);
+  assert.equal(install(['config', '--target', dir]).json.mcp.find((m) => m.name === 'anymd').selected, true);
+  assert.equal(install(['verify', '--target', dir]).json.ok, true);
+
+  const removed = install(['config', '--target', dir, '--remove-mcp', 'anymd', '--yes']);
+  assert.equal(removed.json.ok, true, removed.stderr);
+  assert.equal(JSON.parse(readFileSync(join(dir, '.mcp.json'), 'utf8')).mcpServers.anymd, undefined);
+  assert.match(readFileSync(profilePath, 'utf8'), /Document tool MCP: none$/m);
+  assert.match(readFileSync(profilePath, 'utf8'), /Design tool MCP: playwright$/m, '디자인 도구 선택은 그대로');
 });
 
 test('Figma MCP: 데스크톱 서버는 figma-desktop 이름으로 등록되고 안내가 verify에 남음', () => {
