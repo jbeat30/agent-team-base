@@ -577,6 +577,31 @@ test('config: 이미 다른 설정이 있는 MCP는 덮어쓰지 않고 충돌�
   assert.equal(install(['config', '--target', dir, '--add-mcp']).status, 2);
 });
 
+test('규칙 원본: 프로필에 원본 경로와 우선순위 문구를 기록하고 규칙 내용은 복사하지 않음', () => {
+  const { dir, applied } = installFresh(
+    { 'CLAUDE.md': '브랜치는 develop에서만 작업\n' },
+    { ruleSources: [{ path: 'CLAUDE.md', covers: 'branch rules, selector layout' }, { path: '.eslintrc.json' }] },
+  );
+  assert.equal(applied.status, 0, JSON.stringify(applied.json));
+  const profile = readFileSync(join(dir, '.claude/team/profile.md'), 'utf8');
+  assert.match(profile, /## Project rule sources/);
+  assert.match(profile, /take priority over this profile and over the team defaults/);
+  assert.match(profile, /\| CLAUDE\.md \| branch rules, selector layout \|/);
+  assert.match(profile, /\| \.eslintrc\.json \| unchecked \|/);
+  assert.doesNotMatch(profile, /develop에서만 작업/, '원본 규칙 내용은 프로필에 복사하지 않음');
+});
+
+test('규칙 원본: 없으면 확인 요청 문구를 남기고, 프로젝트 밖 경로·URL은 거부', () => {
+  const { dir } = installFresh({}, {});
+  assert.match(readFileSync(join(dir, '.claude/team/profile.md'), 'utf8'), /None recorded\. Ask the user whether the project has rule files/);
+  for (const path of ['../outside.md', '/etc/rules.md', 'C:\rules.md', 'https://example.com/rules.md', 'a/../../b.md', '']) {
+    const bad = install(planArgs(project(), answersFile({ ruleSources: [{ path }] })));
+    assert.equal(bad.status, 2, path);
+    assert.match(bad.stderr, /ruleSources/);
+  }
+  assert.equal(install(planArgs(project(), answersFile({ ruleSources: 'CLAUDE.md' }))).status, 2);
+});
+
 test('Figma MCP: 데스크톱 서버는 figma-desktop 이름으로 등록되고 안내가 verify에 남음', () => {
   const { dir, applied } = installFresh({}, { designTools: ['figma-desktop'] });
   assert.equal(applied.status, 0, JSON.stringify(applied.json));
