@@ -48,9 +48,9 @@ const version = spawnSync(CLAUDE, ['--version'], { encoding: 'utf8' }).stdout?.t
 const repoCommit = repo ? spawnSync('git', ['-C', repo, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout?.trim() : null;
 const started = Date.now();
 const run = sh(CLAUDE, [
-  '-p', task.prompt + AUTOMATION_NOTE, '--output-format', 'stream-json', '--verbose', '--model', MODEL,
+  '-p', (condition === 'direct' ? '' : '/team ') + task.prompt + AUTOMATION_NOTE, '--output-format', 'stream-json', '--verbose', '--model', MODEL,
   '--permission-mode', PERMISSION, '--max-budget-usd', BUDGET,
-  '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--disable-slash-commands', '--setting-sources', 'project',
+  '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--setting-sources', 'project',
   '--allowedTools', 'Bash(npm test)', 'Bash(node .claude/team/bin/*)', 'Bash(git diff:*)', 'Bash(git status:*)',
 ], { maxBuffer: 256 * 1024 * 1024, timeout: 40 * 60 * 1000 });
 const wallMs = Date.now() - started;

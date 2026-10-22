@@ -1,24 +1,37 @@
 {
-  "agent": "pm-agent",
   "hooks": {
     "PreToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit|Agent|Task",
         "hooks": [
-          { "type": "command", "command": "node .claude/hooks/team-guard.mjs", "onFailure": "block" }
+          {
+            "type": "command",
+            "command": "node .claude/hooks/team-guard.mjs",
+            "onFailure": "block"
+          }
         ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Agent|Task",
-        "hooks": [{ "type": "command", "command": "node .claude/hooks/team-guard.mjs" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/team-guard.mjs"
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [
       {
         "matcher": "Agent|Task",
-        "hooks": [{ "type": "command", "command": "node .claude/hooks/team-guard.mjs" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/team-guard.mjs"
+          }
+        ]
       }
     ]
   }

@@ -49,7 +49,7 @@ Ask only the needed items in chat and do not re-ask what detection already shows
 | Protection mode | Advisory (default) or strict (optional direct-approval tracking). In strict the user runs the approval commands personally; it is not a security boundary against forgery from the main shell. | State the default. If strict is chosen, confirm the user accepts running the commands directly. |
 | PDCA | this version supports only off; bkit integration is planned for a later version. | Skip the question; the team's own plan and verification gates stay. |
 | gitignore | Whether to add `.claude-team-docs/` (task records) to `.gitignore`; default is yes. | State the default. |
-| Conflicts | If the plan reports conflicts, per item: skip or replace-with-backup. For an existing `agent` setting: keep or replace. | Only when conflicts exist. |
+| Conflicts | If the plan reports conflicts, per item: skip or replace-with-backup. | Only when conflicts exist. |
 
 ## 5. Answers file
 
@@ -65,7 +65,6 @@ Save it as JSON at a temporary path outside the project. No secrets.
   "designSystem": [{ "item": "Component library", "content": "summary", "location": "path or link" }],
   "designTools": ["playwright", "chrome-devtools", "shadcn", "figma"],
   "guardMode": "advisory",
-  "agentSetting": "keep | replace (only when an agent setting already exists)",
   "stack": [{ "item": "language and framework", "value": "version, etc.", "evidence": "evidence path" }],
   "checks": [{ "purpose": "Test", "command": "npm test", "cwd": ".", "sideEffect": "none | present (auto-fix, etc.)" }],
   "conventions": [{ "item": "Code style", "content": "summary", "evidence": "evidence path" }],
@@ -96,7 +95,8 @@ Write it in the user's language.
 - Installed version (tag and commit), profile, summary of changed files, and skipped or backed-up items.
 - Protection state: the chosen advisory or strict mode; if the `guard live` result is not `pass`, say `no protection`.
 - Unchecked items (`unverified` from verify). Context7 needs MCP approval after restarting Claude Code.
-- From the next session the main session acts as the PM and the user just asks in natural language; give one or two usage examples.
+- The team does not start by itself. The user calls it with `/team <request>` or in words such as "solve this with the agent team" or "work on this as pm-agent"; ordinary requests stay ordinary Claude. Give one or two usage examples and say simple questions or small edits are better asked directly without the team.
+- If an update released a legacy `agent=pm-agent` setting from v0.2.x, tell the user the main session is no longer pinned to the PM.
 - Removal and update work the same way as install; follow sections 9 and 10. Files the user edited are kept.
 
 ## 9. Removal
