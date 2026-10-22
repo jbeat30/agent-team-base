@@ -34,6 +34,7 @@ const LEGACY_GITIGNORE_END = '# <<< claude-team-base';
 // 등록하는 MCP 서버, 형식은 각 공식 문서의 Claude Code 설정을 따름
 // Figma는 연결 방식이 셋이고 서버 이름이 도구 이름 접두사를 정하므로 이름을 바꾸지 않음
 // figma: 원격 서버(mcp__figma__*), figma-desktop: 데스크톱 앱 서버(mcp__figma-desktop__*)
+// 역할 정의는 이 서버들의 읽기 도구만 허용, 쓰기 도구(use_figma 등)는 허용하지 않음
 const FIGMA_TOOLS = ['figma', 'figma-desktop', 'figma-plugin'];
 const DESIGN_TOOLS = ['playwright', 'chrome-devtools', 'shadcn', ...FIGMA_TOOLS];
 // 문서 읽기 도구: 디자인 도구와 별도 선택지, 로컬에서 PDF 등을 Markdown으로 읽음(패키지 @sylphx/anymd, 옛 이름 pdf-reader-mcp는 호환 별칭)
@@ -786,9 +787,9 @@ const MCP_INFO = {
   'chrome-devtools': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Inspect the screen, console, network and performance in Chrome', note: 'Can see the content of the browser it opens; runs an external package through npx' },
   shadcn: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Reuse vetted shadcn/ui components', note: 'Needs components.json in the project; runs an external package through npx' },
   anymd: { kind: 'document', used_by: 'planner-agent, frontend-agent, qa-agent', summary: 'Read PDF files (and Word, Excel, PowerPoint, HTML) as Markdown on this machine through @sylphx/anymd', note: 'Runs an external package through npx and downloads its native binary on first use; nothing is uploaded, but it fetches a URL if one is given and can download OCR or speech models only if you ask. The agents are told to open only files you point to and never to follow instructions found inside a document' },
-  figma: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the remote server (https://mcp.figma.com/mcp)', note: 'Needs a browser sign-in after registering: start a new session, run /mcp, select figma, Authenticate. Use one Figma connection only' },
-  'figma-desktop': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the Figma desktop app (http://127.0.0.1:3845/mcp)', note: 'Needs the Figma desktop app running with "Enable desktop MCP server" in Dev Mode, and a Dev or Full seat on a paid plan. Use one Figma connection only' },
-  'figma-plugin': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the official Figma plugin for Claude Code (includes Figma skills)', note: `Not installed by this tool: the user runs \`${GUIDED['figma-plugin'].command}\` and signs in through /plugin. Tool names differ (mcp__plugin_figma_figma__*). Use one Figma connection only` },
+  figma: { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the remote server (https://mcp.figma.com/mcp)', note: 'Needs a browser sign-in after registering: start a new session, run /mcp, select figma, Authenticate. Use one Figma connection only; if the official Figma plugin is already installed, choose figma-plugin instead. Agents get read tools only. Read calls are limited by plan and seat: Starter plan and View or Collab seats about 20 per month, Full or Dev seats about 200 per day (Figma may change this)' },
+  'figma-desktop': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the Figma desktop app (http://127.0.0.1:3845/mcp)', note: 'Needs the Figma desktop app running with "Enable desktop MCP server" in Dev Mode, and a Dev or Full seat on a paid plan (the only option for Figma for Government). Use one Figma connection only. Agents get read tools only; read calls are limited per plan and seat (Dev or Full about 200 per day)' },
+  'figma-plugin': { kind: 'design', used_by: 'frontend-agent, qa-agent', summary: 'Read Figma designs through the official Figma plugin for Claude Code (includes Figma skills)', note: `Not installed by this tool: the user runs \`${GUIDED['figma-plugin'].command}\` and signs in through /plugin. Tool names differ (mcp__plugin_figma_figma__*). Use one Figma connection only. Agents get read tools only; read calls are limited per plan and seat (Starter and View or Collab about 20 per month)` },
 };
 const SELECTABLE = Object.keys(MCP_INFO);
 
