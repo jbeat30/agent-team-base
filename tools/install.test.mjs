@@ -648,6 +648,35 @@ test('문서 도구 MCP: config로 추가·해제하고, 줄이 없는 이전 �
   assert.match(readFileSync(profilePath, 'utf8'), /Design tool MCP: playwright$/m, '디자인 도구 선택은 그대로');
 });
 
+test('verify: 설치된 팀 버전이 플러그인보다 낮으면 갱신 안내, 같으면 통과, 높으면 플러그인 갱신 안내', () => {
+  const { dir } = installFresh();
+  const manifestPath = join(dir, '.claude/team/manifest.json');
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const versionCheck = () => install(['verify', '--target', dir]).json;
+
+  const same = versionCheck();
+  assert.equal(same.checks.find((c) => c.name === 'team version').status, 'pass');
+
+  manifest.templateVersion = '0.0.1';
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  const older = versionCheck();
+  const olderCheck = older.checks.find((c) => c.name === 'team version');
+  assert.equal(olderCheck.status, 'update');
+  assert.match(olderCheck.detail, /agent-team-base:setup update/);
+  assert.equal(older.ok, true, '버전 차이는 실패가 아닌 안내');
+
+  manifest.templateVersion = '99.0.0';
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  const newer = versionCheck();
+  const newerCheck = newer.checks.find((c) => c.name === 'team version');
+  assert.equal(newerCheck.status, 'unverified');
+  assert.match(newerCheck.detail, /claude plugin update agent-team-base@jbeat-plugins/);
+
+  manifest.templateVersion = 'abc';
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  assert.equal(versionCheck().checks.find((c) => c.name === 'team version').status, 'unverified');
+});
+
 test('Figma MCP: 데스크톱 서버는 figma-desktop 이름으로 등록되고 안내가 verify에 남음', () => {
   const { dir, applied } = installFresh({}, { designTools: ['figma-desktop'] });
   assert.equal(applied.status, 0, JSON.stringify(applied.json));
