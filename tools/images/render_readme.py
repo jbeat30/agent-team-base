@@ -20,8 +20,8 @@ COPY = {
   'note': '역할 파일 9종은 항상 설치 · Lite/Full은 설치 시 선택',
   'roles': ['분류 · 대화 · 컨펌 · 검사 · 보고','기획 조율','개발 조율','요구 분해 · 인수 기준','호출처 · 계약 · 영향','화면 · 접근성','서버 · 업무 로직','공유 계약 · 클라이언트','테스트 작성','독립 검증'],
   'gates': ['/team · 접수 · 분류','기획','컨펌','개발','독립 검증','최종 보고'],
-  'subs': ['', '요구 분해 · 인수 기준 · 영향 분석', '', '승인된 파일만 · 순차 쓰기','검사 기록 원본 · 체크리스트','요구사항별 충족 · 미검증 구분'],
-  'skip': 'Q · L1: PM이 직접 처리', 'ask': '승인 필수 항목이 있으면 사용자에게 질문',
+  'subs': ['Q · L1 · L2 · L3로 분류', '요구 분해 · 인수 기준 · 영향 분석', 'L3는 항상 사용자 확인', '승인된 파일만 · 순차 쓰기','검사 기록 원본 · 체크리스트','요구사항별 충족 · 미검증 구분'],
+  'skip': 'Q · L1: PM이 직접 처리', 'skip_sub': 'L1은 체크리스트로 자가 점검 · 영향이 보이면 L2로', 'ask': 'L3이거나 판단 필요 시 사용자에게 질문',
   'rework': '실패 항목 재작업 (최대 3회)',
   'bar': '가드 hook: 쓰기 경로 · 호출 대상 검사 │ 검사 실행기: exit code · 시각 · 해시 기록',
   'request': '/claude-team-base:setup 으로 이 프로젝트에 팀 세팅',
@@ -36,8 +36,8 @@ COPY = {
   'note': 'All 9 roles are always installed · Lite/Full is chosen at setup',
   'roles': ['triage · chat · confirm · checks · report','coordinates planning','coordinates build','requirements · acceptance criteria','callers · contracts · impact','UI · accessibility','server · business logic','shared contracts · clients','writes tests','independent verification'],
   'gates': ['/team · Intake · triage','Plan','Confirm','Build','Independent QA','Final report'],
-  'subs': ['', 'requirements · acceptance criteria · impact', '', 'approved files only · sequential writes','check records · checklist','per-requirement status · unverified'],
-  'skip': 'Q · L1: handled directly by the PM', 'ask': 'Ask the user if approval is required',
+  'subs': ['classify as Q · L1 · L2 · L3', 'requirements · acceptance criteria · impact', 'L3: always ask the user', 'approved files only · sequential writes','check records · checklist','per-requirement status · unverified'],
+  'skip': 'Q · L1: handled directly by the PM', 'skip_sub': 'L1: self-check · raise to L2 if impact appears', 'ask': 'Ask the user for L3, or when a decision is needed',
   'rework': 'Rework failed items (max 3 rounds)',
   'bar': 'Guard hook: write paths · call targets │ Check runner: exit code · timestamps · hashes',
   'request': 'Run /claude-team-base:setup to set the team up in this project',
@@ -175,7 +175,7 @@ def render(out,fonts):
    if i:v.path([(x-37,205),(x,205)])
    v.card(x,110,288,245,'G'+str(i)+' · '+c['gates'][i],c['subs'][i],AMBER if i==2 else BLUE,size=24,subsize=18)
   v.path([(184,355),(184,430)],dash=True)
-  v.card(40,430,530,90,c['skip'],size=21)
+  v.card(40,430,530,90,c['skip'],c['skip_sub'],size=21)
   v.path([(305,520),(305,705),(1975,705),(1975,75),(1848,75),(1848,110)],dash=True)
   v.card(690,430,288,130,c['ask'],color=AMBER,size=18)
   v.path([(834,355),(834,430)],color=AMBER)
