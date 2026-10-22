@@ -2,7 +2,7 @@
 <rect width="2000" height="900" fill="#F5F7FB"/>
 <rect x="40" y="110" width="288" height="245" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
 <rect x="40" y="125" width="6" height="215" rx="3" fill="#3B6FD8" stroke="#3B6FD8" stroke-width="1.5"/>
-<text x="58" y="127" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#1A2744">G0 · Intake · triage</text>
+<text x="58" y="127" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="24" font-weight="700" fill="#1A2744">G0 · /team · Intake · triage</text>
 <polyline points="328,205 365,205" fill="none" stroke="#D5DBE6" stroke-width="2"/>
 <polygon points="365,205 354.60769515458674,211.0 354.60769515458674,199.0" fill="#D5DBE6"/>
 <rect x="365" y="110" width="288" height="245" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>

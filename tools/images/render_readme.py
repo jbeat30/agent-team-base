@@ -14,36 +14,36 @@ from PIL import Image, ImageDraw, ImageFont
 BG, NAVY, BLUE, GREEN, LINE, AMBER = '#F5F7FB', '#1A2744', '#3B6FD8', '#15996B', '#D5DBE6', '#E8A33D'
 COPY = {
  'ko': {
-  'user': '사용자', 'main': '메인 세션',
+  'user': '사용자 · /team으로 호출', 'main': 'PM (/team) · 메인 세션',
   'lite': 'PM이 직접 호출', 'full': '리더가 하위를 조율, QA는 PM이 직접 호출',
   'legend': ['조율 · 분석 · 검증', '지정 파일 수정'],
-  'note': '역할 파일 10종은 항상 설치 · Lite/Full은 설치 시 선택',
+  'note': '역할 파일 9종은 항상 설치 · Lite/Full은 설치 시 선택',
   'roles': ['분류 · 대화 · 컨펌 · 검사 · 보고','기획 조율','개발 조율','요구 분해 · 인수 기준','호출처 · 계약 · 영향','화면 · 접근성','서버 · 업무 로직','공유 계약 · 클라이언트','테스트 작성','독립 검증'],
-  'gates': ['접수 · 분류','기획','컨펌','개발','독립 검증','최종 보고'],
+  'gates': ['/team · 접수 · 분류','기획','컨펌','개발','독립 검증','최종 보고'],
   'subs': ['', '요구 분해 · 인수 기준 · 영향 분석', '', '승인된 파일만 · 순차 쓰기','검사 기록 원본 · 체크리스트','요구사항별 충족 · 미검증 구분'],
   'skip': 'Q · L1: PM이 직접 처리', 'ask': '승인 필수 항목이 있으면 사용자에게 질문',
   'rework': '실패 항목 재작업 (최대 3회)',
   'bar': '가드 hook: 쓰기 경로 · 호출 대상 검사 │ 검사 실행기: exit code · 시각 · 해시 기록',
-  'request': '…/claude-team-base 의 INSTALL.md를 읽고 이 프로젝트에 세팅해줘',
+  'request': '/claude-team-base:setup 으로 이 프로젝트에 팀 세팅',
   'install': ['프로젝트 조사','채팅으로 질문','계획 요약 · 확인 1회','스크립트로 적용','보호 장치 점검'],
   'install_sub': ['', 'Lite/Full · Context7 · 금지 영역', '', '기존 파일 보존', '실제 Claude 호출'],
-  'end': '새 세션부터 자연어로 요청',
+  'end': '필요할 때 /team으로 호출',
  },
  'en': {
-  'user': 'User', 'main': 'main session',
+  'user': 'User · calls /team', 'main': 'PM (/team) · main session',
   'lite': 'Called directly by the PM', 'full': 'Leads coordinate; the PM calls QA directly',
   'legend': ['coordinate · analyze · verify','edit assigned files'],
-  'note': 'All 10 roles are always installed · Lite/Full is chosen at setup',
+  'note': 'All 9 roles are always installed · Lite/Full is chosen at setup',
   'roles': ['triage · chat · confirm · checks · report','coordinates planning','coordinates build','requirements · acceptance criteria','callers · contracts · impact','UI · accessibility','server · business logic','shared contracts · clients','writes tests','independent verification'],
-  'gates': ['Intake · triage','Plan','Confirm','Build','Independent QA','Final report'],
+  'gates': ['/team · Intake · triage','Plan','Confirm','Build','Independent QA','Final report'],
   'subs': ['', 'requirements · acceptance criteria · impact', '', 'approved files only · sequential writes','check records · checklist','per-requirement status · unverified'],
   'skip': 'Q · L1: handled directly by the PM', 'ask': 'Ask the user if approval is required',
   'rework': 'Rework failed items (max 3 rounds)',
   'bar': 'Guard hook: write paths · call targets │ Check runner: exit code · timestamps · hashes',
-  'request': 'Read INSTALL.md at …/claude-team-base and set this project up',
+  'request': 'Run /claude-team-base:setup to set the team up in this project',
   'install': ['Inspect project','Questions in chat','Plan summary · 1 confirmation','Apply via script','Verify guard'],
   'install_sub': ['', 'Lite/Full · Context7 · protected areas', '', 'existing files preserved', 'real Claude call'],
-  'end': 'Ask in plain language from the next session',
+  'end': 'Call /team when you need it',
  }
 }
 ROLES = ['pm-agent','planning-lead','dev-lead','planner-agent','architecture-agent','frontend-agent','backend-agent','api-agent','test-agent','qa-agent']
@@ -147,7 +147,7 @@ def render(out,fonts):
    v.text(x+32,170,'Lite' if x==20 else 'Full',29,True)
    v.text(x+32,215,caption,19,width=900)
    v.path([(1000,100),(1000,120),(x+485,120),(x+485,260)])
-   v.card(x+120,260,760,104,'pm-agent · '+c['main'],c['roles'][0],dark=True,size=25,subsize=19)
+   v.card(x+120,260,760,104,c['main'],c['roles'][0],dark=True,size=25,subsize=19)
   # Lite의 동일 깊이 실무 7종, 줄바꿈은 계층을 의미하지 않음
   v.path([(505,364),(505,390),(62,390),(62,938)],arrow=False)
   for i,idx in enumerate([3,4,5,6,7,8,9]):
