@@ -61,6 +61,8 @@ Acceptance criteria and verification method per requirement ID. If automatic ver
 | --- | --- | --- | --- | --- |
 | R1 | | | | test / command / screen check |
 
+UI requirements: in Verification write the method, its source (rule file and line, or `none found`), and its case (defined, ambiguous resolved by the user, or none), per `.claude/team/ui-verification.md`.
+
 UI/UX walkthrough (only if the user opted in at confirmation): flows, viewports, and pass criteria.
 
 ## 8. Check commands and side-effect class
