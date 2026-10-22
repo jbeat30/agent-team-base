@@ -8,7 +8,7 @@ A target is one screen, component, or change that needs UI verification. For eac
 
 1. Re-read the files listed under `Project rule sources` in `.claude/team/profile.md` from their original paths, and search them for statements about how UI is verified (any method: measured styles, a design-tool value comparison, a browser or test tool, a story or snapshot, a manual checklist, or something else). Rules may be scoped by path, screen, component, or change type; match the rule to the target.
 2. Put the target in exactly one case:
-   - **Defined**: one clear method applies to this target, including any tolerance or criterion it states (for example a pixel tolerance).
+   - **Defined**: one clear method applies to this target, including any tolerance or criterion it states (for example a pixel tolerance). A clear method that you cannot run yourself is still Defined; handle it under "When the method cannot be run by the role".
    - **Ambiguous**: the rule is vague, covers only part of the target, conflicts with another rule, has an unclear scope, or names a method you cannot map to a tool or command.
    - **None**: no rule about UI verification applies to this target.
 
@@ -16,7 +16,7 @@ A target is one screen, component, or change that needs UI verification. For eac
 
 - **Defined**: use that method as written, with its criterion. Do not replace it or add the team's own method on top. Use the team's browser check only for a gap the method does not cover, and only after the user agrees.
 - **Ambiguous**: ask the user; never guess and never choose the closest-looking method. Quote the rule text and its file, and list the options. Planner and QA return `needs-input` with the question; the PM asks at G2. Until answered, that target is `unchecked`.
-- **None**: use the team default: compare with the design system or design source when there is one, and look at the running app with a browser tool the profile lists. Say in the report that no project method was found and that the team default was used. A scripted walkthrough still needs the user's consent (`design-tools.md`).
+- **None**: use the team default: compare with the design system or design source when there is one, and look at the running app with a browser tool the profile lists. Say in the report that no project method was found and that the team default was used. A single snapshot or screenshot per target is a look; anything multi-step (a scripted walkthrough) still needs the user's consent (`design-tools.md`).
 
 Do not build a list of known methods and pick from it. Read the method from the rule text, then check what is available to run it.
 
@@ -34,7 +34,7 @@ Label every UI claim in the report with one grade.
 
 | Grade | Meaning |
 | --- | --- |
-| measured | The defined method was run and its output or record is cited |
+| measured | A method was actually run (the project's method, or the team default when the project has none) and its output or record is cited; state which method |
 | read-only | Judged from reading code, styles, or design values without running the method |
 | unchecked | Not verified, with the reason |
 
@@ -42,7 +42,7 @@ If the project's method requires measuring (for example exact values), a `read-o
 
 ## Record and confirm
 
-- In plan section 7, write for each UI requirement ID the method, its source (rule file and line, or `none found`), and its case (Defined, Ambiguous resolved by the user, or None).
+- The PM records this in plan section 7 from the planner's report (other roles report it and do not edit the plan): for each UI requirement ID write the method, its source (rule file and line, or `none found`), and its case (Defined, Ambiguous resolved by the user, or None). Escape any `|` in a table cell as `|`.
 - At G2, show the user the chosen method per target in one short table (target, method, source) so a wrong guess is caught before work starts.
 - The plan is the record. Only if the user asks to keep it, suggest they add the line to their own rule file; do not edit the project's rule files or the profile yourself.
 - Interaction safety is unchanged: no real credentials, orders, payments, messages, or data changes, and a UI/UX walkthrough still needs consent.
