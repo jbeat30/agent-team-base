@@ -156,6 +156,15 @@ test('trace: 요구·카드·보고·diff가 기획안과 일치하면 통과', 
   assert.equal(result.json.requirements, 2);
 });
 
+test('trace: 실행 기록 파일(plan.md 등)을 허용 파일로 적은 카드는 소스 파일 비교에서 제외', () => {
+  const recordFile = `.claude-team-docs/runs/${RUN_ID}/plan.md`;
+  const ok = trace(traceProject({ card: { name: '01-planning-lead.md', opts: { files: recordFile } } }));
+  assert.equal(ok.status, 0, JSON.stringify(ok.json));
+  const sourceOutside = trace(traceProject({ card: { name: '01-planning-lead.md', opts: { files: `${recordFile}, src/other.js` } } }));
+  assert.equal(sourceOutside.status, 1, '계획에 없는 소스 파일은 계속 탐지');
+  assert.match(JSON.stringify(sourceOutside.json), /src\/other\.js/);
+});
+
 test('trace: 기획안의 요구 누락·원문 변형을 탐지', () => {
   const dropped = trace(traceProject({ planOpts: { quote: '로그인 화면에 비밀번호 보기 버튼을 추가한다.' } }));
   assert.equal(dropped.status, 1);

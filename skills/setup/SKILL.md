@@ -30,16 +30,9 @@ If `${CLAUDE_PLUGIN_ROOT}` is empty, find it with `find ~/.claude -path "*claude
 3. Save tokens: read only the needed sections, and do not ask what `detect` already tells you.
 4. Talk with the user in their language. Installer output is English; show it translated.
 
-## Choosing a usage mode
+## Usage mode
 
-When asking, describe the modes in one line each and let the user choose.
-
-| Mode | Fits | Behavior |
-| --- | --- | --- |
-| Lite (recommended default) | Small edits up to mid-size features | The PM calls only the needed roles directly; simple requests are handled by the PM itself |
-| Full | Large work across several areas | Planning and development leaders coordinate sub-roles; the PM calls them from call cards (relay) |
-
-Both modes classify requests first, so simple requests never call the team.
+Do not ask for a mode at install. Every role file is installed and the team starts in Lite. Say in one line that the default mode (Lite or Full) and the MCP servers can be changed later with `/claude-team-base:setting`, and that a single request can ask for Full ("handle this in Full mode").
 
 ## Rules
 

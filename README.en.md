@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/release-v0.3.1-blue" alt="release: v0.3.1">
+  <img src="https://img.shields.io/badge/release-v0.3.2-blue" alt="release: v0.3.2">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -34,6 +34,8 @@ Requirements: Claude Code 2.1.302 or later, Node 18 or later.
 /claude-team-base:setup
 ```
 
+![Install flow](docs/assets/install-flow.en.png)
+
 1. Install the plugin and run `/claude-team-base:setup` in your project.
 2. The skill surveys the project and asks only what it needs.
 3. It shows the change plan in 10 lines or fewer and asks for confirmation **once**.
@@ -52,8 +54,9 @@ Read INSTALL.md at https://github.com/jbeat30/claude-team-base and set this proj
 | --- | --- | --- |
 | `/claude-team-base:setup` | **Install, update, or remove** the team; pass `install`, `update`, or `remove` as an argument | One Claude call for the guard check after install |
 | `/claude-team-base:check` | Check the installation (file hashes, hook registration, role files, version) | None; it does not call Claude without `--live` |
+| `/claude-team-base:setting` | **View and change settings**: the default mode (Lite/Full), the protection mode, which MCP servers the team can use and which are selected, and adding an MCP server you did not select | A few conversation turns; the installer commands do not call Claude |
 
-Plain requests work too: "set up the agent team", "check the team installation", "remove the team".
+Plain requests work too: "set up the agent team", "check the team installation", "show the team settings", "switch the mode to Full", "remove the team".
 
 ## What you choose at setup
 
@@ -61,8 +64,6 @@ Plain requests work too: "set up the agent team", "check the team installation",
 
 | Choice | Options | Default or recommendation |
 | --- | --- | --- |
-| Usage mode | **Lite**: the PM calls only the needed roles directly<br>**Full**: planning and development leaders coordinate sub-roles; better for large multi-area work | Lite |
-| Full execution mode | **relay**: the leader returns call cards and the PM makes the calls | relay |
 | Context7 MCP | Register it in `.mcp.json` to check docs against the installed version | Asked |
 | Design system (UI projects) | Where your tokens, component library, Storybook, Figma library, or brand guide live. If you have one it is the **top authority for all UI work** and agents never deviate from it | Only if you have one |
 | Design tool MCP (optional) | **Playwright**: open and look at the running page<br>**Chrome DevTools**: inspect the page, console, network, and performance in Chrome; useful for UI/UX checks<br>**shadcn/ui**: reuse vetted components (needs `components.json`)<br>**Figma**: when you have Figma designs; browser sign-in on first use | Asked only for projects with a UI; Playwright and shadcn/ui recommended |
@@ -71,7 +72,7 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
 | Conflict handling | If files collide, per item: skip or replace with backup | Asked on conflict |
 
-All 9 role files are always installed regardless of mode; the mode only changes how the team is used.
+The mode is not asked at install. All 9 role files are always installed and the default mode is Lite. Later you can switch to Full in `/claude-team-base:setting`, or ask for it in a single request ("handle this in Full mode"). Asking this way in a project installed as Lite ran the Full path planning-lead → dev-lead → worker agents → qa-agent (checked once).
 
 Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwright, Chrome DevTools) can see the content of the browser they open, so avoid personal tabs and sensitive data. A registered server's tool definitions are added to every call of those two roles, which costs tokens, and `npx` runs external packages, so choose them only when you need them. The agents never invent spacing, colors, or copy that the design does not state, and mark visual checks they could not make as `unchecked`.
 
@@ -142,10 +143,10 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 
 | Grade | Example | Path |
 | --- | --- | --- |
-| Q | Questions, explanations | The PM answers directly |
-| L1 | Comments, typos, wording, behavior unchanged | The PM edits directly and checks completion |
-| L2 | Ordinary behavior changes | With no risk signal the PM handles it directly and self-checks (no independent QA, no runner records); otherwise plan, confirm, build, final verification |
-| L3 | Contracts, permissions, data, security, many areas | L2 path with required impact analysis and user confirmation |
+| Q | Questions, explanations | The PM answers directly, even after the team is called |
+| L1 | Comments, typos, wording, behavior unchanged | The PM edits directly and self-checks with the checklist |
+| L2 | Ordinary behavior changes | Plan, confirm, build, final verification. The PM self-confirms when no item needs approval and there is a single interpretation |
+| L3 | Contracts, permissions, data, security, many areas | The L2 path with required impact analysis; the user is always asked to confirm |
 
 - **Requirements become Given/When/Then acceptance criteria**, and failing tests are written first when testing is possible.
 - **Every agent reads the request source and the plan file directly**, so summaries cannot distort requirements.
@@ -183,6 +184,20 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 .mcp.json            Context7 and design tool MCP registration (optional, merged with existing settings)
 ```
 
+## Changing settings
+
+```text
+/claude-team-base:setting
+```
+
+A skill to view and change the team settings after install.
+
+- **See the current settings**: the default mode (Lite/Full), the protection mode, and the MCP servers the team can use with whether each is selected (with its purpose and caution). This list differs from Claude Code's `/mcp`: `/mcp` shows every connected server, while this shows only the servers the team uses.
+- **Change the default mode** between Lite and Full. To change it for one request only, say "handle this in Full mode".
+- **Add an MCP server** you did not select at install (Context7, Playwright, Chrome DevTools, shadcn/ui, Figma); it is registered in `.mcp.json`. Start a new Claude Code session for it to take effect.
+- It shows a preview first and applies only after you confirm, and backs up the files it changes.
+- An MCP server that already has a different setting is not overwritten; it is reported as a conflict.
+
 ## Update and removal
 
 ```text
@@ -203,6 +218,12 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 - Right after install the guard is checked with a real Claude call; if that is not confirmed, treat it as `no protection`.
 - Report vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
+### What are the protection mode and the guard hook?
+
+- **Guard hook**: a small script Claude Code runs right before it writes a file or calls another agent in this project. It blocks actions that break the rules, such as editing a file that is not in the confirmed plan or calling an agent that should not be called.
+- **Advisory mode (default)**: the guard blocks rule violations. It is a safety net against mistakes, not a security boundary.
+- **Strict mode (optional)**: adds approval records on top of advisory mode. You approve the allowed paths and commands directly. It is experimental and applies to every edit of the main session.
+
 ### Feature maturity
 
 | Level | Features |
@@ -215,9 +236,10 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 - **Following the L3 procedure depends on the prompt alone and is not enforced**: in the v0.2.0 evaluation the PM classified a request as L3 and still edited directly without a plan, impact analysis, or user confirmation. That may have been caused by the direct path of that version; this version removed it but did not measure again. Behavior in interactive use has not been checked.
 - Marketplace install and the `/team` call were checked in real Claude. Interactive screens (the skill permission prompt, the trust screen), macOS/Linux, and updating between releases are not checked yet.
 
-![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.svg)
+![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.en.svg)
 
 - [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive, with Korean prompts before the English switch: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
+- [v0.3.2 check results](docs/verification/EVAL_RESULTS_v0.3.2.md) (Korean): one check each of switching the mode after install and the `setting` skill; not a usefulness evaluation
 - [v0.3.0 check results](docs/verification/EVAL_RESULTS_v0.3.0.md) (Korean): a check of how `/team` is called and one run of the hard task l1; not a usefulness evaluation
 - [v0.2.0 evaluation results](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean; 8 tasks, one run each, one model, raw JSON included): the team's value can only be judged on the hard tasks (hidden callers l1, implicit requirements m1), which have few measurements and one run each, so they cannot be judged against the design criteria. Easy tasks are not requests anyone would hand to a team, so their cost figures are not used as evidence of the team's usefulness.
 - There is no guarantee that the team structure improves quality over handling tasks directly.
