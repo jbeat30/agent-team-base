@@ -37,7 +37,9 @@ const MCP_SERVERS = {
   shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] },
   figma: { type: 'http', url: 'https://mcp.figma.com/mcp' },
 };
-const ROLE_FILES = ['pm-agent', 'planning-lead', 'dev-lead', 'planner-agent', 'architecture-agent', 'frontend-agent', 'backend-agent', 'api-agent', 'test-agent', 'qa-agent'];
+const ROLE_FILES = ['planning-lead', 'dev-lead', 'planner-agent', 'architecture-agent', 'frontend-agent', 'backend-agent', 'api-agent', 'test-agent', 'qa-agent'];
+// v0.2.x까지 설치된 PM 정의: v0.3.0부터 PM은 .claude/skills/team 스킬, 갱신 때 사용자가 수정하지 않았으면 삭제
+const RETIRED_FILES = ['.claude/agents/pm-agent.md'];
 // 복사하지 않는 템플릿 파일: settings는 병합, 프로필은 조사 결과로 생성
 const NOT_COPIED = new Set(['.claude/settings.fragment.json', '.claude/team/profile.template.md']);
 
@@ -304,19 +306,14 @@ ${table(['Item', 'Content', 'Location'], answers.designSystem.map((d) => [d.item
 
 // ---------- plan ----------
 
-function mergeSettings(existing, fragment, answers) {
+function mergeSettings(existing, fragment, answers, legacyAgent) {
   const settings = structuredClone(existing ?? {});
   const result = { added: [], agent: { action: 'none', previous: null }, conflicts: [] };
-  if (fragment.agent) {
-    if (settings.agent === undefined) {
-      settings.agent = fragment.agent;
-      result.agent.action = 'set';
-    } else if (settings.agent === fragment.agent) result.agent.action = 'already';
-    else if (answers.agentSetting === 'replace') {
-      result.agent = { action: 'replaced', previous: settings.agent };
-      settings.agent = fragment.agent;
-    } else if (answers.agentSetting === 'keep') result.agent.action = 'kept-user-agent';
-    else result.conflicts.push({ item: 'settings.agent', reason: `an existing agent setting (${settings.agent}) is present; answers.agentSetting needs keep or replace` });
+  // v0.2.x 설치는 메인 세션을 PM으로 고정했으므로 갱신 때 설치기가 넣은 agent 설정만 해제
+  if (settings.agent === 'pm-agent' && ['set', 'replaced'].includes(legacyAgent?.action)) {
+    if (legacyAgent.action === 'replaced' && legacyAgent.previous) settings.agent = legacyAgent.previous;
+    else delete settings.agent;
+    result.agent = { action: 'released', previous: legacyAgent.previous ?? null };
   }
   for (const [event, groups] of Object.entries(fragment.hooks ?? {})) {
     settings.hooks ??= {};
@@ -379,6 +376,13 @@ function buildPlan(dir, answers, options) {
     }
   }
 
+  for (const path of RETIRED_FILES) {
+    const abs = join(dir, path);
+    if (!existsSync(abs)) continue;
+    if (recorded.get(path) === sha256(readFileSync(abs))) operations.push({ path, action: 'delete', sha256: recorded.get(path) });
+    else operations.push({ path, action: 'keep-retired', sha256: sha256(readFileSync(abs)) });
+  }
+
   // settings 병합
   const settingsAbs = join(dir, SETTINGS_PATH);
   const fragment = readJson(join(templateRoot, '.claude', 'settings.fragment.json')).value;
@@ -388,9 +392,9 @@ function buildPlan(dir, answers, options) {
     blockers.push(`${SETTINGS_PATH} JSON cannot be parsed; fix it and run again: ${existingSettings.error}`);
     settingsPlan = { action: 'blocked', reason: 'unparseable' };
   } else {
-    const merged = mergeSettings(existingSettings.value, fragment, answers);
+    const merged = mergeSettings(existingSettings.value, fragment, answers, manifest?.settings?.agent);
     for (const c of merged.conflicts) conflicts.push(c);
-    const changed = merged.added.length > 0 || ['set', 'replaced'].includes(merged.agent.action);
+    const changed = merged.added.length > 0 || merged.agent.action === 'released';
     settingsPlan = { action: merged.conflicts.length ? 'blocked' : changed ? (existingSettings.value ? 'merge' : 'create') : 'unchanged', agent: merged.agent, addedHooks: merged.added, content: merged.conflicts.length ? null : `${JSON.stringify(merged.settings, null, 2)}\n` };
   }
 
@@ -503,7 +507,11 @@ function apply(dir, options) {
       if (op.action === 'update') doBackup(op.path);
       writeFile(dir, op.path, op.content);
       installed.push({ path: op.path, sha256: op.sha256 });
-    } else if (op.action === 'unchanged') installed.push({ path: op.path, sha256: op.sha256 });
+    } else if (op.action === 'delete') {
+      doBackup(op.path);
+      unlinkSync(join(dir, op.path));
+    } else if (op.action === 'keep-retired') skipped.push({ path: op.path, reason: 'retired file modified by the user; kept, delete manually if unused' });
+    else if (op.action === 'unchanged') installed.push({ path: op.path, sha256: op.sha256 });
     else if (op.action === 'replace-with-backup') {
       doBackup(op.path);
       writeFile(dir, op.path, op.content);
@@ -520,6 +528,7 @@ function apply(dir, options) {
     writeFile(dir, SETTINGS_PATH, settingsPlan.content);
     for (const h of settingsPlan.addedHooks) if (!hooks.some((x) => x.event === h.event && x.command === h.command)) hooks.push(h);
     if (['set', 'replaced'].includes(settingsPlan.agent.action)) agentRecord = settingsPlan.agent;
+    else if (settingsPlan.agent.action === 'released') agentRecord = { action: 'none', previous: null };
   }
   let mcpRecord = previous?.mcp ?? { context7: 'none' };
   if (plan.mcpPlan.action === 'add') {
@@ -598,9 +607,11 @@ function verify(dir, options) {
   const settings = readJson(join(dir, SETTINGS_PATH));
   const missingHooks = (manifest.settings.hooks ?? []).filter((h) => !(settings.value?.hooks?.[h.event] ?? []).some((g) => (g.hooks ?? []).some((x) => x.command === h.command)));
   add('settings hooks', settings.error || missingHooks.length ? 'fail' : 'pass', settings.error ?? (missingHooks.length ? `missing ${missingHooks.length}` : 'hooks registered'));
-  add('settings agent', settings.value?.agent === 'pm-agent' ? 'pass' : 'unverified', settings.value?.agent === 'pm-agent' ? 'agent=pm-agent' : `agent=${settings.value?.agent ?? 'none'}; the main session does not act as PM`);
+  const skillOk = existsSync(join(dir, '.claude', 'skills', 'team', 'SKILL.md'));
+  add('team skill', skillOk ? 'pass' : 'fail', skillOk ? '/team skill present' : 'missing .claude/skills/team/SKILL.md');
+  if (settings.value?.agent === 'pm-agent') add('settings agent', 'unverified', 'legacy agent=pm-agent pins every request to the PM; run the update to release it');
   const roles = ROLE_FILES.filter((r) => !existsSync(join(dir, '.claude', 'agents', `${r}.md`)));
-  add('role files', roles.length ? 'fail' : 'pass', roles.length ? `missing ${roles.join(', ')}` : 'all 10 role files present');
+  add('role files', roles.length ? 'fail' : 'pass', roles.length ? `missing ${roles.join(', ')}` : 'all 9 role files present');
   const claude = claudeStatus();
   add('claude version', claude.status === 'ok' ? 'pass' : claude.status === 'below' ? 'fail' : 'unverified', `${claude.version ?? 'unavailable'} (minimum ${MIN_CLAUDE})`);
   const canary = guardCanary(dir);
