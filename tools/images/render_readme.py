@@ -23,7 +23,7 @@ COPY = {
   'subs': ['Q · L1 · L2 · L3로 분류', '요구 분해 · 인수 기준 · 영향 분석', 'L3는 항상 사용자 확인', '승인된 파일만 · 순차 쓰기','검사 기록 원본 · 체크리스트','요구사항별 충족 · 미검증 구분'],
   'skip': 'Q · L1: PM이 직접 처리', 'skip_sub': 'L1은 체크리스트로 자가 점검 · 영향이 보이면 L2로', 'ask': 'L3이거나 판단 필요 시 사용자에게 질문',
   'rework': '실패 항목 재작업 (최대 3회)',
-  'request': '/claude-team-base:setup 으로 이 프로젝트에 팀 세팅',
+  'request': '/agent-team-base:setup 으로 이 프로젝트에 팀 세팅',
   'install': ['프로젝트 조사','채팅으로 질문','계획 요약 · 확인 1회','스크립트로 적용','보호 장치 점검'],
   'install_sub': ['', 'Lite/Full · Context7 · 금지 영역', '', '기존 파일 보존', '실제 Claude 호출'],
   'end': '필요할 때 /team으로 호출',
@@ -38,7 +38,7 @@ COPY = {
   'subs': ['classify as Q · L1 · L2 · L3', 'requirements · acceptance criteria · impact', 'L3: always ask the user', 'approved files only · sequential writes','check records · checklist','per-requirement status · unverified'],
   'skip': 'Q · L1: handled directly by the PM', 'skip_sub': 'L1: self-check · raise to L2 if impact appears', 'ask': 'Ask the user for L3, or when a decision is needed',
   'rework': 'Rework failed items (max 3 rounds)',
-  'request': 'Run /claude-team-base:setup to set the team up in this project',
+  'request': 'Run /agent-team-base:setup to set the team up in this project',
   'install': ['Inspect project','Questions in chat','Plan summary · 1 confirmation','Apply via script','Verify guard'],
   'install_sub': ['', 'Lite/Full · Context7 · protected areas', '', 'existing files preserved', 'real Claude call'],
   'end': 'Call /team when you need it',
@@ -132,7 +132,7 @@ def render(out,fonts):
   v.box(112,100,72,6,BLUE,BLUE,3)
   v.box(196,100,24,6,GREEN,GREEN,3)
   v.path([(2180,394),(2288,394)],arrow=False,color=LINE)
-  title='claude-team-base'
+  title='agent-team-base'
   width=v.font(124,True).getlength(title)/2
   v.text((2400-width)/2,190,title,124,True)
   v.lang=lang

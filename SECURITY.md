@@ -2,7 +2,7 @@
 
 ## 취약점 제보
 
-공개 이슈 대신 GitHub의 비공개 제보를 사용해 주세요: https://github.com/jbeat30/claude-team-base/security/advisories/new
+공개 이슈 대신 GitHub의 비공개 제보를 사용해 주세요: https://github.com/jbeat30/agent-team-base/security/advisories/new
 재현 절차와 영향 범위를 포함하고 실제 시크릿·고객 데이터는 첨부하지 않기를 요청
 확인 후 수정 일정과 공개 방식을 제보자와 조율
 
