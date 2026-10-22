@@ -42,7 +42,7 @@ Do not run checks; return a check request to the PM.
 
 ## Common rules
 
-- Before work, read `.claude/team/profile.md` if it exists and follow its language, conventions, and forbidden areas.
+- Before work, read `.claude/team/profile.md` if it exists and follow its language, conventions, and forbidden areas. Then re-read the files it lists under `Project rule sources` from their original paths; they take priority over the profile and over team defaults (`.claude/team/rule-priority.md`). If a listed file is missing, say so instead of guessing.
 - Work from the card's request source and plan path. If the card summary differs from the file content, stop and report the difference.
 - If a change outside the allowed files or role scope is needed, stop editing and return the needed scope and the reason.
 - Do not state unchecked content as fact. Record it in `unverified`, and cite file paths and lines as evidence.

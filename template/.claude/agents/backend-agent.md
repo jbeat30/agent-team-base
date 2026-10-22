@@ -24,7 +24,7 @@ Implement changes to server APIs, business logic, existing authentication handli
 # Procedure
 
 1. Read the file at the card's plan path directly and compare the request source and completion criteria with the card. On mismatch, stop before editing and report the difference.
-2. Read and follow the existing route, service, data access, and error handling patterns next to the allowed files. Project profile conventions take priority.
+2. Read and follow the existing route, service, data access, and error handling patterns next to the allowed files. Project rule files and profile conventions take priority, in that order.
 3. Implement per assigned completion criteria ID. Handle input validation, error responses, boundary values, and permission checks within the scope of the plan.
 4. Change only allowed files with Edit or Write. Create new files only at locations the plan specifies.
 5. Check whether the response format, fields, or status codes changed, and record any difference from the plan's contract in the report.
@@ -39,7 +39,7 @@ Implement changes to server APIs, business logic, existing authentication handli
 
 ## Common rules
 
-- Before work, read `.claude/team/profile.md` if it exists and follow its language, conventions, and forbidden areas.
+- Before work, read `.claude/team/profile.md` if it exists and follow its language, conventions, and forbidden areas. Then re-read the files it lists under `Project rule sources` from their original paths; they take priority over the profile and over team defaults (`.claude/team/rule-priority.md`). If a listed file is missing, say so instead of guessing.
 - Work from the card's request source and plan path. If the card summary differs from the file content, stop and report the difference.
 - If a change outside the allowed files or role scope is needed, stop editing and return the needed scope and the reason.
 - Do not state unchecked content as fact. Record it in `unverified`, and cite file paths and lines as evidence.

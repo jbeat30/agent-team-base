@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/release-v0.3.4-blue" alt="release: v0.3.4">
+  <img src="https://img.shields.io/badge/release-v0.3.6-blue" alt="release: v0.3.6">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -66,7 +66,8 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | --- | --- | --- |
 | Context7 MCP | Register it in `.mcp.json` to check docs against the installed version | Asked |
 | Design system (UI projects) | Where your tokens, component library, Storybook, Figma library, or brand guide live. If you have one it is the **top authority for all UI work** and agents never deviate from it | Only if you have one |
-| Design tool MCP (optional) | **Playwright**: open and look at the running page<br>**Chrome DevTools**: inspect the page, console, network, and performance in Chrome; useful for UI/UX checks<br>**shadcn/ui**: reuse vetted components (needs `components.json`)<br>**Figma**: when you have Figma designs; browser sign-in on first use | Asked only for projects with a UI; Playwright and shadcn/ui recommended |
+| Document reader MCP (optional) | **anymd** (`@sylphx/anymd`, MIT): reads PDF and Word, Excel, PowerPoint, HTML as Markdown on your machine; useful for spec or design PDFs. Nothing is uploaded and no API key is needed, but it runs an external package through `npx` and downloads a native binary on first use. Agents open only files named in the request and never follow instructions found inside a document | Only if you want it |
+| Design tool MCP (optional) | **Playwright**: open and look at the running page<br>**Chrome DevTools**: inspect the page, console, network, and performance in Chrome; useful for UI/UX checks<br>**shadcn/ui**: reuse vetted components (needs `components.json`)<br>**Figma**: when you have Figma designs; pick one connection<br>· `figma`: remote server; sign in from the browser through `/mcp` after registering<br>· `figma-desktop`: Figma desktop app server; enable the desktop MCP server in Dev Mode, needs a Dev or Full seat<br>· `figma-plugin`: official plugin; the installer does not install it and only shows the command to run (choose this one if you already use the official plugin)<br>Agents only **read** Figma (tools that change files are not allowed). Reads count against your plan limit: about 20 per month on the Starter plan and View or Collab seats, about 200 per day on Full or Dev seats | Asked only for projects with a UI; Playwright and shadcn/ui recommended |
 | Forbidden areas | Production config, generated files, specific paths | None |
 | Protection mode | **Advisory**: the guard hook blocks violations<br>**Strict**: tracks direct approval records (optional; you run the approval commands yourself) | Advisory |
 | Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
@@ -155,6 +156,19 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 - Only approved commands run, through a **check runner** that records exit code, times, output, and hashes; QA reads these originals, not the PM's summary.
 - Library and framework behavior is checked against the installed version through Context7; anything unchecked is marked `unchecked`.
 
+### Project rules come first
+
+This team is a base layer, so it always ranks below the rules a project already has. The order is: your request > the project's rule files (`CLAUDE.md`, `AGENTS.md`, lint config, verification method, branch rules) > existing conventions > the profile > team defaults. Details: [rule-priority.md](template/.claude/team/rule-priority.md).
+
+- The profile does not copy rules; it points to the **original paths**. Agents re-read the originals before work, so edits to them apply immediately.
+- Team behaviors fall into three classes.
+  1. **Defaults**: plan and card forms, requirement IDs, report structure, risk grades. Where the project already defines the same thing, the project's way wins.
+  2. **Confirm first**: behaviors the project lacks that change how you work (UI/UX walkthrough, a browser check in place of the project's own verification, strict mode, reports in the team's structure). Asked once before applying.
+  3. **Fixed safety**: the guard hook, no edits before confirmation, assigned files only, never reporting unchecked items as passed. If a project rule conflicts, you are told and the team stops.
+- If the project defines its own verification method (for example measuring computed styles), it is used first; the browser check covers only what that method does not.
+- The guard protects only the team's policy files (hooks, team, the team skill, team role definitions, settings), not all of `.claude/`, so your own rules under `.claude/` stay editable.
+- Strict mode still applies to every edit of the main session (it is not limited to team runs). When no approval is registered, the block message states the reason and the fix.
+
 ### Against hallucination and unrequested edits
 
 - The request source is quoted verbatim in the plan, and every agent reads the source and plan files directly.
@@ -195,9 +209,27 @@ A skill to view and change the team settings after install.
 - **See the current settings**: the default mode (Lite/Full), the protection mode, and the MCP servers the team can use with whether each is selected (with its purpose and caution). This list differs from Claude Code's `/mcp`: `/mcp` shows every connected server, while this shows only the servers the team uses.
 - **Change the default mode** between Lite and Full. To change it for one request only, say "handle this in Full mode".
 - **Change the protection mode** between advisory and strict. Strict takes effect immediately and blocks ordinary edits by the main session until you register an approval, so you are told this first and asked to confirm once more. You can switch back to advisory at any time.
-- **Add an MCP server** you did not select at install (Context7, Playwright, Chrome DevTools, shadcn/ui, Figma); it is registered in `.mcp.json`. Start a new Claude Code session for it to take effect.
+- **Add or remove an MCP server**: add one you did not select at install (Context7, anymd, Playwright, Chrome DevTools, shadcn/ui, Figma) and it is registered in `.mcp.json`; design tools can also be removed, and the Figma connection can be switched (Context7 cannot be removed). Entries the team did not create, or that you changed after install, are left alone. Start a new Claude Code session for it to take effect.
 - It shows a preview first and applies only after you confirm, and backs up the files it changes.
 - An MCP server that already has a different setting is not overwritten; it is reported as a conflict.
+
+## Getting a new version
+
+An installed plugin does not update by itself. Auto-update is off by default for a self-made marketplace, and updating the plugin does not change the team files already installed in a project, so two steps are needed.
+
+1. Update the plugin (terminal)
+
+```text
+claude plugin marketplace update jbeat-plugins
+claude plugin update agent-team-base@jbeat-plugins
+```
+
+2. Start a new session or run `/reload-plugins`
+3. Update the team files in the project: `/agent-team-base:setup update`
+
+- To see whether an update is needed, run `/agent-team-base:check`; a `team version` item with status `update` means the project's team files are older than the plugin
+- Inside a session: `/plugin` → Marketplaces tab → `jbeat-plugins` → Update marketplace (also updates the installed plugins)
+- Optional auto-update: `/plugin` → Marketplaces tab → `jbeat-plugins` → Enable auto-update. It updates only the plugin; step 3 is still run by you
 
 ## Update and removal
 
@@ -240,6 +272,7 @@ A skill to view and change the team settings after install.
 ![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.en.svg)
 
 - [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive, with Korean prompts before the English switch: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
+- [v0.3.6 check results](docs/verification/EVAL_RESULTS_v0.3.6.md) (Korean): one check each of the Figma connection types, rule priority, and the guard's `.claude/` protection scope; not a usefulness evaluation.
 - [v0.3.3 check results](docs/verification/EVAL_RESULTS_v0.3.3.md) (Korean): one check of switching the protection mode (advisory/strict) and of edits being blocked and released; not a usefulness evaluation
 - [v0.3.2 check results](docs/verification/EVAL_RESULTS_v0.3.2.md) (Korean): one check each of switching the mode after install and the `setting` skill; not a usefulness evaluation
 - [v0.3.0 check results](docs/verification/EVAL_RESULTS_v0.3.0.md) (Korean): a check of how `/team` is called and one run of the hard task l1; not a usefulness evaluation
@@ -254,7 +287,7 @@ A skill to view and change the team settings after install.
 | English prompts and user-language replies | Implemented; delegation evaluation planned |
 | Hard-task comparison (direct, Lite, Full, repeated runs) | One run published; repeated runs not done |
 | Context slimming (shorter PM instructions) | First pass done (PM instructions about 18% smaller, a rule-list check prevents omissions); more planned |
-| Design tool MCP choice at setup (Playwright, shadcn/ui, Figma) | Implemented; real Claude and server connection check planned |
+| Design tool MCP choice at setup (Playwright, shadcn/ui, three Figma connection types) | Implemented; real Claude and server connection check planned |
 | bkit PDCA integration | Planned for v0.4.0 |
 
 ## Contributing

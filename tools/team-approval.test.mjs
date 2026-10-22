@@ -62,7 +62,10 @@ function register(dir) {
 
 test('엄격 모드는 등록 없으면 소스 쓰기·개발 호출 거부', () => {
   const dir = fixture();
-  assert.equal(write(dir, 'src/a.js').status, 2);
+  const blocked = write(dir, 'src/a.js');
+  assert.equal(blocked.status, 2);
+  assert.match(blocked.stderr, /no approved plan is registered/, '등록이 없으면 파일 오류가 아닌 안내 문구');
+  assert.doesNotMatch(blocked.stderr, /ENOENT/);
   assert.equal(call(dir).status, 2);
   assert.equal(write(dir, '.claude-team-docs/runs/R1/plan.md').status, 0);
 });
