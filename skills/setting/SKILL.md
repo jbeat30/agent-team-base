@@ -14,7 +14,7 @@ allowed-tools:
 # Claude Team Base Setting
 
 `<installer>` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/install.mjs"`
-If `${CLAUDE_PLUGIN_ROOT}` is empty, find it with `find ~/.claude -path "*claude-team-base*/scripts/install.mjs" | head -1`.
+If `${CLAUDE_PLUGIN_ROOT}` is empty, find it with `find ~/.claude -path "*agent-team-base*/scripts/install.mjs" | head -1`.
 This skill changes only the team's own files of the current project (`.claude/team/profile.md`, `.mcp.json`, the manifest). It never changes global settings or other plugins. The setup skill installs, updates, and removes; this skill adjusts what is installed.
 
 ## Steps
@@ -29,7 +29,7 @@ This skill changes only the team's own files of the current project (`.claude/te
    - Switching to `advisory` needs no warning; it removes the approval requirement at once.
 4. After confirmation run it again with `--yes`. Report what changed and the backup folder.
 5. After adding an MCP server, say that a new Claude Code session is needed to load it, that Claude asks once to approve project MCP servers, and repeat the server's note (for example the Figma browser login or the browser-content warning).
-6. Run `<installer> verify --target .` (no `--live`) and report only failures. If nothing is installed, point to `/claude-team-base:setup`.
+6. Run `<installer> verify --target .` (no `--live`) and report only failures. If nothing is installed, point to `/agent-team-base:setup`.
 
 ## Plain explanations to give when asked
 

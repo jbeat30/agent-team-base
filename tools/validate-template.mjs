@@ -220,7 +220,7 @@ try {
   fail('.claude-plugin/plugin.json', '파일 없음 또는 JSON 오류');
 }
 if (plugin) {
-  if (plugin.name !== 'claude-team-base') fail('plugin.json', 'name은 저장소명 claude-team-base');
+  if (plugin.name !== 'agent-team-base') fail('plugin.json', 'name은 agent-team-base(claude- 접두사는 서드파티 예약어라 사용 불가)');
   if (plugin.author?.name !== 'jbeat') fail('plugin.json', 'author.name은 jbeat');
   if (plugin.skills !== './skills/') fail('plugin.json', 'skills는 ./skills/');
 }

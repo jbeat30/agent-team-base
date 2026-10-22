@@ -18,7 +18,7 @@ allowed-tools:
 
 The installer ships inside the plugin, so no repository fetch is needed.
 `<installer>` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/install.mjs"`
-If `${CLAUDE_PLUGIN_ROOT}` is empty, find it with `find ~/.claude -path "*claude-team-base*/scripts/install.mjs" | head -1`.
+If `${CLAUDE_PLUGIN_ROOT}` is empty, find it with `find ~/.claude -path "*agent-team-base*/scripts/install.mjs" | head -1`.
 
 ## Steps
 
@@ -32,7 +32,7 @@ If `${CLAUDE_PLUGIN_ROOT}` is empty, find it with `find ~/.claude -path "*claude
 
 ## Usage mode
 
-Do not ask for a mode at install. Every role file is installed and the team starts in Lite. Say in one line that the default mode (Lite or Full) and the MCP servers can be changed later with `/claude-team-base:setting`, and that a single request can ask for Full ("handle this in Full mode").
+Do not ask for a mode at install. Every role file is installed and the team starts in Lite. Say in one line that the default mode (Lite or Full) and the MCP servers can be changed later with `/agent-team-base:setting`, and that a single request can ask for Full ("handle this in Full mode").
 
 ## Rules
 
