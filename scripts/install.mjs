@@ -635,6 +635,9 @@ function liveCanary(dir) {
   return /team-guard/.test(text) ? { status: 'pass', detail: 'hook firing and blocking confirmed in Claude Code' } : { status: 'unverified', detail: 'the write was not made, but no team-guard denial message was seen' };
 }
 
+// 설치된 팀 버전 비교용, 숫자 세 마디가 아니면 null
+const isVersion = (v) => /^\d+\.\d+\.\d+$/.test(String(v ?? ''));
+
 function verify(dir, options) {
   const checks = [];
   const add = (name, status, detail) => checks.push({ name, status, detail });
@@ -648,6 +651,12 @@ function verify(dir, options) {
     else if (sha256(readFileSync(abs)) !== f.sha256) bad.push(`${f.path}(modified)`);
   }
   add('files', bad.length ? 'fail' : 'pass', bad.length ? bad.join(', ') : `${manifest.files.length} file hashes match`);
+  // 플러그인을 새 버전으로 받아도 프로젝트에 설치된 팀 파일은 자동으로 바뀌지 않으므로 버전 차이를 알림, 실패가 아닌 안내
+  const cmp = isVersion(manifest.templateVersion) ? compareVersions(manifest.templateVersion, TEMPLATE_VERSION) : null;
+  if (cmp === null) add('team version', 'unverified', `installed version ${manifest.templateVersion ?? 'unknown'} cannot be compared with ${TEMPLATE_VERSION}`);
+  else if (cmp < 0) add('team version', 'update', `installed ${manifest.templateVersion}, this plugin has ${TEMPLATE_VERSION}; run /agent-team-base:setup update to apply the new version to this project`);
+  else if (cmp > 0) add('team version', 'unverified', `installed ${manifest.templateVersion} is newer than this plugin (${TEMPLATE_VERSION}); update the plugin first (/plugin marketplace update jbeat-plugins, then claude plugin update agent-team-base@jbeat-plugins)`);
+  else add('team version', 'pass', `${manifest.templateVersion} matches this plugin`);
   const settings = readJson(join(dir, SETTINGS_PATH));
   const missingHooks = (manifest.settings.hooks ?? []).filter((h) => !(settings.value?.hooks?.[h.event] ?? []).some((g) => (g.hooks ?? []).some((x) => x.command === h.command)));
   add('settings hooks', settings.error || missingHooks.length ? 'fail' : 'pass', settings.error ?? (missingHooks.length ? `missing ${missingHooks.length}` : 'hooks registered'));
