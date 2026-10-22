@@ -29,7 +29,7 @@ Requirement coverage, discovery of missed items, scope control, evidence, and fi
 Requirements: Claude Code 2.1.302 or later, Node 18 or later.
 
 ```text
-/plugin marketplace add jbeat30/jbeat-conventions
+/plugin marketplace add jbeat30/jbeat-plugins
 /plugin install agent-team-base@jbeat-plugins
 /agent-team-base:setup
 ```
