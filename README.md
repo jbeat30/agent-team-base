@@ -244,6 +244,7 @@ Full의 relay 방식에서는 리더가 하위 역할을 직접 부르지 않고
 ![모드별 비용·시간·토큰 비교](docs/verification/assets/mode-compare.svg)
 
 - [소규모 fixture 실행 기록](docs/verification/2026-10-19-small-fixture.md): 14회 확인(1회씩, 비대화형, 영어로 바꾸기 전의 한국어 프롬프트). Lite는 직접 처리보다 L2·L3에서 비용이 약 12배, 시간이 30배 이상 들었어요. 작은 과제는 직접 처리가 더 빠르고 저렴해서, Lite를 기본으로 하고 Full은 큰 작업에서 선택하도록 했어요.
+- [v0.3.2 점검 결과](docs/verification/EVAL_RESULTS_v0.3.2.md): 설치 후 모드 전환과 `setting` 스킬을 1회씩 점검했어요. 효용 평가는 아니에요.
 - [v0.3.0 점검 결과](docs/verification/EVAL_RESULTS_v0.3.0.md): `/team` 호출 방식과 어려운 과제(l1) 1회 점검이에요. 효용 평가는 아니에요.
 - [v0.2.0 평가 결과](docs/verification/EVAL_RESULTS_v0.2.0.md)(과제 8종, 반복 1회, 한 모델, 원본 JSON 포함): 팀의 가치는 어려운 과제(숨은 호출처 l1, 암묵 요구 m1)에서만 판단할 수 있는데, 이 과제들은 측정이 적고 반복도 1회라 설계 기준으로 판정할 수 없어요. 쉬운 과제는 팀에 맡길 요청이 아니라서 그 비용 수치는 팀의 효용 근거로 쓰지 않아요.
 - 팀 구조가 직접 처리보다 품질을 높인다는 보장은 없어요.
