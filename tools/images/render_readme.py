@@ -23,7 +23,6 @@ COPY = {
   'subs': ['Q · L1 · L2 · L3로 분류', '요구 분해 · 인수 기준 · 영향 분석', 'L3는 항상 사용자 확인', '승인된 파일만 · 순차 쓰기','검사 기록 원본 · 체크리스트','요구사항별 충족 · 미검증 구분'],
   'skip': 'Q · L1: PM이 직접 처리', 'skip_sub': 'L1은 체크리스트로 자가 점검 · 영향이 보이면 L2로', 'ask': 'L3이거나 판단 필요 시 사용자에게 질문',
   'rework': '실패 항목 재작업 (최대 3회)',
-  'bar': '가드 hook: 쓰기 경로 · 호출 대상 검사 │ 검사 실행기: exit code · 시각 · 해시 기록',
   'request': '/claude-team-base:setup 으로 이 프로젝트에 팀 세팅',
   'install': ['프로젝트 조사','채팅으로 질문','계획 요약 · 확인 1회','스크립트로 적용','보호 장치 점검'],
   'install_sub': ['', 'Lite/Full · Context7 · 금지 영역', '', '기존 파일 보존', '실제 Claude 호출'],
@@ -35,11 +34,10 @@ COPY = {
   'legend': ['coordinate · analyze · verify','edit assigned files'],
   'note': 'All 9 roles are always installed · Lite/Full is chosen at setup',
   'roles': ['triage · chat · confirm · checks · report','coordinates planning','coordinates build','requirements · acceptance criteria','callers · contracts · impact','UI · accessibility','server · business logic','shared contracts · clients','writes tests','independent verification'],
-  'gates': ['/team · Intake · triage','Plan','Confirm','Build','Independent QA','Final report'],
+  'gates': ['/team · Triage','Plan','Confirm','Build','Independent QA','Final report'],
   'subs': ['classify as Q · L1 · L2 · L3', 'requirements · acceptance criteria · impact', 'L3: always ask the user', 'approved files only · sequential writes','check records · checklist','per-requirement status · unverified'],
   'skip': 'Q · L1: handled directly by the PM', 'skip_sub': 'L1: self-check · raise to L2 if impact appears', 'ask': 'Ask the user for L3, or when a decision is needed',
   'rework': 'Rework failed items (max 3 rounds)',
-  'bar': 'Guard hook: write paths · call targets │ Check runner: exit code · timestamps · hashes',
   'request': 'Run /claude-team-base:setup to set the team up in this project',
   'install': ['Inspect project','Questions in chat','Plan summary · 1 confirmation','Apply via script','Verify guard'],
   'install_sub': ['', 'Lite/Full · Context7 · protected areas', '', 'existing files preserved', 'real Claude call'],
@@ -169,20 +167,18 @@ def render(out,fonts):
    v.circle(x,1058,7,color);v.text(x+20,1048,t,19,width=330)
   v.save(out,'agent-team')
 
-  v=Canvas(2000,900,lang,fonts)
+  v=Canvas(2000,700,lang,fonts)
   xs=[40+i*325 for i in range(6)]
   for i,x in enumerate(xs):
    if i:v.path([(x-37,205),(x,205)])
    v.card(x,110,288,245,'G'+str(i)+' · '+c['gates'][i],c['subs'][i],AMBER if i==2 else BLUE,size=24,subsize=18)
   v.path([(184,355),(184,430)],dash=True)
   v.card(40,430,530,90,c['skip'],c['skip_sub'],size=21)
-  v.path([(305,520),(305,705),(1975,705),(1975,75),(1848,75),(1848,110)],dash=True)
+  v.path([(305,520),(305,620),(1975,620),(1975,75),(1848,75),(1848,110)],dash=True)
   v.card(690,430,288,130,c['ask'],color=AMBER,size=18)
   v.path([(834,355),(834,430)],color=AMBER)
-  v.curve((xs[4]+144,355),(xs[4]+144,690),(xs[3]+144,690),(xs[3]+144,355))
-  v.text(1015,650,c['rework'],21,width=850)
-  v.box(40,755,1920,95,NAVY,NAVY)
-  v.text(75,790,c['bar'],24,color='white',width=1850)
+  v.path([(xs[4]+144,355),(xs[4]+144,415),(xs[3]+144,415),(xs[3]+144,355)],color=BLUE)
+  v.text(1175,428,c['rework'],21,width=330)
   v.save(out,'task-workflow')
 
   v=Canvas(2000,700,lang,fonts)
