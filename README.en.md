@@ -54,8 +54,9 @@ Read INSTALL.md at https://github.com/jbeat30/claude-team-base and set this proj
 | --- | --- | --- |
 | `/claude-team-base:setup` | **Install, update, or remove** the team; pass `install`, `update`, or `remove` as an argument | One Claude call for the guard check after install |
 | `/claude-team-base:check` | Check the installation (file hashes, hook registration, role files, version) | None; it does not call Claude without `--live` |
+| `/claude-team-base:setting` | **View and change settings**: the default mode (Lite/Full), the protection mode, which MCP servers the team can use and which are selected, and adding an MCP server you did not select | A few conversation turns; the installer commands do not call Claude |
 
-Plain requests work too: "set up the agent team", "check the team installation", "remove the team".
+Plain requests work too: "set up the agent team", "check the team installation", "show the team settings", "switch the mode to Full", "remove the team".
 
 ## What you choose at setup
 
@@ -63,8 +64,6 @@ Plain requests work too: "set up the agent team", "check the team installation",
 
 | Choice | Options | Default or recommendation |
 | --- | --- | --- |
-| Usage mode | **Lite**: the PM calls only the needed roles directly<br>**Full**: planning and development leaders coordinate sub-roles; better for large multi-area work | Lite |
-| Full execution mode | **relay**: the leader returns call cards and the PM makes the calls | relay |
 | Context7 MCP | Register it in `.mcp.json` to check docs against the installed version | Asked |
 | Design system (UI projects) | Where your tokens, component library, Storybook, Figma library, or brand guide live. If you have one it is the **top authority for all UI work** and agents never deviate from it | Only if you have one |
 | Design tool MCP (optional) | **Playwright**: open and look at the running page<br>**Chrome DevTools**: inspect the page, console, network, and performance in Chrome; useful for UI/UX checks<br>**shadcn/ui**: reuse vetted components (needs `components.json`)<br>**Figma**: when you have Figma designs; browser sign-in on first use | Asked only for projects with a UI; Playwright and shadcn/ui recommended |
@@ -73,7 +72,7 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
 | Conflict handling | If files collide, per item: skip or replace with backup | Asked on conflict |
 
-All 9 role files are always installed regardless of mode; the mode sets the default path. The PM instructions say to follow another mode if you ask for it in a request, but using Full in a project installed as Lite has not been tried yet.
+The mode is not asked at install. All 9 role files are always installed and the default mode is Lite. Later you can switch to Full in `/claude-team-base:setting`, or ask for it in a single request ("handle this in Full mode"). Asking this way in a project installed as Lite ran the Full path planning-lead → dev-lead → worker agents → qa-agent (checked once).
 
 Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwright, Chrome DevTools) can see the content of the browser they open, so avoid personal tabs and sensitive data. A registered server's tool definitions are added to every call of those two roles, which costs tokens, and `npx` runs external packages, so choose them only when you need them. The agents never invent spacing, colors, or copy that the design does not state, and mark visual checks they could not make as `unchecked`.
 
@@ -185,6 +184,20 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 .mcp.json            Context7 and design tool MCP registration (optional, merged with existing settings)
 ```
 
+## Changing settings
+
+```text
+/claude-team-base:setting
+```
+
+A skill to view and change the team settings after install.
+
+- **See the current settings**: the default mode (Lite/Full), the protection mode, and the MCP servers the team can use with whether each is selected (with its purpose and caution). This list differs from Claude Code's `/mcp`: `/mcp` shows every connected server, while this shows only the servers the team uses.
+- **Change the default mode** between Lite and Full. To change it for one request only, say "handle this in Full mode".
+- **Add an MCP server** you did not select at install (Context7, Playwright, Chrome DevTools, shadcn/ui, Figma); it is registered in `.mcp.json`. Start a new Claude Code session for it to take effect.
+- It shows a preview first and applies only after you confirm, and backs up the files it changes.
+- An MCP server that already has a different setting is not overwritten; it is reported as a conflict.
+
 ## Update and removal
 
 ```text
@@ -204,6 +217,12 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 - Check records are results the main session ran through the runner and are not fully tamper-proof; the QA report states the source.
 - Right after install the guard is checked with a real Claude call; if that is not confirmed, treat it as `no protection`.
 - Report vulnerabilities privately through [SECURITY.md](SECURITY.md).
+
+### What are the protection mode and the guard hook?
+
+- **Guard hook**: a small script Claude Code runs right before it writes a file or calls another agent in this project. It blocks actions that break the rules, such as editing a file that is not in the confirmed plan or calling an agent that should not be called.
+- **Advisory mode (default)**: the guard blocks rule violations. It is a safety net against mistakes, not a security boundary.
+- **Strict mode (optional)**: adds approval records on top of advisory mode. You approve the allowed paths and commands directly. It is experimental and applies to every edit of the main session.
 
 ### Feature maturity
 
