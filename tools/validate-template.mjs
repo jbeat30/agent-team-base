@@ -155,11 +155,17 @@ else {
 }
 
 // PM 지침의 필수 규칙: 분리된 참조 파일까지 합친 본문에서 확인
-const pmText = ['skills/team/SKILL.md', 'team/relay-mode.md', 'team/design-tools.md', 'team/strict-mode.md', 'team/rule-priority.md']
+const pmText = ['skills/team/SKILL.md', 'team/relay-mode.md', 'team/design-tools.md', 'team/strict-mode.md', 'team/rule-priority.md', 'team/ui-verification.md']
   .map((p) => (existsSync(join(root, '.claude', p)) ? readFileSync(join(root, '.claude', p), 'utf8') : ''))
   .join('\n');
 for (const [label, re] of PM_RULES) {
   if (!re.test(pmText)) fail('pm-agent 규칙', `필수 규칙 없음: ${label}`);
+}
+
+// UI 검증 방식 문서를 UI 검증 역할이 참조하는지 확인
+for (const role of ['planner-agent', 'frontend-agent', 'qa-agent']) {
+  const p = join(root, '.claude', 'agents', `${role}.md`);
+  if (existsSync(p) && !readFileSync(p, 'utf8').includes('.claude/team/ui-verification.md')) fail(`agents/${role}.md`, 'ui-verification.md 참조 없음');
 }
 
 // 문체와 참조 검사

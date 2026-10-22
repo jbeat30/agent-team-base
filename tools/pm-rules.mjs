@@ -41,5 +41,9 @@ export const PM_RULES = [
   ['프로젝트 규칙 원본이 팀 기본값보다 우선', /The project's own rules always come first/],
   ['팀에만 있는 동작은 적용 전 사용자 확인', /Ask the user once before applying it/],
   ['프로젝트가 정한 검증 방법을 먼저 사용', /Use the project's own verification method first/],
+  ['UI 검증 방식은 대상별로 프로젝트 규칙을 따름', /Decide per target/],
+  ['UI 검증 규칙이 애매하면 추측하지 않고 질문', /never guess and never choose the closest-looking method/],
+  ['검증 방식을 실행할 수 없으면 대체하지 않고 unchecked', /never silently replace the method/],
+  ['UI 근거 등급 구분', /Never present `read-only` as `measured`/],
   ['팀은 사용자가 요청한 경우에만 동작', /only for requests the user routed to it/],
 ];
