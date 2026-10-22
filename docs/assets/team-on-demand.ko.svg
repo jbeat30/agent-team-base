@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="700" viewBox="0 0 2000 700">
+<rect width="2000" height="700" fill="#F5F7FB"/>
+<rect x="40" y="280" width="320" height="130" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="40" y="292" width="7" height="106" rx="3" fill="#1A2744"/>
+<text x="68" y="310" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">내 요청</text>
+<rect x="470" y="60" width="430" height="160" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="470" y="72" width="7" height="136" rx="3" fill="#9AA5B8"/>
+<text x="498" y="90" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">평소처럼 요청</text>
+<text x="498" y="142" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="21" font-weight="400" fill="#1A2744">그냥 말하기</text>
+<rect x="1000" y="60" width="760" height="160" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1000" y="72" width="7" height="136" rx="3" fill="#9AA5B8"/>
+<text x="1028" y="90" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">Claude가 바로 처리</text>
+<text x="1028" y="142" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="21" font-weight="400" fill="#1A2744">간단한 질문 · 작은 수정에 알맞아요</text>
+<line x1="900" y1="140" x2="990" y2="140" stroke="#9AA5B8" stroke-width="3"/>
+<polygon points="1000,140 986,132 986,148" fill="#9AA5B8"/>
+<text x="1000" y="245" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="23" font-weight="700" fill="#9AA5B8">가장 빠르고 토큰이 적어요</text>
+<rect x="470" y="400" width="430" height="160" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="470" y="412" width="7" height="136" rx="3" fill="#3B6FD8"/>
+<text x="498" y="430" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">팀 호출</text>
+<text x="498" y="482" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="21" font-weight="400" fill="#1A2744">/team 요청 또는 "에이전트 팀으로 해줘"</text>
+<rect x="1000" y="400" width="420" height="160" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1000" y="412" width="7" height="136" rx="3" fill="#3B6FD8"/>
+<text x="1028" y="430" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">PM이 분류</text>
+<text x="1028" y="482" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="21" font-weight="400" fill="#1A2744">간단하면 바로 처리, 크면 팀이 나서요</text>
+<rect x="1520" y="400" width="440" height="160" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
+<rect x="1520" y="412" width="7" height="136" rx="3" fill="#3B6FD8"/>
+<text x="1548" y="430" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">기획 → 확인 → 개발 → 검증</text>
+<text x="1548" y="482" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="21" font-weight="400" fill="#1A2744">호출처 · 계약 · 빠뜨린 요구를 챙겨요</text>
+<line x1="900" y1="480" x2="990" y2="480" stroke="#3B6FD8" stroke-width="3"/>
+<polygon points="1000,480 986,472 986,488" fill="#3B6FD8"/>
+<line x1="1420" y1="480" x2="1510" y2="480" stroke="#3B6FD8" stroke-width="3"/>
+<polygon points="1520,480 1506,472 1506,488" fill="#3B6FD8"/>
+<text x="1000" y="585" dominant-baseline="text-before-edge" font-family="Noto Sans KR, sans-serif" font-size="23" font-weight="700" fill="#3B6FD8">시간과 토큰이 더 들어요</text>
+<polyline points="360,345 415,345 415,140 470,140" fill="none" stroke="#9AA5B8" stroke-width="3"/>
+<polyline points="360,345 415,345 415,480 470,480" fill="none" stroke="#3B6FD8" stroke-width="3"/>
+</svg>
