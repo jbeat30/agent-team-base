@@ -1,6 +1,6 @@
 > [!NOTE]
-> **Preview**
-> 소규모 fixture 측정으로 동작을 확인한 미리보기 릴리즈. 직접 처리보다 비용·시간이 크게 들 수 있고 효용은 추가 평가 예정. 사용 전 [측정 기록](docs/verification/2026-10-19-small-fixture.md)의 한계 확인.
+> **알아 두세요**
+> 팀을 부르면 직접 처리보다 시간과 토큰이 더 들 수 있어요. 팀이 직접 처리보다 낫다는 것은 아직 충분히 확인하지 못했어요(어려운 과제에서만 도움이 된 것으로 보이고 반복 측정이 부족해요). 쓰기 전에 [평가 결과와 한계](docs/verification/EVAL_RESULTS_v0.2.0.md)를 읽어 주세요.
 
 <p align="center">
   <img src="docs/assets/hero.ko.png" alt="claude-team-base" width="100%">
@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/status-preview-yellow" alt="status: preview">
+  <img src="https://img.shields.io/badge/release-v0.3.0-blue" alt="release: v0.3.0">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 이상">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 이상">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -201,6 +201,7 @@ Full의 relay: 리더는 하위 역할을 직접 호출하지 않고 호출 카�
 | 기본 | 스킬 설치·갱신·제거, Lite, 역할 파일, 권고 모드 가드, 검사 실행기 |
 | 실험적·선택 | Full, relay 실행 모드, 엄격 모드(직접 승인 추적), 요구 보존 추적 검사(`team-check.mjs trace`) |
 
+- 엄격 모드는 메인 세션의 모든 수정에 적용돼요. 팀을 부르지 않은 평소 대화에도 영향을 줄 수 있어서, 팀 실행 중으로만 한정하는 개선이 남아 있어요
 - 실험적 기능은 실제 Claude 환경에서 검증하지 못했고 직접 처리보다 낫다는 비교 결과도 아직 없음
 - **L3 절차 준수는 지침에만 의존하며 강제되지 않아요**: v0.2.0 평가에서 PM이 L3로 분류하고도 계획서·영향 분석·사용자 확인 없이 직접 수정한 사례가 있었어요(그 버전의 직접 경로 도입 영향일 수 있고, 이번 버전에서 그 경로를 없앴지만 다시 측정하지 않았어요). 대화형 사용에서의 준수 여부도 확인하지 못했어요
 - 스킬 설치 경로(플러그인 설치, `${CLAUDE_PLUGIN_ROOT}` 치환, 스킬 실행)와 영어 프롬프트의 실제 위임 동작은 실제 Claude에서 아직 확인하지 않음
@@ -208,6 +209,7 @@ Full의 relay: 리더는 하위 역할을 직접 호출하지 않고 호출 카�
 ![모드별 비용·시간·토큰 비교](docs/verification/assets/mode-compare.svg)
 
 - [소규모 fixture 실행 기록](docs/verification/2026-10-19-small-fixture.md), 14회 확인(1회씩, 비대화형, 영어 전환 전 한국어 프롬프트): Lite는 직접 처리보다 L2·L3에서 비용 약 12배·시간 30배 이상, 작은 과제는 직접 처리가 빠르고 저렴하므로 Lite를 기본으로 하고 Full은 대형 작업에서 선택
+- [v0.3.0 점검 결과](docs/verification/EVAL_RESULTS_v0.3.0.md): `/team` 호출 방식과 어려운 과제(l1) 1회 점검, 효용 평가가 아니에요
 - [v0.2.0 평가 결과](docs/verification/EVAL_RESULTS_v0.2.0.md)(과제 8종, 반복 1회, 한 모델, 원본 JSON 포함): 팀의 가치는 어려운 과제(숨은 호출처 l1, 암묵 요구 m1)에서만 판단할 수 있는데, 이 과제들은 측정이 적고 반복 1회라 설계 기준으로 판정할 수 없음, 쉬운 과제는 팀에 맡길 요청이 아니므로 그 비용 수치는 팀의 효용 근거로 쓰지 않음
 - 팀 구조가 직접 처리보다 품질을 높인다는 보장은 없음
 
@@ -215,12 +217,12 @@ Full의 relay: 리더는 하위 역할을 직접 호출하지 않고 호출 카�
 
 | 항목 | 상태 |
 | --- | --- |
-| 스킬(플러그인) 설치 | 구현, 실제 Claude 확인 예정 |
+| 스킬(플러그인) 설치와 `/team` 호출 | 구현, 마켓플레이스 설치와 `/team` 호출을 실제 Claude로 1회씩 점검, 대화형 화면 확인 예정 |
 | 영어 프롬프트와 사용자 언어 응답 | 구현, 위임 동작 평가 예정 |
 | 어려운 과제 비교 평가(직접 처리·Lite·Full, 반복 측정) | 1회 측정 공개, 반복 측정은 미완 |
 | 컨텍스트 슬림화(PM 지침 축소) | 1차 구현(PM 지침 약 18% 감소, 규칙 목록 검사로 누락 방지), 추가 정리 예정 |
 | 설치 시 디자인 도구 MCP 선택(Playwright·shadcn/ui, Figma) | 구현, 실제 Claude·서버 연결 확인 예정 |
-| bkit PDCA 연동 | v0.3.0 이후 |
+| bkit PDCA 연동 | v0.4.0 예정 |
 
 ## 기여
 

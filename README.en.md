@@ -1,6 +1,6 @@
 > [!NOTE]
-> **Preview**
-> A preview release verified on a small fixture. It can cost far more time and money than handling tasks directly, and its usefulness is still to be evaluated. Read the limits in the [run record](docs/verification/2026-10-19-small-fixture.md) (Korean) before using it.
+> **Good to know**
+> Calling the team can cost more time and tokens than handling a task directly. It has not yet been shown that the team beats direct handling (it appeared to help only on hard tasks, and there are too few repeated runs). Please read the [results and limits](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean) before using it.
 
 <p align="center">
   <img src="docs/assets/hero.en.png" alt="claude-team-base" width="100%">
@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/status-preview-yellow" alt="status: preview">
+  <img src="https://img.shields.io/badge/release-v0.3.0-blue" alt="release: v0.3.0">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -201,6 +201,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 | Core | Skill install, update, and removal, Lite, role files, advisory-mode guard, check runner |
 | Experimental or optional | Full, relay execution mode, strict mode (direct approval tracking), requirement-preservation trace check (`team-check.mjs trace`) |
 
+- Strict mode applies to every edit of the main session, so it can affect ordinary conversations where the team was not called. Limiting it to team runs is still to be done.
 - Experimental features are not verified in a real Claude environment, and there is no comparison yet showing they beat handling tasks directly.
 - **Following the L3 procedure depends on the prompt alone and is not enforced**: in the v0.2.0 evaluation the PM classified a request as L3 and still edited directly without a plan, impact analysis, or user confirmation. That may have been caused by the direct path of that version; this version removed it but did not measure again. Behavior in interactive use has not been checked.
 - The skill install path (plugin install, `${CLAUDE_PLUGIN_ROOT}` substitution, skill execution) and real delegation behavior with English prompts have not been checked in real Claude yet.
@@ -208,6 +209,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 ![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.svg)
 
 - [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive, with Korean prompts before the English switch: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
+- [v0.3.0 check results](docs/verification/EVAL_RESULTS_v0.3.0.md) (Korean): a check of how `/team` is called and one run of the hard task l1; not a usefulness evaluation
 - [v0.2.0 evaluation results](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean; 8 tasks, one run each, one model, raw JSON included): the team's value can only be judged on the hard tasks (hidden callers l1, implicit requirements m1), which have few measurements and one run each, so they cannot be judged against the design criteria. Easy tasks are not requests anyone would hand to a team, so their cost figures are not used as evidence of the team's usefulness.
 - There is no guarantee that the team structure improves quality over handling tasks directly.
 
@@ -215,12 +217,12 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 
 | Item | Status |
 | --- | --- |
-| Skill (plugin) install | Implemented; real Claude check planned |
+| Skill (plugin) install and `/team` call | Implemented; marketplace install and `/team` checked once each in real Claude; interactive screens still to be checked |
 | English prompts and user-language replies | Implemented; delegation evaluation planned |
 | Hard-task comparison (direct, Lite, Full, repeated runs) | One run published; repeated runs not done |
 | Context slimming (shorter PM instructions) | First pass done (PM instructions about 18% smaller, a rule-list check prevents omissions); more planned |
 | Design tool MCP choice at setup (Playwright, shadcn/ui, Figma) | Implemented; real Claude and server connection check planned |
-| bkit PDCA integration | After v0.3.0 |
+| bkit PDCA integration | Planned for v0.4.0 |
 
 ## Contributing
 
