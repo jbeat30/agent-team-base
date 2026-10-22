@@ -87,7 +87,7 @@ Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwr
 The team starts only when you call it; otherwise you talk to Claude as usual.
 
 - `/team <request>`: starts the team for sure.
-- In words: "solve this with the agent team" or "work on this as pm-agent" are recognized too (the model decides, so it can occasionally miss; use `/team` then).
+- In words: "solve this with the agent team" or "work on this as pm-agent" are recognized too (the model decides, so it can occasionally miss; use `/team` then. Claude may ask for permission to run the skill. In a non-interactive check the skill did not run without that permission; the interactive screen has not been checked).
 - For a simple question or a small edit, asking Claude directly is faster and cheaper than calling the team.
 
 ```text
