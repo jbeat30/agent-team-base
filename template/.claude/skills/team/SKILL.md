@@ -14,7 +14,7 @@ The request to handle is the skill argument or the user message that asked for t
 For this request the main session acts as the PM. Talk with the user in natural language and own request classification, plan confirmation, the user question channel, approval scope management, check execution, rework decisions, and the final report.
 The user never handles files, forms, or cards directly; internal artifacts live under `.claude/team/`.
 Meeting user requirements, finding missing items, scope control, evidence-based judgment, and finishing quality take priority over speed and cost.
-Before work, read `.claude/team/profile.md` and follow its language, check commands, conventions, forbidden areas, design system, and execution profile. If the file is missing, say the install is not finished and only answer questions and explain.
+Before work, read `.claude/team/profile.md` and follow its language, check commands, conventions, forbidden areas, design system, and execution profile. Then read `.claude/team/rule-priority.md`: the project's own rule files listed in the profile under `Project rule sources` come first and are re-read from the original path before every run; team behaviors the project lacks are applied only after the user confirms them; messages to the user follow the project's wording. If the file is missing, say the install is not finished and only answer questions and explain.
 Write every message to the user in the language the user writes in, short and plain. Internal files, cards, and reports stay in English.
 
 # Execution profile

@@ -27,7 +27,7 @@ Not a middle manager between server routes and screen work; owns only contract a
 
 1. Read the file at the card's plan path directly and compare the request source and completion criteria with the card. On mismatch, stop before editing and report the difference.
 2. Read the preceding server work report and the actual server code to confirm the contract (fields, types, status codes, error format).
-3. Read and follow the existing type and client patterns in the allowed files. Project profile conventions take priority.
+3. Read and follow the existing type and client patterns in the allowed files. Project rule files and profile conventions take priority, in that order.
 4. Implement the contract and client wiring exactly as the plan's contract says. If it differs from the actual server behavior, do not implement; return the mismatch.
 5. Change only allowed files with Edit or Write. Create new files only at locations the plan specifies.
 6. After changes, re-read the files, compare against the completion criteria, and check for unused code, temporary logs, and leftover TODOs.
@@ -41,7 +41,7 @@ Not a middle manager between server routes and screen work; owns only contract a
 
 ## Common rules
 
-- Before work, read `.claude/team/profile.md` if it exists and follow its language, conventions, and forbidden areas.
+- Before work, read `.claude/team/profile.md` if it exists and follow its language, conventions, and forbidden areas. Then re-read the files it lists under `Project rule sources` from their original paths; they take priority over the profile and over team defaults (`.claude/team/rule-priority.md`). If a listed file is missing, say so instead of guessing.
 - Work from the card's request source and plan path. If the card summary differs from the file content, stop and report the difference.
 - If a change outside the allowed files or role scope is needed, stop editing and return the needed scope and the reason.
 - Do not state unchecked content as fact. Record it in `unverified`, and cite file paths and lines as evidence.

@@ -18,7 +18,16 @@ No secrets. Mark items without evidence as `unchecked`. The user may edit it.
 | Lint, format | | | |
 | Type check | | | |
 
+## Project rule sources
+
+The project's own rule files take priority over this profile and over the team defaults. Re-read them from the original path before work; never rely on a copied summary.
+
+| Path | Covers |
+| --- | --- |
+
 ## Conventions
+
+Pointers to the evidence path, not a copy of the rule files.
 
 | Item | Content | Evidence path |
 | --- | --- | --- |
