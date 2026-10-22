@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/release-v0.3.6-blue" alt="release: v0.3.6">
+  <img src="https://img.shields.io/badge/release-v0.3.7-blue" alt="release: v0.3.7">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 이상">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 이상">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -277,6 +277,7 @@ claude plugin update agent-team-base@jbeat-plugins
 ![모드별 비용·시간·토큰 비교](docs/verification/assets/mode-compare.svg)
 
 - [소규모 fixture 실행 기록](docs/verification/2026-10-19-small-fixture.md): 14회 확인(1회씩, 비대화형, 영어로 바꾸기 전의 한국어 프롬프트). Lite는 직접 처리보다 L2·L3에서 비용이 약 12배, 시간이 30배 이상 들었어요. 작은 과제는 직접 처리가 더 빠르고 저렴해서, Lite를 기본으로 하고 Full은 큰 작업에서 선택하도록 했어요.
+- [v0.3.7 점검 결과](docs/verification/EVAL_RESULTS_v0.3.7.md): UI 검증 방식을 프로젝트 규칙 기준으로 대상별로 정하는 절차를 5개 상황에서 1회씩 점검했어요. 효용 평가는 아니에요.
 - [v0.3.6 점검 결과](docs/verification/EVAL_RESULTS_v0.3.6.md): Figma 연결 방식, 규칙 우선순위, 가드의 `.claude/` 보호 범위를 1회씩 점검했어요. 효용 평가는 아니에요.
 - [v0.3.3 점검 결과](docs/verification/EVAL_RESULTS_v0.3.3.md): 보호 모드 전환(권고↔엄격)과 엄격 상태의 수정 차단·해제를 1회 점검했어요. 효용 평가는 아니에요.
 - [v0.3.2 점검 결과](docs/verification/EVAL_RESULTS_v0.3.2.md): 설치 후 모드 전환과 `setting` 스킬을 1회씩 점검했어요. 효용 평가는 아니에요.
