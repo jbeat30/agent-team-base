@@ -29,7 +29,7 @@ PM, 담당 에이전트, 독립 QA가 단계마다 확인하며 일하는 팀을
 요구 사항: Claude Code 2.1.302 이상, Node 18 이상
 
 ```text
-/plugin marketplace add jbeat30/jbeat-conventions
+/plugin marketplace add jbeat30/jbeat-plugins
 /plugin install agent-team-base@jbeat-plugins
 /agent-team-base:setup
 ```
