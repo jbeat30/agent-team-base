@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/release-v0.3.4-blue" alt="release: v0.3.4">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
@@ -45,7 +45,7 @@ Requirements: Claude Code 2.1.302 or later, Node 18 or later.
 You can also fetch the repository directly. In Claude Code, ask:
 
 ```text
-Read INSTALL.md at https://github.com/jbeat30/claude-team-base and set this project up
+Read INSTALL.md at https://github.com/jbeat30/agent-team-base and set this project up
 ```
 
 ## Skills
@@ -261,7 +261,7 @@ A skill to view and change the team settings after install.
 
 Issues and fork PRs are welcome. Only the owner has write access, and every change is merged after the owner reviews and approves it.
 
-- Bug reports and feature ideas: [Issues](https://github.com/jbeat30/claude-team-base/issues/new/choose)
+- Bug reports and feature ideas: [Issues](https://github.com/jbeat30/agent-team-base/issues/new/choose)
 - Proposing changes: fork, then open a PR against the `feature/vX.Y.Z` branch the owner names.
 - `main`, `release`, and `feature` require PRs and forbid force pushes; outside contributors cannot push or merge directly.
 - Fork PR workflows from outside contributors need the owner's approval to run, regardless of contribution history.

@@ -6,7 +6,7 @@
     "name": "jbeat",
     "url": "https://github.com/jbeat30"
   },
-  "repository": "https://github.com/jbeat30/claude-team-base",
+  "repository": "https://github.com/jbeat30/agent-team-base",
   "license": "MIT",
   "keywords": ["claude-skill", "agent-team", "subagents", "jbeat"],
   "skills": "./skills/",

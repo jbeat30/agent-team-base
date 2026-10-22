@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/release-v0.3.4-blue" alt="release: v0.3.4">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 이상">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 이상">
@@ -45,7 +45,7 @@ PM, 담당 에이전트, 독립 QA가 단계마다 확인하며 일하는 팀을
 저장소를 직접 가져오는 방식도 지원해요. Claude Code에 아래처럼 요청하세요.
 
 ```text
-https://github.com/jbeat30/claude-team-base 의 INSTALL.md를 읽고 이 프로젝트에 세팅해줘
+https://github.com/jbeat30/agent-team-base 의 INSTALL.md를 읽고 이 프로젝트에 세팅해줘
 ```
 
 ## 스킬
@@ -266,7 +266,7 @@ Full의 relay 방식에서는 리더가 하위 역할을 직접 부르지 않고
 
 이슈와 포크 PR을 환영해요. 저장소 쓰기 권한은 소유자만 갖고 있고, 모든 변경은 소유자가 검토·승인한 뒤에 머지돼요.
 
-- 문제 제보·기능 제안: [Issues](https://github.com/jbeat30/claude-team-base/issues/new/choose)
+- 문제 제보·기능 제안: [Issues](https://github.com/jbeat30/agent-team-base/issues/new/choose)
 - 변경 제안: 저장소를 포크한 뒤 PR을 보내 주세요. 대상은 소유자가 지정한 `feature/vX.Y.Z`예요.
 - `main`·`release`·`feature`는 PR이 필수이고 강제 푸시가 금지돼요. 외부 기여자는 직접 푸시하거나 머지할 수 없어요.
 - 외부 기여자의 포크 PR 워크플로는 기여 이력과 관계없이 소유자의 실행 승인이 필요해요.
