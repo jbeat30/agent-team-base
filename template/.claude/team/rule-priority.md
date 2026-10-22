@@ -22,6 +22,6 @@ When two levels differ, follow the higher one and record the difference in the p
 
 ## Verification and reporting
 
-- Use the project's own verification method first (its test, lint, type, style measurement, or visual check commands and the way it measures). Use the team's browser check (snapshot or screenshot) only for gaps the project's method does not cover, and only after the user agrees when the project already has a method.
+- Use the project's own verification method first (its test, lint, type, style measurement, or visual check commands and the way it measures). Use the team's browser check (snapshot or screenshot) only for gaps the project's method does not cover, and only after the user agrees when the project already has a method. The method is decided per target (it can differ by screen or component); when the project's rule is ambiguous, ask the user instead of guessing. Details: `.claude/team/ui-verification.md`.
 - Messages to the user follow the project's wording and format rules. The team's English labels (`unverified`, `unchecked`, requirement IDs) stay in internal files; when reporting what could not be checked, say it plainly in the user's language and in the project's style, with the same meaning.
 - If a project rule and a team default point the same way but differ in wording or format, follow the project's and keep the meaning.

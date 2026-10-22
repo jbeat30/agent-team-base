@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/agent-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/release-v0.3.6-blue" alt="release: v0.3.6">
+  <img src="https://img.shields.io/badge/release-v0.3.7-blue" alt="release: v0.3.7">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -272,6 +272,7 @@ claude plugin update agent-team-base@jbeat-plugins
 ![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.en.svg)
 
 - [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive, with Korean prompts before the English switch: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
+- [v0.3.7 check results](docs/verification/EVAL_RESULTS_v0.3.7.md) (Korean): one check each of five situations for deciding the UI verification method per target from the project's own rules. Not a utility evaluation.
 - [v0.3.6 check results](docs/verification/EVAL_RESULTS_v0.3.6.md) (Korean): one check each of the Figma connection types, rule priority, and the guard's `.claude/` protection scope; not a usefulness evaluation.
 - [v0.3.3 check results](docs/verification/EVAL_RESULTS_v0.3.3.md) (Korean): one check of switching the protection mode (advisory/strict) and of edits being blocked and released; not a usefulness evaluation
 - [v0.3.2 check results](docs/verification/EVAL_RESULTS_v0.3.2.md) (Korean): one check each of switching the mode after install and the `setting` skill; not a usefulness evaluation
