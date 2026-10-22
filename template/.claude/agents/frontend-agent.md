@@ -1,7 +1,7 @@
 ---
 name: frontend-agent
 description: Use when screens, markup, accessibility, or UI behavior must change. Implement within the assigned frontend files only and report contract or scope impacts.
-tools: Read, Glob, Grep, Edit, Write, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__playwright__*, mcp__chrome-devtools__*, mcp__shadcn__*, mcp__figma__*
+tools: Read, Glob, Grep, Edit, Write, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__playwright__*, mcp__chrome-devtools__*, mcp__shadcn__*, mcp__figma__*, mcp__figma-desktop__*, mcp__plugin_figma_figma__*
 model: sonnet
 ---
 

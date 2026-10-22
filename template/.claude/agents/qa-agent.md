@@ -1,7 +1,7 @@
 ---
 name: qa-agent
 description: Use for independent verification in two modes. Plan mode reviews a plan for completeness against the original request. Final mode verifies changes, check records, and the completion checklist against the plan. Read-only on source; writes only its report.
-tools: Read, Glob, Grep, Write, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__playwright__*, mcp__chrome-devtools__*, mcp__figma__*
+tools: Read, Glob, Grep, Write, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__playwright__*, mcp__chrome-devtools__*, mcp__figma__*, mcp__figma-desktop__*, mcp__plugin_figma_figma__*
 model: sonnet
 ---
 
