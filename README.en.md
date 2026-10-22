@@ -213,6 +213,24 @@ A skill to view and change the team settings after install.
 - It shows a preview first and applies only after you confirm, and backs up the files it changes.
 - An MCP server that already has a different setting is not overwritten; it is reported as a conflict.
 
+## Getting a new version
+
+An installed plugin does not update by itself. Auto-update is off by default for a self-made marketplace, and updating the plugin does not change the team files already installed in a project, so two steps are needed.
+
+1. Update the plugin (terminal)
+
+```text
+claude plugin marketplace update jbeat-plugins
+claude plugin update agent-team-base@jbeat-plugins
+```
+
+2. Start a new session or run `/reload-plugins`
+3. Update the team files in the project: `/agent-team-base:setup update`
+
+- To see whether an update is needed, run `/agent-team-base:check`; a `team version` item with status `update` means the project's team files are older than the plugin
+- Inside a session: `/plugin` → Marketplaces tab → `jbeat-plugins` → Update marketplace (also updates the installed plugins)
+- Optional auto-update: `/plugin` → Marketplaces tab → `jbeat-plugins` → Enable auto-update. It updates only the plugin; step 3 is still run by you
+
 ## Update and removal
 
 ```text

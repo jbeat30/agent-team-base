@@ -218,6 +218,24 @@ Full의 relay 방식에서는 리더가 하위 역할을 직접 부르지 않고
 - 바꾸기 전에 미리보기를 보여 드리고, 확인한 뒤에만 적용해요. 바꾸기 전 파일은 백업해요.
 - 이미 다른 설정이 있는 MCP는 덮어쓰지 않고 충돌로 알려 드려요.
 
+## 새 버전 받기
+
+플러그인을 이미 쓰고 있어도 새 버전은 자동으로 받아지지 않아요. 직접 만든 마켓플레이스는 자동 갱신이 기본으로 꺼져 있고, 플러그인을 갱신해도 프로젝트에 설치된 팀 파일은 그대로라서 두 단계가 필요해요.
+
+1. 플러그인 갱신 (터미널)
+
+```text
+claude plugin marketplace update jbeat-plugins
+claude plugin update agent-team-base@jbeat-plugins
+```
+
+2. 새 세션을 시작하거나 `/reload-plugins` 실행
+3. 프로젝트의 팀 파일 갱신: `/agent-team-base:setup update`
+
+- 갱신이 필요한지 확인: `/agent-team-base:check` 실행, `team version` 항목이 `update`이면 프로젝트의 팀 파일이 플러그인보다 낮은 버전
+- 세션 안에서 갱신: `/plugin` → Marketplaces 탭 → `jbeat-plugins` → Update marketplace (설치한 플러그인까지 함께 갱신)
+- 자동 갱신 켜기(선택): `/plugin` → Marketplaces 탭 → `jbeat-plugins` → Enable auto-update. 켜도 플러그인만 갱신되며 3번(프로젝트 팀 파일 갱신)은 직접 실행
+
 ## 갱신과 제거
 
 ```text
