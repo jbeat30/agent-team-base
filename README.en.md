@@ -1,6 +1,6 @@
 > [!NOTE]
-> **Preview**
-> A preview release verified on a small fixture. It can cost far more time and money than handling tasks directly, and its usefulness is still to be evaluated. Read the limits in the [run record](docs/verification/2026-10-19-small-fixture.md) (Korean) before using it.
+> **Good to know**
+> Calling the team can cost more time and tokens than handling a task directly. It has not yet been shown that the team beats direct handling (it appeared to help only on hard tasks, and there are too few repeated runs). Please read the [results and limits](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean) before using it.
 
 <p align="center">
   <img src="docs/assets/hero.en.png" alt="claude-team-base" width="100%">
@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/status-preview-yellow" alt="status: preview">
+  <img src="https://img.shields.io/badge/release-v0.3.0-blue" alt="release: v0.3.0">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -20,11 +20,11 @@
 
 **A plugin that sets up a Claude Code agent team in your project with one skill.**
 
-It installs a team in which a main-session PM, specialist agents, and an independent QA work through stage gates, while respecting your project's existing rules and tools.
+It installs a team in which a PM, specialist agents, and an independent QA work through stage gates, while respecting your project's existing rules and tools.
 Requirement coverage, discovery of missed items, scope control, evidence, and finishing quality come before speed.
 
-- Ask in natural language; the PM classifies the request and calls only the roles it needs.
-- Small requests are handled directly without the team; large ones go through plan, confirm, build, verify.
+- **The team works only when you call it.** Installing does not change your normal Claude conversations. Use `/team <request>` or say something like "solve this with the agent team", and the team handles just that request.
+- When the team runs, the PM classifies the request: simple ones are handled directly, large ones go through plan, confirm, build, verify.
 - The skill guides install, update, and removal in conversation and asks for confirmation of the change plan only once.
 - Existing files are never overwritten, and global settings and your feature code are left alone.
 
@@ -73,9 +73,9 @@ Plain requests work too: "set up the agent team", "check the team installation",
 | Forbidden areas | Production config, generated files, specific paths | None |
 | Protection mode | **Advisory**: the guard hook blocks violations<br>**Strict**: tracks direct approval records (optional; you run the approval commands yourself) | Advisory |
 | Task records | Add `.claude-team-docs/` to `.gitignore` | Add |
-| Conflict handling | If files collide, per item: skip or replace with backup; keep or replace an existing `agent` setting | Asked on conflict |
+| Conflict handling | If files collide, per item: skip or replace with backup | Asked on conflict |
 
-All 10 role files are always installed regardless of mode; the mode only changes how the team is used.
+All 9 role files are always installed regardless of mode; the mode only changes how the team is used.
 
 Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwright, Chrome DevTools) can see the content of the browser they open, so avoid personal tabs and sensitive data. A registered server's tool definitions are added to every call of those two roles, which costs tokens, and `npx` runs external packages, so choose them only when you need them. The agents never invent spacing, colors, or copy that the design does not state, and mark visual checks they could not make as `unchecked`.
 
@@ -84,21 +84,25 @@ Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwr
 
 ## Using it after install
 
-No extra commands. From the next session, ask in natural language.
+The team starts only when you call it; otherwise you talk to Claude as usual.
+
+- `/team <request>`: starts the team for sure.
+- In words: "solve this with the agent team" or "work on this as pm-agent" are recognized too (the model decides, so it can occasionally miss; use `/team` then. Claude may ask for permission to run the skill. In a non-interactive check the skill did not run without that permission; the interactive screen has not been checked).
+- For a simple question or a small edit, asking Claude directly is faster and cheaper than calling the team.
 
 ```text
-Add a show/hide password toggle to the existing login screen. Follow the current UI rules.
+/team Add a show/hide password toggle to the existing login screen. Follow the current UI rules.
 ```
 
 ```text
-Add shipping status to the order API response and wire it to the screen. Start by laying out the contract and impact.
+Solve this with the agent team: add shipping status to the order API response and wire it to the screen. Start by laying out the contract and impact.
 ```
 
 ```text
 Explain what this function does.
 ```
 
-The PM answers and asks questions in the language you write in.
+A request like the last one, without calling the team, is answered by regular Claude. The PM answers and asks questions in the language you write in.
 
 ## How it works
 
@@ -106,7 +110,7 @@ The PM answers and asks questions in the language you write in.
 
 ![Agent team: Lite and Full](docs/assets/agent-team.en.png)
 
-The main session acts as the PM (`pm-agent`), talks with you, and calls only the roles it needs.
+When you call the team, the main session acts as the PM for that request, talks with you, and calls only the roles it needs (the PM instructions are the `/team` skill).
 
 | Mode | Structure | Fits |
 | --- | --- | --- |
@@ -117,7 +121,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 
 | Role | Responsibility |
 | --- | --- |
-| pm-agent (main session) | Request classification, user conversation and confirmation, approval scope, running checks, final report |
+| PM (`/team` skill, main session) | Request classification, user conversation and confirmation, approval scope, running checks, final report |
 | planning-lead, dev-lead | Planning and development coordination in Full |
 | planner-agent | Requirement breakdown, finding items users may miss, acceptance criteria |
 | architecture-agent | Analysis of callers, contracts, regressions, and side effects |
@@ -152,6 +156,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 
 ### Token efficiency
 
+- When you do not call the team, the PM instructions are not added to the session; they are read only when `/team` runs.
 - Agent prompts (roles, forms, guard messages) are written in English, about 26% fewer always-injected tokens than the Korean version (measured on all 10 roles plus forms, one model).
 - Simple requests (Q and L1) never call the team.
 - Files and requirements of the same owner are bundled into one call.
@@ -161,10 +166,11 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 
 ```text
 .claude/
-  agents/        10 role definitions
+  agents/        9 role definitions
+  skills/team/   the /team skill (PM instructions), read only when called
   hooks/         guard hook
   team/          forms, project profile, check runner, install manifest
-  settings.json  agent=pm-agent and hook registration (merged with existing settings)
+  settings.json  hook registration (merged with existing settings); the main session is not pinned to the PM
 .claude-team-docs/   per-task records (request source, plan, reports, check records, diff); adding it to .gitignore is optional
 .mcp.json            Context7 and design tool MCP registration (optional, merged with existing settings)
 ```
@@ -195,27 +201,28 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 | Core | Skill install, update, and removal, Lite, role files, advisory-mode guard, check runner |
 | Experimental or optional | Full, relay execution mode, strict mode (direct approval tracking), requirement-preservation trace check (`team-check.mjs trace`) |
 
+- Strict mode applies to every edit of the main session, so it can affect ordinary conversations where the team was not called. Limiting it to team runs is still to be done.
 - Experimental features are not verified in a real Claude environment, and there is no comparison yet showing they beat handling tasks directly.
-- **Following the L3 procedure depends on the prompt alone and is not enforced**: in the evaluation the PM classified a request as L3 and still edited directly without a plan, impact analysis, or user confirmation. Behavior in interactive use has not been checked.
-- **L2 direct path**: with no risk signal (other users of the changed symbols, ambiguous requirements, many files) the PM works without delegation; checks are `unrecorded` (no runner record) and there is no independent QA.
+- **Following the L3 procedure depends on the prompt alone and is not enforced**: in the v0.2.0 evaluation the PM classified a request as L3 and still edited directly without a plan, impact analysis, or user confirmation. That may have been caused by the direct path of that version; this version removed it but did not measure again. Behavior in interactive use has not been checked.
 - The skill install path (plugin install, `${CLAUDE_PLUGIN_ROOT}` substitution, skill execution) and real delegation behavior with English prompts have not been checked in real Claude yet.
 
 ![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.svg)
 
 - [Small fixture run record](docs/verification/2026-10-19-small-fixture.md) (Korean), 14 runs, one each, non-interactive, with Korean prompts before the English switch: Lite cost about 12x and took 30x+ longer than direct handling on L2/L3 tasks, so Lite is the default and Full is opt-in for large work.
-- [v0.2.0 evaluation results](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean; 8 tasks, one run each, one model, raw JSON included): the team beat direct handling only on hidden-caller and implicit-requirement tasks and only added cost on easy ones. After the L2 direct path, cost fell about 5-17x on m1 (Lite, Full), m2 (Full), and m3 (Full) with the same quality, while Lite m2 rose from 0.046 to 0.089 USD. One run each is not enough to judge against the design criteria.
+- [v0.3.0 check results](docs/verification/EVAL_RESULTS_v0.3.0.md) (Korean): a check of how `/team` is called and one run of the hard task l1; not a usefulness evaluation
+- [v0.2.0 evaluation results](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean; 8 tasks, one run each, one model, raw JSON included): the team's value can only be judged on the hard tasks (hidden callers l1, implicit requirements m1), which have few measurements and one run each, so they cannot be judged against the design criteria. Easy tasks are not requests anyone would hand to a team, so their cost figures are not used as evidence of the team's usefulness.
 - There is no guarantee that the team structure improves quality over handling tasks directly.
 
 ## Roadmap
 
 | Item | Status |
 | --- | --- |
-| Skill (plugin) install | Implemented; real Claude check planned |
+| Skill (plugin) install and `/team` call | Implemented; marketplace install and `/team` checked once each in real Claude; interactive screens still to be checked |
 | English prompts and user-language replies | Implemented; delegation evaluation planned |
 | Hard-task comparison (direct, Lite, Full, repeated runs) | One run published; repeated runs not done |
 | Context slimming (shorter PM instructions) | First pass done (PM instructions about 18% smaller, a rule-list check prevents omissions); more planned |
 | Design tool MCP choice at setup (Playwright, shadcn/ui, Figma) | Implemented; real Claude and server connection check planned |
-| bkit PDCA integration | After v0.3.0 |
+| bkit PDCA integration | Planned for v0.4.0 |
 
 ## Contributing
 

@@ -38,7 +38,5 @@ export const PM_RULES = [
   ['실제 계정·결제·데이터 변경 금지', /Never enter real credentials/],
   ['relay 호출 카드 저장 경로', /cards\/NN-/],
   ['relay needs-dispatch 처리', /needs-dispatch/],
-  ['L2 직접 경로는 위험 신호가 없을 때만', /Risk signals \(any one\)/],
-  ['직접 경로는 L2 전용, L3 금지', /Never use it for L3/],
-  ['직접 경로 점검 결과는 unrecorded 표기', /`unrecorded`/],
+  ['팀은 사용자가 요청한 경우에만 동작', /only for requests the user routed to it/],
 ];

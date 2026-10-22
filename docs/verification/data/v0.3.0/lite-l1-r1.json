@@ -1,0 +1,56 @@
+{
+ "condition": "lite",
+ "taskId": "l1",
+ "rep": 1,
+ "size": "L",
+ "expectedGrade": "L3",
+ "model": "sonnet",
+ "claudeVersion": "2.1.307 (Claude Code)",
+ "repoCommit": "eb8ed1eeab59cf9daee09f741320fce8d85fe6ba",
+ "exit": 0,
+ "subtype": "success",
+ "isError": false,
+ "budgetStopped": false,
+ "costUsd": 0.7541044999999998,
+ "turns": 32,
+ "wallMs": 221399,
+ "tokens": {
+  "input": 42,
+  "cacheCreation": 38979,
+  "cacheRead": 832216,
+  "output": 13569
+ },
+ "resultEvents": 1,
+ "delegations": [
+  "architecture-agent",
+  "qa-agent",
+  "backend-agent",
+  "test-agent",
+  "qa-agent"
+ ],
+ "delegationCount": 5,
+ "usedPlanFiles": true,
+ "score": {
+  "task": "l1",
+  "size": "L",
+  "changed": [
+   "scripts/export-csv.js",
+   "scripts/run-report.mjs",
+   "src/cart.js",
+   "src/pricing.js",
+   "src/report.js",
+   "src/sort.js",
+   "tools/legacy/sum.js",
+   "test/callers.test.js",
+   "test/pricing.test.js"
+  ],
+  "outOfScope": [],
+  "existingTestsModified": [],
+  "missed": 0,
+  "brokenCallers": 0,
+  "callers": 6,
+  "hiddenBroken": 0,
+  "npmTestPass": true
+ },
+ "stderr": ""
+}
