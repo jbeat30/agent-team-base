@@ -2,14 +2,14 @@
 <rect width="2000" height="1100" fill="#F5F7FB"/>
 <rect x="740" y="20" width="520" height="80" rx="14" fill="white" stroke="#D5DBE6" stroke-width="1.5"/>
 <rect x="740" y="35" width="6" height="50" rx="3" fill="#1A2744" stroke="#1A2744" stroke-width="1.5"/>
-<text x="758" y="37" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="#1A2744">User</text>
+<text x="758" y="37" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="#1A2744">User · calls /team</text>
 <rect x="20" y="145" width="970" height="870" rx="14" fill="#F5F7FB" stroke="#D5DBE6" stroke-width="1.5"/>
 <text x="52" y="170" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">Lite</text>
 <text x="52" y="215" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="#1A2744">Called directly by the PM</text>
 <polyline points="1000,100 1000,120 505,120 505,260" fill="none" stroke="#D5DBE6" stroke-width="2"/>
 <polygon points="505,260 499.0,249.60769515458674 511.0,249.60769515458674" fill="#D5DBE6"/>
 <rect x="140" y="260" width="760" height="104" rx="14" fill="#1A2744" stroke="#D5DBE6" stroke-width="1.5"/>
-<text x="158" y="277" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">pm-agent · main session</text>
+<text x="158" y="277" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">PM (/team) · main session</text>
 <text x="158" y="312" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="white">triage · chat · confirm · checks · report</text>
 <rect x="1010" y="145" width="970" height="870" rx="14" fill="#F5F7FB" stroke="#D5DBE6" stroke-width="1.5"/>
 <text x="1042" y="170" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="29" font-weight="700" fill="#1A2744">Full</text>
@@ -17,7 +17,7 @@
 <polyline points="1000,100 1000,120 1495,120 1495,260" fill="none" stroke="#D5DBE6" stroke-width="2"/>
 <polygon points="1495,260 1489.0,249.60769515458674 1501.0,249.60769515458674" fill="#D5DBE6"/>
 <rect x="1130" y="260" width="760" height="104" rx="14" fill="#1A2744" stroke="#D5DBE6" stroke-width="1.5"/>
-<text x="1148" y="277" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">pm-agent · main session</text>
+<text x="1148" y="277" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="25" font-weight="700" fill="white">PM (/team) · main session</text>
 <text x="1148" y="312" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="white">triage · chat · confirm · checks · report</text>
 <polyline points="505,364 505,390 62,390 62,938" fill="none" stroke="#D5DBE6" stroke-width="2"/>
 <polyline points="62,438 105,438" fill="none" stroke="#D5DBE6" stroke-width="2"/>
@@ -119,7 +119,7 @@
 <rect x="1395" y="920" width="6" height="68" rx="3" fill="#15996B" stroke="#15996B" stroke-width="1.5"/>
 <text x="1413" y="922" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="19" font-weight="700" fill="#1A2744">test-agent</text>
 <text x="1413" y="951" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="15" font-weight="400" fill="#1A2744">writes tests</text>
-<text x="35" y="1045" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="23" font-weight="400" fill="#1A2744">All 10 roles are always installed · Lite/Full is chosen at setup</text>
+<text x="35" y="1045" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="23" font-weight="400" fill="#1A2744">All 9 roles are always installed · Lite/Full is chosen at setup</text>
 <circle cx="1210" cy="1058" r="7" fill="#3B6FD8"/>
 <text x="1230" y="1048" dominant-baseline="text-before-edge" font-family="Inter, Noto Sans KR, sans-serif" font-size="19" font-weight="400" fill="#1A2744">coordinate · analyze · verify</text>
 <circle cx="1640" cy="1058" r="7" fill="#15996B"/>

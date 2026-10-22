@@ -1,14 +1,10 @@
-> [!NOTE]
-> **Good to know**
-> Calling the team can cost more time and tokens than handling a task directly. It has not yet been shown that the team beats direct handling (it appeared to help only on hard tasks, and there are too few repeated runs). Please read the [results and limits](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean) before using it.
-
 <p align="center">
   <img src="docs/assets/hero.en.png" alt="claude-team-base" width="100%">
 </p>
 
 <p align="center">
   <a href="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml"><img src="https://github.com/jbeat30/claude-team-base/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/release-v0.3.0-blue" alt="release: v0.3.0">
+  <img src="https://img.shields.io/badge/release-v0.3.1-blue" alt="release: v0.3.1">
   <img src="https://img.shields.io/badge/Claude%20Code-%E2%89%A5%202.1.302-5A67D8" alt="Claude Code 2.1.302 or later">
   <img src="https://img.shields.io/badge/Node-%E2%89%A5%2018-339933" alt="Node 18 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
@@ -42,7 +38,7 @@ Requirements: Claude Code 2.1.302 or later, Node 18 or later.
 2. The skill surveys the project and asks only what it needs.
 3. It shows the change plan in 10 lines or fewer and asks for confirmation **once**.
 4. The installer copies and merges files, then checks the guard.
-5. From the next session, just ask in natural language.
+5. When you need the team, call it with `/team <request>`.
 
 You can also fetch the repository directly. In Claude Code, ask:
 
@@ -86,6 +82,8 @@ Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwr
 
 The team starts only when you call it; otherwise you talk to Claude as usual.
 
+![Ordinary requests versus calling the team](docs/assets/team-on-demand.en.png)
+
 - `/team <request>`: starts the team for sure.
 - In words: "solve this with the agent team" or "work on this as pm-agent" are recognized too (the model decides, so it can occasionally miss; use `/team` then. Claude may ask for permission to run the skill. In a non-interactive check the skill did not run without that permission; the interactive screen has not been checked).
 - For a simple question or a small edit, asking Claude directly is faster and cheaper than calling the team.
@@ -101,6 +99,16 @@ Solve this with the agent team: add shipping status to the order API response an
 ```text
 Explain what this function does.
 ```
+
+### When to call the team
+
+| Call the team | Just ask directly |
+| --- | --- |
+| Changing a function's return shape or an API contract so several callers must change | Explaining code, questions |
+| Adding a feature where unstated requirements (validation, error handling) are easy to miss | Typos, comments, wording |
+| Changes to data structures, permissions, or security where the impact has to be worked out first | A small edit to a single file |
+
+In the evaluation the team appeared to help on changes with hidden callers and on tasks with unstated requirements. There are too few repeated runs to be sure. Details are in the [results and limits](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean).
 
 A request like the last one, without calling the team, is answered by regular Claude. The PM answers and asks questions in the language you write in.
 
@@ -183,6 +191,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 ```
 
 - Update: **fully replaces** the installed team files with the new version. It shows the changes as a plan and applies them after confirmation. Files you edited after install are never overwritten automatically; you choose skip or replace with backup.
+- Updating from v0.2.x or earlier releases the `agent=pm-agent` setting that version added, so the main session is no longer pinned to the PM, and deletes the unmodified legacy PM agent file (settings and files you changed are kept).
 - Removal: shows a preview and, after confirmation, reverts only what was installed. Files you edited are kept, and task records (`.claude-team-docs`) and backups are not deleted.
 - From v0.2.0 prompts and record labels are English, so runs left in progress by an older version are not read by the new one. Finish them before updating.
 
@@ -204,7 +213,7 @@ Full runs in relay mode: leaders do not call sub-roles directly but return call 
 - Strict mode applies to every edit of the main session, so it can affect ordinary conversations where the team was not called. Limiting it to team runs is still to be done.
 - Experimental features are not verified in a real Claude environment, and there is no comparison yet showing they beat handling tasks directly.
 - **Following the L3 procedure depends on the prompt alone and is not enforced**: in the v0.2.0 evaluation the PM classified a request as L3 and still edited directly without a plan, impact analysis, or user confirmation. That may have been caused by the direct path of that version; this version removed it but did not measure again. Behavior in interactive use has not been checked.
-- The skill install path (plugin install, `${CLAUDE_PLUGIN_ROOT}` substitution, skill execution) and real delegation behavior with English prompts have not been checked in real Claude yet.
+- Marketplace install and the `/team` call were checked in real Claude. Interactive screens (the skill permission prompt, the trust screen), macOS/Linux, and updating between releases are not checked yet.
 
 ![Cost, time, and tokens by mode](docs/verification/assets/mode-compare.svg)
 
