@@ -1,7 +1,3 @@
-> [!NOTE]
-> **Good to know**
-> Calling the team can cost more time and tokens than handling a task directly. It has not yet been shown that the team beats direct handling (it appeared to help only on hard tasks, and there are too few repeated runs). Please read the [results and limits](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean) before using it.
-
 <p align="center">
   <img src="docs/assets/hero.en.png" alt="claude-team-base" width="100%">
 </p>
@@ -86,6 +82,8 @@ Only `frontend-agent` and `qa-agent` use the design tools. Browser tools (Playwr
 
 The team starts only when you call it; otherwise you talk to Claude as usual.
 
+![Ordinary requests versus calling the team](docs/assets/team-on-demand.en.png)
+
 - `/team <request>`: starts the team for sure.
 - In words: "solve this with the agent team" or "work on this as pm-agent" are recognized too (the model decides, so it can occasionally miss; use `/team` then. Claude may ask for permission to run the skill. In a non-interactive check the skill did not run without that permission; the interactive screen has not been checked).
 - For a simple question or a small edit, asking Claude directly is faster and cheaper than calling the team.
@@ -101,6 +99,16 @@ Solve this with the agent team: add shipping status to the order API response an
 ```text
 Explain what this function does.
 ```
+
+### When to call the team
+
+| Call the team | Just ask directly |
+| --- | --- |
+| Changing a function's return shape or an API contract so several callers must change | Explaining code, questions |
+| Adding a feature where unstated requirements (validation, error handling) are easy to miss | Typos, comments, wording |
+| Changes to data structures, permissions, or security where the impact has to be worked out first | A small edit to a single file |
+
+In the evaluation the team appeared to help on changes with hidden callers and on tasks with unstated requirements. There are too few repeated runs to be sure. Details are in the [results and limits](docs/verification/EVAL_RESULTS_v0.2.0.md) (Korean).
 
 A request like the last one, without calling the team, is answered by regular Claude. The PM answers and asks questions in the language you write in.
 
