@@ -45,5 +45,7 @@ export const PM_RULES = [
   ['UI 검증 규칙이 애매하면 추측하지 않고 질문', /never guess and never choose the closest-looking method/],
   ['검증 방식을 실행할 수 없으면 대체하지 않고 unchecked', /never silently replace the method/],
   ['UI 근거 등급 구분', /Never present `read-only` as `measured`/],
+  ['사용자가 풀 수 있는 unchecked는 질문으로 마무리', /`unchecked` is not an ending/],
+  ['되돌릴 수 있는 답이면 즉시 중단하고 질문', /Stop and ask at once/],
   ['팀은 사용자가 요청한 경우에만 동작', /only for requests the user routed to it/],
 ];
